@@ -47,8 +47,8 @@ class GEMCosmicMuonStandSim : public DQMEDAnalyzer {
   Int_t GetVFATId(Float_t x, const GEMEtaPartition* roll);
   Int_t GetChamberIndex(Int_t chamber_id) {return (chamber_id - 1) / 2; }
   Int_t GetOverallVFATPlotY(Int_t roll_id, Int_t vfat_id) {return 3 * roll_id + vfat_id - 3;}
-  // conversion_factor = 10 deg * ( TMath::Pi() / 180 deg ) / 384 = 0.00045451283
-  Float_t GetLocalPhi(Float_t strip) {return 0.00045451283 * (strip - 192);}
+  // conversion_factor = 10.15 deg * ( TMath::Pi() / 180 deg ) / 384 (on kisti, with ROOT)
+  Float_t GetLocalPhi(Float_t strip) {return 0.000461331 * (strip - 192);}
 
  private:
   edm::EDGetTokenT<edm::PSimHitContainer> sim_hit_token_;
@@ -59,6 +59,11 @@ class GEMCosmicMuonStandSim : public DQMEDAnalyzer {
   const Int_t kMinRollId_ = 1, kMaxRollId_ = 8;
   const Int_t kMinVFATId_ = 1, kMaxVFATId_ = 3;
 
+  // 10.15 * (TMath::Pi() / 180) = 0.177151 (on kisti, with ROOT)
+  const Double_t kOpeningAngle_ = 0.177151;
+  // TMath::Pi() / 180 
+  const Double_t k1Deg_ = 0.0174533; 
+
   const Int_t kNumRow_ = 5, kNumColumn_ = 3; // # of rows and columns in the stand
   const Int_t kNumSuperchamber_ = 15; // # of superchambers in the stand
   const Int_t kNumLayer_ = 2; // # of layers (chambers) in each superchamber
@@ -66,7 +71,7 @@ class GEMCosmicMuonStandSim : public DQMEDAnalyzer {
   const Int_t kNumVFAT_ = 3; // # of VFATs in each roll.
   const Int_t kNumStrip_ = 384; // # of strips in each roll.
 
-  const Int_t k1Deg_ = TMath::Pi() / 180.0;
+
 
 
   // Monitor Element
