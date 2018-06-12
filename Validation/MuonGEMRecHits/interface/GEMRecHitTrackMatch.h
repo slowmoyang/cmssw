@@ -12,6 +12,8 @@
 #include "Validation/MuonGEMDigis/interface/GEMDigiMatcher.h"
 #include "Validation/MuonGEMRecHits/interface/GEMRecHitMatcher.h"
 
+#include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
+
 
 class GEMRecHitTrackMatch : public GEMTrackMatch 
 {
@@ -22,18 +24,29 @@ public:
   void analyze(const edm::Event& e, const edm::EventSetup&) override;
  private:
 
-  MonitorElement* track_eta[3];
-  MonitorElement* track_phi[3][3];
+  MonitorElement* me_track_eta_[3];
+  MonitorElement* me_track_phi_[3][3];
+  MonitorElement* me_rh_eta_[4][3];
+  MonitorElement* me_rh_sh_eta_[4][3]; 
+  MonitorElement* me_rh_phi_[4][3][3];
+  MonitorElement* me_rh_sh_phi_[4][3][3]; 
 
-  MonitorElement* rh_eta[4][3];
-  MonitorElement* rh_sh_eta[4][3]; 
+  MonitorElement *me_region_;
+  MonitorElement *me_station_;
+  MonitorElement *me_ring_;
+  MonitorElement *me_layer_;
+  MonitorElement *me_chamber_;
+  MonitorElement *me_roll_;
 
-  MonitorElement* rh_phi[4][3][3];
-
-  MonitorElement* rh_sh_phi[4][3][3]; 
+  MonitorElement *me_eta_phi_;
+  MonitorElement *me_eta_phi_sim_hit_;
+  MonitorElement *me_eta_phi_rec_hit_;
+  MonitorElement *me_eta_phi_track_;
+  MonitorElement *me_eta_phi_good_track_;
+  MonitorElement *me_num_matched_sim_hits_;
+  MonitorElement *me_num_matched_sim_tracks_;
 
   edm::EDGetToken gem_recHitToken_;
-
 };
 
 #endif

@@ -35,8 +35,7 @@ GEMRecHitMatcher::init(const edm::Event& e)
 }
 
 
-void
-GEMRecHitMatcher::matchRecHitsToSimTrack(const GEMRecHitCollection& rechits)
+void GEMRecHitMatcher::matchRecHitsToSimTrack(const GEMRecHitCollection& rechits)
 {
   
   auto det_ids = simhit_matcher_.detIdsGEM();
@@ -46,6 +45,7 @@ GEMRecHitMatcher::matchRecHitsToSimTrack(const GEMRecHitCollection& rechits)
     GEMDetId superch_id(p_id.region(), p_id.ring(), p_id.station(), 1, p_id.chamber(), 0);
 
     auto hit_strips = simhit_matcher_.hitStripsInDetId(id, matchDeltaStrip_);
+
     if (verbose())
     {
       cout<<"hit_strips_fat ";
@@ -64,13 +64,13 @@ GEMRecHitMatcher::matchRecHitsToSimTrack(const GEMRecHitCollection& rechits)
 
       int firstStrip = d->firstClusterStrip();
       int cls = d->clusterSize();
+      int lastStrip = firstStrip + cls - 1;
       bool stripFound = false;
 
-      for(int i = firstStrip; i < (firstStrip + cls); i++){
-
-	if (hit_strips.find(i) != hit_strips.end()) stripFound = true;
-        //std::cout<<i<<" "<<firstStrip<<" "<<cls<<" "<<stripFound<<std::endl;
-	
+      for(int i = firstStrip; i <= lastStrip; i++)
+      {
+	    if (hit_strips.find(i) != hit_strips.end())
+          stripFound = true;
       }
 
       if (!stripFound) continue;

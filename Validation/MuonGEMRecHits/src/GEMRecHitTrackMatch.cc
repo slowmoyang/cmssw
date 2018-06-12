@@ -1,13 +1,17 @@
 #include "Validation/MuonGEMRecHits/interface/GEMRecHitTrackMatch.h"
 #include "Validation/MuonGEMHits/interface/GEMDetLabel.h"
+#include "Validation/MuonGEMHits/interface/GEMSimTrackHelper.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
 #include <DataFormats/GEMRecHit/interface/GEMRecHit.h>
 #include <DataFormats/GEMRecHit/interface/GEMRecHitCollection.h>
 #include "DQMServices/Core/interface/DQMStore.h"
+
 #include <TMath.h>
 #include <TH1F.h>
+
+#include <utility> // make_pair
 
 using namespace std;
 GEMRecHitTrackMatch::GEMRecHitTrackMatch(const edm::ParameterSet& ps) : GEMTrackMatch(ps)
@@ -23,15 +27,18 @@ GEMRecHitTrackMatch::GEMRecHitTrackMatch(const edm::ParameterSet& ps) : GEMTrack
   cfg_ = ps;
 }
 
-void GEMRecHitTrackMatch::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& run, edm::EventSetup const & iSetup){
+void GEMRecHitTrackMatch::bookHistograms(DQMStore::IBooker& ibooker,
+                                         edm::Run const& run,
+                                         edm::EventSetup const & iSetup)
+{
   edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: bookHistograms"<<std::endl;
   edm::ESHandle<GEMGeometry> hGeom;
   iSetup.get<MuonGeometryRecord>().get(hGeom);
-  const GEMGeometry& geom = *hGeom;
+  const GEMGeometry& kGEMGeom = *hGeom;
   edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: about to set the geometry"<<std::endl;
-  setGeometry(geom);
+  setGeometry(kGEMGeom);
   edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: successfully set the geometry"<<std::endl;
-  edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: geom = "<<&geom<<std::endl;
+  edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: geom = "<< &kGEMGeom << std::endl;
     
   ibooker.setCurrentFolder("MuonGEMRecHitsV/GEMRecHitsTask");
   edm::LogInfo("GEMRecHitTrackMatch")<<"ibooker set current folder\n";
@@ -40,230 +47,246 @@ void GEMRecHitTrackMatch::bookHistograms(DQMStore::IBooker& ibooker, edm::Run co
 
   using namespace GEMDetLabel;
 
-  nstation = geom.regions()[0]->stations().size(); 
+  nstation = kGEMGeom.regions()[0]->stations().size(); 
   for( unsigned int j=0 ; j<nstation ; j++) {
-      string track_eta_name  = string("track_eta")+s_suffix.at(j);
-      string track_eta_title = string("track_eta")+";SimTrack |#eta|;# of tracks";
-      track_eta[j] = ibooker.book1D(track_eta_name.c_str(), track_eta_title.c_str(),140,minEta_,maxEta_);
+    string track_eta_name  = string("track_eta")+s_suffix.at(j);
+    string track_eta_title = string("track_eta")+";SimTrack |#eta|;# of tracks";
+    // track_eta[j] = ibooker.book1D(track_eta_name.c_str(), track_eta_title.c_str(),140,minEta_,maxEta_);
+    me_track_eta_[j] = ibooker.book1D(track_eta_name.c_str(), track_eta_title.c_str(),101,-3, 3);
+
+    for ( unsigned int k = 0 ; k < c_suffix.size() ; k++) {
+      string suffix = string(s_suffix[j])+ string(c_suffix[k]);
+      string track_phi_name  = string("track_phi")+suffix;
+      string track_phi_title = string("track_phi")+suffix+";SimTrack #phi;# of tracks";
+      me_track_phi_[j][k] = ibooker.book1D(track_phi_name.c_str(), track_phi_title.c_str(),200,-PI,PI);
+    }
+
+
+    for( unsigned int i=0 ; i < l_suffix.size(); i++) {
+      string suffix = string(s_suffix[j])+string(l_suffix[i]);
+      string rh_eta_name = string("rh_eta")+suffix;
+      string rh_eta_title = rh_eta_name+"; tracks |#eta|; # of tracks";
+      // rh_eta[i][j] = ibooker.book1D( rh_eta_name.c_str(), rh_eta_title.c_str(), 140, minEta_, maxEta_) ;
+      me_rh_eta_[i][j] = ibooker.book1D( rh_eta_name.c_str(), rh_eta_title.c_str(), 101, -3, 3) ;
+
+      string rh_sh_eta_name = string("rh_sh_eta")+suffix;
+      string rh_sh_eta_title = rh_sh_eta_name+"; tracks |#eta|; # of tracks";
+      // rh_sh_eta[i][j] = ibooker.book1D( rh_sh_eta_name.c_str(), rh_sh_eta_title.c_str(), 140, -minEta_, maxEta_) ;
+      me_rh_sh_eta_[i][j] = ibooker.book1D( rh_sh_eta_name.c_str(), rh_sh_eta_title.c_str(), 101, -3, 3) ;
 
       for ( unsigned int k = 0 ; k < c_suffix.size() ; k++) {
-          string suffix = string(s_suffix[j])+ string(c_suffix[k]);
-          string track_phi_name  = string("track_phi")+suffix;
-          string track_phi_title = string("track_phi")+suffix+";SimTrack #phi;# of tracks";
-          track_phi[j][k] = ibooker.book1D(track_phi_name.c_str(), track_phi_title.c_str(),200,-PI,PI);
+        suffix = string(s_suffix[j])+string(l_suffix[i])+ string(c_suffix[k]);
+        string rh_phi_name = string("rh_phi")+suffix;
+        string rh_phi_title = rh_phi_name+"; tracks #phi; # of tracks";
+        me_rh_phi_[i][j][k] = ibooker.book1D( (rh_phi_name).c_str(), rh_phi_title.c_str(), 200, -PI,PI) ;
+
+        string rh_sh_phi_name = string("rh_sh_phi")+suffix;
+        string rh_sh_phi_title = rh_sh_phi_name+"; tracks #phi; # of tracks";
+        me_rh_sh_phi_[i][j][k] = ibooker.book1D( (rh_sh_phi_name).c_str(), rh_sh_phi_title.c_str(), 200,-PI,PI) ;
+
       }
+    }
+  }
 
 
-      for( unsigned int i=0 ; i < l_suffix.size(); i++) {
-         string suffix = string(s_suffix[j])+string(l_suffix[i]);
-         string rh_eta_name = string("rh_eta")+suffix;
-         string rh_eta_title = rh_eta_name+"; tracks |#eta|; # of tracks";
-         rh_eta[i][j] = ibooker.book1D( rh_eta_name.c_str(), rh_eta_title.c_str(), 140, minEta_, maxEta_) ;
+  me_region_ = ibooker.book1D("region", "region", 5, -2 - 0.5, 2 + 0.5);
+  me_station_ = ibooker.book1D("station", "station",  5, -2 - 0.5, 2 + 0.5);
+  me_ring_ = ibooker.book1D("ring", "ring",  5, -2 - 0.5, 2 + 0.5);
+  me_layer_ = ibooker.book1D("layer", "layer",  4, 0 - 0.5, 3 + 0.5);
+  me_chamber_ = ibooker.book1D("chamber", "chamber",  51, 0 - 0.5, 50 + 0.5);
+  me_roll_ = ibooker.book1D("roll", "roll",  10, 0 - 0.5, 9 + 0.5);
 
-         string rh_sh_eta_name = string("rh_sh_eta")+suffix;
-         string rh_sh_eta_title = rh_sh_eta_name+"; tracks |#eta|; # of tracks";
-         rh_sh_eta[i][j] = ibooker.book1D( rh_sh_eta_name.c_str(), rh_sh_eta_title.c_str(), 140, minEta_, maxEta_) ;
+  me_eta_phi_ = ibooker.book2D("eta_phi", "eta_phi", 101, -4, 4, 101, -3.14, 3.14);
+  me_eta_phi_sim_hit_ = ibooker.book2D("eta_phi_sim_hit", "eta_phi_sim_hit", 101, -4, 4, 101, -3.14, 3.14);
+  me_eta_phi_rec_hit_ = ibooker.book2D("eta_phi_rec_hit", "eta_phi_rec_hit", 101, -4, 4, 101, -3.14, 3.14);
+  me_eta_phi_track_ = ibooker.book2D("eta_phi_track", "eta_phi_track", 101, -4, 4, 101, -3.14, 3.14);
+  me_eta_phi_good_track_ = ibooker.book2D("eta_phi_good_track", "eta_phi_good_track", 101, -4, 4, 101, -3.14, 3.14);
 
-         for ( unsigned int k = 0 ; k < c_suffix.size() ; k++) {
-          suffix = string(s_suffix[j])+string(l_suffix[i])+ string(c_suffix[k]);
-          string rh_phi_name = string("rh_phi")+suffix;
-          string rh_phi_title = rh_phi_name+"; tracks #phi; # of tracks";
-          rh_phi[i][j][k] = ibooker.book1D( (rh_phi_name).c_str(), rh_phi_title.c_str(), 200, -PI,PI) ;
 
-          string rh_sh_phi_name = string("rh_sh_phi")+suffix;
-          string rh_sh_phi_title = rh_sh_phi_name+"; tracks #phi; # of tracks";
-          rh_sh_phi[i][j][k] = ibooker.book1D( (rh_sh_phi_name).c_str(), rh_sh_phi_title.c_str(), 200,-PI,PI) ;
+  me_num_matched_sim_hits_ = ibooker.book1D("num_matched_sim_hits", "num_matched_sim_hits", 11, 0 - 0.5, 10 + 0.5);
+  me_num_matched_sim_tracks_ = ibooker.book1D("num_matched_sim_tracks", "num_matched_sim_tracks", 11, 0 - 0.5, 10 + 0.5);
 
-         }
-      }
-   }
+
+  // const DetIdContainer &
+  for(auto & det_id : kGEMGeom.detUnitIds())
+  {
+    GEMDetId gem_id(det_id);
+
+    me_region_->Fill(gem_id.region());
+    me_station_->Fill(gem_id.station());
+    me_ring_->Fill(gem_id.ring());
+    me_layer_->Fill(gem_id.layer());
+    me_chamber_->Fill(gem_id.chamber());
+    me_roll_->Fill(gem_id.roll());
+
+    const GEMEtaPartition* eta_partition = kGEMGeom.etaPartition(gem_id);
+    LocalPoint local_origin(0.0, 0.0, 0.0);
+    GlobalPoint gp = eta_partition->toGlobal(local_origin);
+    auto eta = gp.eta();
+    auto phi = gp.phi();
+    me_eta_phi_->Fill(eta, phi);
+  }
 }
 
 GEMRecHitTrackMatch::~GEMRecHitTrackMatch() {  }
 
-void GEMRecHitTrackMatch::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+
+void GEMRecHitTrackMatch::analyze(const edm::Event& iEvent,
+                                  const edm::EventSetup& iSetup)
 {
   edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: analyze"<<std::endl;
   edm::ESHandle<GEMGeometry> hGeom;
   iSetup.get<MuonGeometryRecord>().get(hGeom);
-  const GEMGeometry& geom = *hGeom;
+  const GEMGeometry& kGEMGeom = *hGeom;
 
-  edm::Handle<edm::PSimHitContainer> simhits;
+  edm::Handle<edm::PSimHitContainer> sim_hits;
   edm::Handle<edm::SimTrackContainer> sim_tracks;
+  edm::Handle<GEMRecHitCollection> rec_hits;
   //edm::Handle<edm::SimVertexContainer> sim_vertices;
-  iEvent.getByToken(simHitsToken_, simhits);
+  iEvent.getByToken(simHitsToken_, sim_hits);
   iEvent.getByToken(simTracksToken_, sim_tracks);
-  //iEvent.getByToken(simVerticesToken_, sim_vertices);
-  //if ( !simhits.isValid() || !sim_tracks.isValid() || !sim_vertices.isValid()) return;
-  if ( !simhits.isValid() || !sim_tracks.isValid() ) return;
+  iEvent.getByToken(gem_recHitToken_, rec_hits);
+
+  // TODO error log
+  if ( not sim_hits.isValid())
+  {
+    edm::LogError("GEMRecHitTrackMatch") << "Invalid SimHit" << std::endl;
+    return;
+  }
+
+  if ( not sim_tracks.isValid() )
+  {
+    edm::LogError("GEMRecHitTrackMatch") << "Invalid SimTrack" << std::endl;
+    return;
+  }
+
+  if(not rec_hits.isValid())
+  {
+    edm::LogError("GEMRecHitTrackMatch") << "Invalid RecHit" << std::endl;
+    return;
+  }
+
 
   //const edm::SimVertexContainer & sim_vert = *sim_vertices.product();
-  const edm::SimTrackContainer & sim_trks = *sim_tracks.product();
+  // const edm::SimTrackContainer & sim_track_container = *sim_tracks.product();
+  // const edm::PSimHitContainer & sim_hit_container = *sim_hits.product();
 
-  MySimTrack track_; 
-  for (auto& t: sim_trks)
+  // Consider only SimTracks that matche 
+  // edm::SimTrackContainer matched_sim_track_container;  
+  std::vector<std::pair<SimTrack, std::vector<PSimHit> > > matched_track_hits;
+  // for(edm::SimTrackContainer::const_iterator sim_track=sim_tracks->begin(); sim_track != sim_tracks->end(); ++sim_track)
+  for(auto sim_track = sim_tracks->begin(); sim_track != sim_tracks->end(); ++sim_track)
   {
-    if (!isSimTrackGood(t)) 
-    { continue; } 
-    
-    // match hits and rechits to this SimTrack
+    if(not isSimTrackGood(*sim_track)) continue;
 
-    const SimHitMatcher& match_sh = SimHitMatcher( t, iEvent, geom, cfg_, simHitsToken_, simTracksToken_, simVerticesToken_);
-    const GEMRecHitMatcher& match_rh = GEMRecHitMatcher( match_sh, iEvent, geom, cfg_ ,gem_recHitToken_);
-
-    track_.pt = t.momentum().pt();
-    //std::cout << "SimTrack pt value :  " << track_.pt << "\n"; 
-    track_.phi = t.momentum().phi();
-    track_.eta = t.momentum().eta();
-    std::fill( std::begin(track_.hitOdd), std::end(track_.hitOdd),false);
-    std::fill( std::begin(track_.hitEven), std::end(track_.hitEven),false);
-
-    for ( int i= 0 ; i< 3 ; i++) {
-      for ( int j= 0 ; j<2 ; j++) {
-        track_.gem_sh[i][j]  = false;
-        track_.gem_rh[i][j]  = false;
-      }
-    }
-
-    // ** GEM SimHits ** //
-    const auto gem_sh_ids_ch = match_sh.chamberIdsGEM();
-    for(auto d: gem_sh_ids_ch)
+    std::vector<PSimHit> matched_hits;
+    for (edm::PSimHitContainer::const_iterator sim_hit = sim_hits->begin(); sim_hit != sim_hits->end(); ++sim_hit)
     {
-      const GEMDetId id(d);
-      if ( id.chamber() %2 ==0 ) track_.hitEven[id.station()-1] = true;
-      else if ( id.chamber() %2 ==1 ) track_.hitOdd[id.station()-1] = true;
-      else { edm::LogInfo("GEMRecHitTrackMatch")<<"Error to get chamber id"<<std::endl; }
+      
+      if(sim_track->trackId() == sim_hit->trackId())
+      {
+        // Local3DPoint sh_lp = sim_hit->localPosition();
+        DetId det_id(sim_hit->detUnitId());
 
-      track_.gem_sh[ id.station()-1][ (id.layer()-1)] = true;
+        // constructor of GEMDetId check if detUnitId of sim_hit is valid
+        // if not, it throw cms::Exception("InvalidDetId")
+        GEMDetId sim_det_id(det_id);
+        std::cout << "region: " << sim_det_id.region()
+                  << " | ring: " << sim_det_id.ring()
+                  << " | station: " << sim_det_id.station()
+                  << " | layer: " << sim_det_id.layer()
+                  << " | chamber: " << sim_det_id.chamber()
+                  << " | layer: " << sim_det_id.layer()
+                  << std::endl;
+        // matched_sim_track_container.push_back(*sim_track);
 
+        matched_hits.push_back(*sim_hit);
+      } 
     }
-    // ** GEM RecHits ** //
-    const auto gem_rh_ids_ch = match_rh.chamberIds();
 
-    for(auto d: gem_rh_ids_ch)
+    me_num_matched_sim_hits_->Fill(matched_hits.size());
+
+    if(matched_hits.empty())
+        continue;
+    else
+        matched_track_hits.push_back(std::make_pair(*sim_track, matched_hits));
+  }
+
+  me_num_matched_sim_tracks_->Fill(matched_track_hits.size());
+
+
+  if(matched_track_hits.empty())
+  {
+    edm::LogError("GEMRecHitTrackMatch") << "No SimTrack matched SimHits" << std::endl;
+    return;
+  }
+
+
+  // XXX
+  GEMSimTrackHelper trk_helper;
+  for(auto& each : matched_track_hits)
+  {
+    std::set<unsigned int> sim_hit_det_ids;
+    std::set<unsigned int> rec_hit_det_ids;
+
+    for(PSimHit& sim_hit : each.second)
     {
-      const GEMDetId id(d);
-      track_.gem_rh[ id.station()-1][ (id.layer()-1)] = true;
-    }
-    
-    FillWithTrigger( track_eta, fabs(track_.eta)) ;
-    FillWithTrigger( track_phi, fabs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+      unsigned int det_id = sim_hit.detUnitId();
+      GEMDetId gem_id(det_id);
+      sim_hit_det_ids.insert(det_id);
 
+      LocalPoint lp = sim_hit.localPosition();
+      Int_t sim_fired_strip = kGEMGeom.etaPartition(gem_id)->strip(lp) + 1;
 
-    FillWithTrigger( rh_sh_eta, track_.gem_sh  , fabs( track_.eta) );
-    FillWithTrigger( rh_eta,    track_.gem_rh  , fabs( track_.eta) );
+      // 
+      GEMRecHitCollection::range range = rec_hits->get(gem_id);
+      for(GEMRecHitCollection::const_iterator rec_hit = range.first; rec_hit != range.second; ++rec_hit)
+      {
+        Int_t rec_cls = rec_hit->clusterSize();
+
+        // Checkt whether a sim. fired strip is in a rec. cluster strips.
+        bool sh_rh_matched;
+        if ( rec_cls == 1 )
+        {
+          sh_rh_matched = sim_fired_strip == rec_hit->firstClusterStrip();
+        }
+        else
+        {
+          Int_t rec_first_fired_strip = rec_hit->firstClusterStrip();
+          Int_t rec_last_fired_strip = rec_first_fired_strip + rec_cls - 1;
+          sh_rh_matched = (sim_fired_strip >= rec_first_fired_strip) and (sim_fired_strip <= rec_last_fired_strip);
+        }
+
+        if(sh_rh_matched)
+        {
+          rec_hit_det_ids.insert(det_id);
+          break;
+        }
+      } // END RecHit Loop
+    } // END SimHit Loop
+
+    const PSimHit & kFirstSimHit = each.second[0];
+    DetId det_id(kFirstSimHit.detUnitId());
+    LocalPoint lp = kFirstSimHit.localPosition();
+    GlobalPoint gp = kGEMGeom.idToDet(det_id)->surface().toGlobal(lp);
+
+    const float kEta = gp.eta();
+    const float kPhi = gp.phi();
+    me_eta_phi_track_->Fill(kEta, kPhi);
+
+    trk_helper.reset();
+    trk_helper.setValuesWithSimHitChamberIds(sim_hit_det_ids);
+    trk_helper.setValuesWithRecHitChamberIds(rec_hit_det_ids);
+
+    //track
+    FillWithTrigger(me_track_eta_, kEta);
+    FillWithTrigger(me_track_phi_, kEta, kPhi, trk_helper.hitOdd, trk_helper.hitEven);
+
+    FillWithTrigger(me_rh_sh_eta_, trk_helper.gem_sh, kEta);
+    FillWithTrigger(me_rh_eta_,    trk_helper.gem_rh, kEta);
   
     // Separate station.
-
-    FillWithTrigger( rh_sh_phi, track_.gem_sh  ,fabs(track_.eta), track_.phi , track_.hitOdd, track_.hitEven);
-    FillWithTrigger( rh_phi,    track_.gem_rh  ,fabs(track_.eta), track_.phi , track_.hitOdd, track_.hitEven);
-  
-   
-    /*  
-
-    // Calculation of the localXY efficiency
-    GlobalPoint gp_track(match_sh.propagatedPositionGEM());
-    
-    float track_angle = gp_track.phi().degrees();
-    if (track_angle < 0.) track_angle += 360.;
-    const int track_region = (gp_track.z() > 0 ? 1 : -1);
-
-    // closest chambers in phi
-    const auto mypair = getClosestChambers(track_region, track_angle);
- 
-    GEMDetId detId_first(mypair.first);
-    GEMDetId detId_second(mypair.second);
- 
-    // assignment of local even and odd chambers (there is always an even and an odd chamber)
-    bool firstIsOdd = detId_first.chamber() & 1;
-
-    GEMDetId detId_even_L1(firstIsOdd ? detId_second : detId_first);
-    GEMDetId detId_odd_L1(firstIsOdd ? detId_first : detId_second);
-
-    auto even_partition = theGEMGeometry->idToDetUnit(detId_even_L1)->surface();
-    auto odd_partition = theGEMGeometry->idToDetUnit(detId_odd_L1)->surface();
-
-    LocalPoint p0(0.,0.,0.);
-    GlobalPoint gp_even_partition = even_partition.toGlobal(p0);
-    GlobalPoint gp_odd_partition = odd_partition.toGlobal(p0);
-    
-    LocalPoint lp_track_even_partition = even_partition.toLocal(gp_track);
-    LocalPoint lp_track_odd_partition = odd_partition.toLocal(gp_track);
-
-    // track chamber local x is the same as track partition local x
-    track_.gem_lx_even = lp_track_even_partition.x();
-    track_.gem_lx_odd = lp_track_odd_partition.x();
-
-    // track chamber local y is the same as track partition local y
-    // corrected for partition's local y WRT chamber
-    track_.gem_ly_even = lp_track_even_partition.y() + (gp_even_partition.perp() - radiusCenter_);
-    track_.gem_ly_odd = lp_track_odd_partition.y() + (gp_odd_partition.perp() - radiusCenter_);
-
-    GEMDetId id_ch_even_L1(detId_even_L1.region(), detId_even_L1.ring(), detId_even_L1.station(), 1, detId_even_L1.chamber(), 0);
-    GEMDetId id_ch_odd_L1(detId_odd_L1.region(), detId_odd_L1.ring(), detId_odd_L1.station(), 1, detId_odd_L1.chamber(), 0);
-    GEMDetId id_ch_even_L2(detId_even_L1.region(), detId_even_L1.ring(), detId_even_L1.station(), 2, detId_even_L1.chamber(), 0);
-    GEMDetId id_ch_odd_L2(detId_odd_L1.region(), detId_odd_L1.ring(), detId_odd_L1.station(), 2, detId_odd_L1.chamber(), 0);
-
-    if(gem_sh_ids_ch.count(id_ch_even_L1)!=0) track_.has_gem_sh_l1 |= 2;
-    if(gem_sh_ids_ch.count(id_ch_odd_L1)!=0) track_.has_gem_sh_l1 |= 1;
-    if(gem_sh_ids_ch.count(id_ch_even_L2)!=0) track_.has_gem_sh_l2 |= 2;
-    if(gem_sh_ids_ch.count(id_ch_odd_L2)!=0) track_.has_gem_sh_l2 |= 1;
-
-    // check if track has dg
-    if(gem_dg_ids_ch.count(id_ch_even_L1)!=0){
-      track_.has_gem_dg_l1 |= 2;
-      track_.has_gem_pad_l1 |= 2;
-    }
-    if(gem_dg_ids_ch.count(id_ch_odd_L1)!=0){
-      track_.has_gem_dg_l1 |= 1;
-      track_.has_gem_pad_l1 |= 1;
-    }
-    if(gem_dg_ids_ch.count(id_ch_even_L2)!=0){
-      track_.has_gem_dg_l2 |= 2;
-      track_.has_gem_pad_l2 |= 2;
-    }
-    if(gem_dg_ids_ch.count(id_ch_odd_L2)!=0){
-      track_.has_gem_dg_l2 |= 1;
-      track_.has_gem_pad_l2 |= 1;
-    }
-    dg_lx_even->Fill( track_.gem_lx_even);
-    dg_lx_odd->Fill( track_.gem_lx_odd);
-    dg_ly_even->Fill( track_.gem_ly_even);
-    dg_ly_odd->Fill( track_.gem_ly_odd);
-    
-    if ( track_.has_gem_dg_l1 /2 >= 1 ) {
-      dg_lx_even_l1->Fill ( track_.gem_lx_even);
-      dg_ly_even_l1->Fill ( track_.gem_ly_even);
-    }
-    if ( track_.has_gem_dg_l1 %2 == 1 ) { 
-      dg_lx_odd_l1->Fill ( track_.gem_lx_odd);
-      dg_ly_odd_l1->Fill ( track_.gem_ly_odd);
-    }
-    if ( track_.has_gem_dg_l2 /2  >=1 ) { 
-      dg_lx_even_l2->Fill ( track_.gem_lx_even);
-      dg_ly_even_l2->Fill ( track_.gem_ly_even);
-    }
-    if ( track_.has_gem_dg_l2 %2 == 1 ) {
-      dg_lx_odd_l2->Fill ( track_.gem_lx_odd);
-      dg_ly_odd_l2->Fill ( track_.gem_ly_odd);
-    }
-    if ( track_.has_gem_dg_l1 /2 >=1  || track_.has_gem_dg_l2 /2 >=1 ) {
-      dg_lx_even_l1or2->Fill ( track_.gem_lx_even);
-      dg_ly_even_l1or2->Fill ( track_.gem_ly_even);
-    }
-    if ( track_.has_gem_dg_l1 %2 ==1  || track_.has_gem_dg_l2 %2 ==1 ) {
-      dg_lx_odd_l1or2->Fill ( track_.gem_lx_odd);
-      dg_ly_odd_l1or2->Fill ( track_.gem_ly_odd);
-    }
-    if ( track_.has_gem_dg_l1 /2 >=1 && track_.has_gem_dg_l2 /2 >=1 ) {
-      dg_lx_even_l1and2->Fill ( track_.gem_lx_even);
-      dg_ly_even_l1and2->Fill ( track_.gem_ly_even);
-    }
-    if ( track_.has_gem_dg_l1 %2 ==1 && track_.has_gem_dg_l2 %2 ==1 ) {
-      dg_lx_odd_l1and2->Fill ( track_.gem_lx_odd);
-      dg_ly_odd_l1and2->Fill ( track_.gem_ly_odd);
-    }
-*/
-
-  }
+    FillWithTrigger(me_rh_sh_phi_, trk_helper.gem_sh, kEta, kPhi, trk_helper.hitOdd, trk_helper.hitEven);
+    FillWithTrigger(me_rh_phi_,    trk_helper.gem_rh, kEta, kPhi, trk_helper.hitOdd, trk_helper.hitEven);
+  } // END SimTrack Loop
 }
