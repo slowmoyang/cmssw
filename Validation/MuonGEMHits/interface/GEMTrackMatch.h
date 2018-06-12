@@ -22,6 +22,10 @@
 #include "Geometry/GEMGeometry/interface/GEMEtaPartition.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
 
+// TODO
+#include "DataFormats/GeometrySurface/interface/Bounds.h"
+
+
 struct MySimTrack
 {
   Float_t pt, eta, phi;
@@ -39,6 +43,7 @@ struct MySimTrack
   bool hitEven[3];
 };
 
+
 class GEMTrackMatch : public DQMEDAnalyzer
 {
 public:
@@ -46,6 +51,7 @@ public:
   ~GEMTrackMatch() override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override = 0 ;
 
+  // Look-Up Table
   void buildLUT(const int maxChamberId);
   std::pair<int,int> getClosestChambers(const int maxChamberId, int region, float phi);
   std::pair<double, double> getEtaRangeForPhi( int station );
@@ -65,9 +71,11 @@ public:
   edm::EDGetToken simTracksToken_;
   edm::EDGetToken simVerticesToken_;
 
-  std::pair<std::vector<float>,std::vector<int> > positiveLUT_;
-  std::pair<std::vector<float>,std::vector<int> > negativeLUT_;
+  // Look-Up Table by Region 
+  std::pair<std::vector<float>, std::vector<int> > positiveLUT_;
+  std::pair<std::vector<float>, std::vector<int> > negativeLUT_;
 
+  // TODO
   std::vector< double > etaRangeForPhi;
 
   
@@ -79,6 +87,10 @@ public:
   const GEMGeometry* gem_geom_;
   unsigned int nstation;
   bool detailPlot_;
+
+
+  // TODO
+  // std::vector<const Bounds &> bounds_;
 };
 
 #endif
