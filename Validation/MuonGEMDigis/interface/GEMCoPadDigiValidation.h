@@ -1,5 +1,5 @@
-#ifndef GEMCoPadDigiValidation_H
-#define GEMCoPadDigiValidation_H
+#ifndef VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
+#define VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 #include "DataFormats/GEMDigi/interface/GEMCoPadDigiCollection.h"
@@ -12,23 +12,26 @@ public:
   ~GEMCoPadDigiValidation() override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override;
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
- private:
 
-  MonitorElement* theCSCCoPad_xy[2][3];
-  MonitorElement* theCSCCoPad_phipad[2][3];
-  MonitorElement* theCSCCoPad[2][3];
-  MonitorElement* theCSCCoPad_bx[2][3];
-  MonitorElement* theCSCCoPad_zr[2][3];
-	std::unordered_map< UInt_t , MonitorElement* > theCSCCoPad_xy_ch;
-
-
+private:
   // Simple plots
-  std::unordered_map< UInt_t , MonitorElement* > theCoPad_dcEta;
-  std::unordered_map< UInt_t , MonitorElement* > theCoPad_simple_zr;
+  MonitorElement* me_occ_zr_[2]; // [# of regions]
+  MonitorElement* me_occ_det_[2][3]; // [# of regions][# of statons]
+
+
+  // DetailPlots
+  MonitorElement* me_detail_occ_xy_[2][3];
+  MonitorElement* me_detail_occ_zr_[2][3];
+  MonitorElement* me_detail_occ_xy_chamber_[2][3][2];
+
+  MonitorElement* me_detail_occ_phi_pad_[2][3];
+  MonitorElement* me_detail_occ_pad_[2][3];
+  MonitorElement* me_detail_bx_[2][3];
+
   int minBXGEM_, maxBXGEM_;
   edm::EDGetToken InputTagToken_;
   int nBinXY_;
   bool detailPlot_;
 };
 
-#endif
+#endif // VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_

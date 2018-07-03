@@ -11,6 +11,8 @@ gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390), 
   nBinGlobalXY = cms.untracked.int32(360),
   detailPlot = cms.bool(False), 
+  nStripsGE11 =  cms.untracked.int32(384),
+  nStripsGE21 =  cms.untracked.int32(768),
 )
 gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   outputFile = cms.string(''),
@@ -33,30 +35,13 @@ gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   maxBXGEM = cms.int32(1),
 )
 
-gemDigiTrackValidation = DQMEDAnalyzer('GEMDigiTrackMatch',
-  simInputLabel = cms.untracked.string('g4SimHits'),
-  simTrackCollection = cms.InputTag('g4SimHits'),
-  simVertexCollection = cms.InputTag('g4SimHits'),
-  verboseSimHit = cms.untracked.int32(0),
-  # GEM digi matching:
-  verboseGEMDigi = cms.untracked.int32(0),
-  gemDigiInput = cms.InputTag("muonGEMDigis"),
-  gemPadDigiInput = cms.InputTag("simMuonGEMPadDigis"),
-  gemCoPadDigiInput = cms.InputTag("simCscTriggerPrimitiveDigis"),
-  minBXGEM = cms.untracked.int32(-1),
-  maxBXGEM = cms.untracked.int32(1),
-  matchDeltaStripGEM = cms.untracked.int32(1),
-  gemMinPt = cms.untracked.double(5.0),
-  gemMinEta = cms.untracked.double(1.55),
-  gemMaxEta = cms.untracked.double(2.45),
-  detailPlot = cms.bool(False), 
-)
 
 gemGeometryChecker = DQMEDAnalyzer('GEMCheckGeometry',
   detailPlot = cms.bool(False), 
 )
 
-gemDigiValidation = cms.Sequence( gemStripValidation+gemPadValidation+gemCoPadValidation+gemDigiTrackValidation+gemGeometryChecker)
+gemDigiValidation = cms.Sequence(
+    gemStripValidation + gemPadValidation + gemCoPadValidation + gemGeometryChecker)
  
 from Configuration.Eras.Modifier_run2_GEM_2017_cff import run2_GEM_2017
 run2_GEM_2017.toReplaceWith(gemDigiValidation, gemDigiValidation.copyAndExclude([gemPadValidation,gemCoPadValidation]))

@@ -1,90 +1,105 @@
 #include "Validation/MuonGEMDigis/interface/GEMStripDigiValidation.h"
+#include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 #include <TMath.h>
 #include <iomanip>
-GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg)
-{
+
+
+GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg) {
   InputTagToken_ = consumes<GEMDigiCollection>(cfg.getParameter<edm::InputTag>("stripLabel"));
   detailPlot_ = cfg.getParameter<bool>("detailPlot");
+
+  nStripsGE11_ = cfg.getUntrackedParameter< int >("nStripsGE11");
+  nStripsGE21_ = cfg.getUntrackedParameter< int >("nStripsGE21");
+
 }
 
-void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const & Run, edm::EventSetup const & iSetup ) {
+void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
+                                            edm::Run const & Run,
+                                            edm::EventSetup const & iSetup )
+{
     
-  const GEMGeometry* GEMGeometry_  = initGeometry( iSetup) ;
-  if ( GEMGeometry_ == nullptr) return ;
-  LogDebug("GEMStripDigiValidation")<<"Geometry is acquired from MuonGeometryRecord\n";
+  const GEMGeometry* GEMGeometry_  = initGeometry(iSetup);
+  if ( GEMGeometry_ == nullptr)
+  {
+    edm::LogError("GEMStripDigiValidation") << "Failed to initialise GEMGeometry\n";
+    return ;
+  }
+
+  LogDebug("GEMStripDigiValidation") << "Geometry is acquired from MuonGeometryRecord\n";
   ibooker.setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
-  LogDebug("GEMStripDigiValidation")<<"ibooker set current folder\n";
+  LogDebug("GEMStripDigiValidation") << "ibooker set current folder\n";
 
-  LogDebug("GEMStripDigiValidation")<<"nregions set.\n";
-  LogDebug("GEMStripDigiValidation")<<"nstations set.\n";
-  int nstripsGE11 = 384;
-  int nstripsGE21 = 768;
+  for(auto& region : GEMGeometry_->regions()) {
+    int region_id = region->region();
+    unsigned ridx = getRegionIndex(region_id);
 
-  LogDebug("GEMStripDigiValidation")<<"Successfully binning set.\n";
+    if(auto* tmp_zr = bookZROccupancy(ibooker, "strip", "Strip", region_id))
+      me_occ_zr_[ridx] = tmp_zr;
+    else
+      edm::LogError("GEMStripDigiValidation") << "cannot book ";  // TODO
 
+    for(auto& station : region->stations()) {
+      int station_id = station->station();
+      unsigned sidx = getStationIndex(station_id);
 
-  int nstrips = 0;
-
-
-  for( auto& region : GEMGeometry_->regions()  ){
-    int re = region->region();
-    TString title_suffix = getSuffixTitle( re );
-    TString histname_suffix = getSuffixName( re) ;
-    TString simpleZR_title    = TString::Format("ZR Occupancy%s; |Z|(cm) ; R(cm)",title_suffix.Data());
-    TString simpleZR_histname = TString::Format("strip_simple_zr%s",histname_suffix.Data());
-
-    auto* simpleZR = getSimpleZR(ibooker, simpleZR_title, simpleZR_histname);
-    if ( simpleZR != nullptr) {
-      theStrip_simple_zr[simpleZR_histname.Hash() ] = simpleZR;
-    }
-
-    for( auto& station : region->stations()) {
-      int st = station->station();
-      TString title_suffix2 = getSuffixTitle( re, st ) ;
-      TString histname_suffix2 = getSuffixName( re, st) ;
-
-      TString dcEta_title    = TString::Format("Occupancy for detector component %s;;#eta-partition",title_suffix2.Data());
-      TString dcEta_histname = TString::Format("strip_dcEta%s",histname_suffix2.Data());
-
-      auto* dcEta = getDCEta(ibooker, station, dcEta_title, dcEta_histname);
-      if ( dcEta != nullptr) {
-        theStrip_dcEta[ dcEta_histname.Hash() ] = dcEta; 
-      }
+      if(auto* tmp_det = bookDetectorOccupancy(ibooker, station, "strip", "Strip", region_id))
+        me_occ_det_[ridx][sidx] = tmp_det; 
+      else
+        edm::LogError("GEMStripDigiValidation") << "cannot book ";  // TODO
     }
   }
+
 
   // Booking detail plot.
-  if ( detailPlot_ ) {
-    for( auto& region : GEMGeometry_->regions() ) {
-    for( auto& station : region->stations()) {
-      for( int la = 1 ; la <= 2 ; la++) {
-          int re = region->region();
-          int st = station->station();
-          int region_num = (re+1)/2;
-          int station_num = st-1;
-          int layer_num = la-1;
+  if(detailPlot_) {
+    for(auto& region : GEMGeometry_->regions()) {
+      int region_id = region->region();
+      unsigned ridx = getRegionIndex(region_id);
 
-          if ( st ==1 ) nstrips = nstripsGE11;
-          else nstrips = nstripsGE21;
-          std::string name_prefix = getSuffixName( re, st, la);
-          std::string label_prefix = getSuffixTitle( re, st, la) ;
-          theStrip_phistrip[region_num][station_num][layer_num] = ibooker.book2D( ("strip_dg_phistrip"+name_prefix).c_str(), ("Digi occupancy: "+label_prefix+"; phi [rad];strip number").c_str(), 280, -TMath::Pi(), TMath::Pi(), nstrips/2,0,nstrips);
-          theStrip[region_num][station_num][layer_num] = ibooker.book1D( ("strip_dg"+name_prefix).c_str(), ("Digi occupancy per stip number: "+label_prefix+";strip number; entries").c_str(), nstrips,0.5,nstrips+0.5);
-          theStrip_bx[region_num][station_num][layer_num] = ibooker.book1D( ("strip_dg_bx"+name_prefix).c_str(), ("Bunch crossing: "+label_prefix+"; bunch crossing ; entries").c_str(), 11,-5.5,5.5);
-          theStrip_zr[region_num][station_num][layer_num] = BookHistZR(ibooker,"strip_dg","Strip Digi",region_num,station_num,layer_num);
-          theStrip_xy[region_num][station_num][layer_num] = BookHistXY(ibooker,"strip_dg","Strip Digi",region_num,station_num,layer_num);
-          TString xy_name = TString::Format("strip_dg_xy%s_odd",name_prefix.c_str());
-          TString xy_title = TString::Format("Digi XY occupancy %s at odd chambers",label_prefix.c_str());
-          theStrip_xy_ch[ xy_name.Hash() ] = ibooker.book2D(xy_name, xy_title, 360, -360,360, 360, -360, 360);
-          xy_name = TString::Format("strip_dg_xy%s_even",name_prefix.c_str());
-          xy_title = TString::Format("Digi XY occupancy %s at even chambers",label_prefix.c_str());
-          theStrip_xy_ch[ xy_name.Hash() ] = ibooker.book2D(xy_name, xy_title, 360, -360,360, 360, -360, 360);
-        }
-      }
-    }
-  }
+      for( auto& station : region->stations()) {
+        int station_id = station->station();
+        unsigned sidx = getStationIndex(station_id);
+
+        int num_strips = station_id == 1 ? nStripsGE11_ : nStripsGE21_;
+
+        for(int layer_id : {1, 2}) {
+          unsigned lidx = getLayerIndex(layer_id);
+
+          me_detail_occ_zr_[ridx][sidx][lidx] = bookZROccupancy(ibooker, kMENamePrefix_, "Strip Digi", region_id, station_id, layer_id);
+          me_detail_occ_xy_[ridx][sidx][lidx] = bookXYOccupancy(ibooker, kMENamePrefix_, "Strip Digi", region_id, station_id, layer_id);
+
+          const char* name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id);
+          const char* title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
+
+          TString name, title;
+
+          name = TString::Format("%s_occ_phi_strip_%s", kMENamePrefix_, name_suffix);
+          title = TString::Format("DIGI Occupancy %s; #phi [rad];strip number", title_suffix);
+          me_detail_occ_phi_strip_[ridx][sidx][lidx] = ibooker.book2D(name, title, 280, -TMath::Pi(), TMath::Pi(), num_strips/2, 0, num_strips);
+
+          name = TString::Format("%s_occ_strip_%s", kMENamePrefix_, name_suffix);
+          title = TString::Format("DIGI Occupancy per stip number: %s;strip number; entries", title_suffix);
+          me_detail_occ_strip_[ridx][sidx][lidx] = ibooker.book1D(name, title, num_strips, 0.5, num_strips+0.5);
+
+          name = TString::Format("%s_bunch_crossing_%s", kMENamePrefix_, name_suffix);
+          title = TString::Format("Bunch crossing: %s; bunch crossing ; entries", title_suffix);
+          me_detail_bx_[ridx][sidx][lidx] = ibooker.book1D(name, title, 11, -5.5, 5.5);
+
+          name = TString::Format("%s_occ_xy_%s_even", kMENamePrefix_, name_suffix);
+          title = TString::Format("Digi XY occupancy %s at even chambers", title_suffix);
+          me_detail_occ_xy_chamber_[ridx][sidx][lidx][0] = ibooker.book2D(name, title, 360, -360, 360, 360, -360, 360);
+
+          name = TString::Format("%s_occ_xy_%s_odd", kMENamePrefix_, name_suffix);
+          title = TString::Format("Digi XY occupancy %s at odd chambers", title_suffix);
+          me_detail_occ_xy_chamber_[ridx][sidx][lidx][1] = ibooker.book2D(name, title, 360, -360, 360, 360, -360, 360);
+
+        } // Layer Loop End
+      } // Station Loop End
+    } // Region Loop End
+  } // detailPlot if End
+
   LogDebug("GEMStripDigiValidation")<<"Booking End.\n";
 }
 
@@ -92,42 +107,44 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Ru
 GEMStripDigiValidation::~GEMStripDigiValidation() {
 }
 
+
 void GEMStripDigiValidation::analyze(const edm::Event& e,
-    const edm::EventSetup& iSetup)
+                                     const edm::EventSetup& iSetup)
 {
-  const GEMGeometry* GEMGeometry_ ;
-  try {
-    edm::ESHandle<GEMGeometry> hGeom;
-    iSetup.get<MuonGeometryRecord>().get(hGeom);
-    GEMGeometry_ = &*hGeom;
-  }
-  catch( edm::eventsetup::NoProxyException<GEMGeometry>& e) {
-    edm::LogError("GEMStripDigiValidation") << "+++ Error : GEM geometry is unavailable on event loop. +++\n";
-    return;
-  }
+  // TODO unify 
+  const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
 
   edm::Handle<GEMDigiCollection> gem_digis;
   e.getByToken( this->InputTagToken_, gem_digis);
-  if (!gem_digis.isValid()) {
+  if (not gem_digis.isValid()) {
     edm::LogError("GEMStripDigiValidation") << "Cannot get strips by Token stripToken.\n";
     return ;
   }
-  for (GEMDigiCollection::DigiRangeIterator cItr=gem_digis->begin(); cItr!=gem_digis->end(); cItr++) {
+
+
+  for (GEMDigiCollection::DigiRangeIterator cItr=gem_digis->begin(); cItr!=gem_digis->end(); cItr++)
+  {
     GEMDetId id = (*cItr).first;
 
     const GeomDet* gdet = GEMGeometry_->idToDet(id);
-    if ( gdet == nullptr) { 
+    if ( gdet == nullptr)
+    { 
       std::cout<<"Getting DetId failed. Discard this gem strip hit.Maybe it comes from unmatched geometry."<<std::endl;
       continue; 
     }
+
     const BoundPlane & surface = gdet->surface();
     const GEMEtaPartition * roll = GEMGeometry_->etaPartition(id);
 
-    int re = id.region();
-    int la = id.layer();
-    int st = id.station();
+    int region_id = id.region();
+    int layer_id = id.layer();
+    int station_id = id.station();
     Short_t chamber = (Short_t) id.chamber();
     Short_t nroll = (Short_t) id.roll();
+
+    unsigned ridx = getRegionIndex(region_id);
+    unsigned sidx = getStationIndex(station_id);
+    unsigned lidx = getLayerIndex(layer_id);
 
     GEMDigiCollection::const_iterator digiItr;
     for (digiItr = (*cItr ).second.first; digiItr != (*cItr ).second.second; ++digiItr)
@@ -146,42 +163,25 @@ void GEMStripDigiValidation::analyze(const edm::Event& e,
       Float_t g_z = (Float_t) gp.z();
 
 
-      int region_num = (re+1)/2;
-      int station_num = st-1;
-      int layer_num = la-1;
-
-      int binX = (chamber-1)*2+layer_num;
+      int binX = (chamber-1)*2+lidx;
       int binY = nroll;
 
       // Fill normal plots.
-      TString histname_suffix = getSuffixName( re) ;
-      TString simple_zr_histname = TString::Format("strip_simple_zr%s",histname_suffix.Data());
-      theStrip_simple_zr[simple_zr_histname.Hash()]->Fill( fabs(g_z), g_r);
-
-
-      histname_suffix = getSuffixName( re, st) ;
-      TString dcEta_histname = TString::Format("strip_dcEta%s",histname_suffix.Data());
-      theStrip_dcEta[dcEta_histname.Hash()]->Fill( binX, binY); 
+      me_occ_zr_[ridx]->Fill(std::fabs(g_z), g_r);
+      me_occ_det_[ridx][sidx]->Fill( binX, binY); 
 
       // Fill detail plots.
-      if ( detailPlot_) {
-        if ( theStrip_xy[region_num][station_num][layer_num] != nullptr) {
-          theStrip_xy[region_num][station_num][layer_num]->Fill(g_x,g_y);     
-          theStrip_phistrip[region_num][station_num][layer_num]->Fill(g_phi,strip);
-          theStrip[region_num][station_num][layer_num]->Fill(strip);
-          theStrip_bx[region_num][station_num][layer_num]->Fill(bx);
-          theStrip_zr[region_num][station_num][layer_num]->Fill(g_z,g_r);
+      if ( detailPlot_)
+      {
+        me_detail_occ_zr_[ridx][sidx][lidx]->Fill(g_z,g_r);
+        me_detail_occ_xy_[ridx][sidx][lidx]->Fill(g_x,g_y);     
+        me_detail_occ_phi_strip_[ridx][sidx][lidx]->Fill(g_phi,strip);
+        me_detail_occ_strip_[ridx][sidx][lidx]->Fill(strip);
+        me_detail_bx_[ridx][sidx][lidx]->Fill(bx);
 
-          std::string name_prefix = getSuffixName( re, st, la) ;
-          TString hname;
-          if ( chamber %2 == 0 ) { hname = TString::Format("strip_dg_xy%s_even",name_prefix.c_str()); }
-          else { hname = TString::Format("strip_dg_xy%s_odd",name_prefix.c_str()); }
-          theStrip_xy_ch[hname.Hash()]->Fill(g_x,g_y);
-        }
-        else {
-          std::cout<<"Error is occued when histograms is called."<<std::endl;
-        }
-      }
+        auto chamber_parity = static_cast<unsigned>(chamber);
+        me_detail_occ_xy_chamber_[ridx][sidx][lidx][chamber_parity]->Fill(g_x,g_y);
+      } // detailPlot_
     }    
   }
 }
