@@ -135,6 +135,7 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
       for(int layer_id : layer_ids_) {
         for(bool is_odd_chamber: {false, true}) {
           for(const char* axis : {"eta", "phi"}) {
+
             const char* name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id, is_odd_chamber);
             const char* title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id, is_odd_chamber);
 
@@ -142,21 +143,23 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
             const char* rec_name = TString::Format("rec_occ_%s%s", axis, name_suffix);
 
             TH1F* sim_occupancy;
-            if(auto tmp_sim = ig.get(sim_name)) {
+            if(MonitorElement* tmp_sim = ig.get(sim_name)) {
               sim_occupancy = dynamic_cast<TH1F*>(tmp_sim->getTH1F()->Clone());
-            }
-            else {
-              // TODO LogError
+            } else {
+              edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
+                                                       << sim_name
+                                                       << std::endl;
               continue;
             }
             sim_occupancy->Sumw2(); // XXX Reason?
 
             TH1F* rec_occupancy;
-            if(auto tmp_rec = ig.get(rec_name)) {
+            if(MonitorElement* tmp_rec = ig.get(rec_name)) {
               rec_occupancy = dynamic_cast<TH1F*>(tmp_rec->getTH1F()->Clone());
-            }
-            else {
-              // TODO LogError
+            } else {
+              edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
+                                                       << rec_name
+                                                       << std::endl;
               continue;
             }
             rec_occupancy->Sumw2();

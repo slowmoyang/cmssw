@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
+
 gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   outputFile = cms.string(''),
   stripLabel= cms.InputTag('muonGEMDigis'),
@@ -13,7 +14,10 @@ gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   detailPlot = cms.bool(False), 
   nStripsGE11 =  cms.untracked.int32(384),
   nStripsGE21 =  cms.untracked.int32(768),
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
 )
+
+
 gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   outputFile = cms.string(''),
   PadLabel = cms.InputTag('simMuonGEMPadDigis'),
@@ -22,7 +26,10 @@ gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390), 
   nBinGlobalXY = cms.untracked.int32(360), 
   detailPlot = cms.bool(False), 
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
 )
+
+
 gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   outputFile = cms.string(''),
   CopadLabel = cms.InputTag('simCscTriggerPrimitiveDigis') ,
@@ -33,6 +40,7 @@ gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   detailPlot = cms.bool(False), 
   minBXGEM = cms.int32(-1),
   maxBXGEM = cms.int32(1),
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
 )
 
 

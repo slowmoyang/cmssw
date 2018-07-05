@@ -1,8 +1,8 @@
 #ifndef VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_
 #define VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_
 
-
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
+#include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
 
 //#include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
@@ -16,31 +16,29 @@ public:
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
 
 private:
-  // r: # of regions
-  // s: # of stations
-  // 
-
   // Simple plots
-  MonitorElement* me_occ_det_[2][3]; // [r][s]
-  MonitorElement* me_occ_zr_[2]; // [region]
+  MEMap1Key me_occ_zr_; // key = region_id
+  MEMap2Key me_occ_det_; // key = make_tuple(region_id, station_id);
 
   // Detail plots
-  MonitorElement* me_detail_occ_zr_[2][3][2]; // [r]
-  MonitorElement* me_detail_occ_xy_[2][3][2];
-  MonitorElement* me_detail_occ_xy_chamber_[2][3][2][2];
+  // key = make_tuple(region_id, station_id, layer_id);
+  MEMap3Key me_detail_occ_zr_;
+  MEMap3Key me_detail_occ_xy_;
+  MEMap3Key me_detail_occ_phi_strip_;
+  MEMap3Key me_detail_occ_strip_;
+  MEMap3Key me_detail_bx_;
 
-  MonitorElement* me_detail_occ_phi_strip_[2][3][2];
-  MonitorElement* me_detail_occ_strip_[2][3][2];
-  MonitorElement* me_detail_bx_[2][3][2];
-
-
- 
+  // ParameterSet
   edm::EDGetToken InputTagToken_;
   int nBinXY_;
   bool detailPlot_;
   int nStripsGE11_;
   int nStripsGE21_;
+  std::string folder_;
+
+  // Constants
   const char* kMENamePrefix_ = "strip_digi";
+  std::string kLogCategory = "GEMStripDigiValidation";
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_

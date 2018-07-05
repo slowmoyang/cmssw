@@ -2,36 +2,41 @@
 #define VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
+#include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
 #include "DataFormats/GEMDigi/interface/GEMCoPadDigiCollection.h"
 
 
 class GEMCoPadDigiValidation : public GEMBaseValidation
 {
 public:
-  explicit GEMCoPadDigiValidation( const edm::ParameterSet& );
+  explicit GEMCoPadDigiValidation(const edm::ParameterSet& );
   ~GEMCoPadDigiValidation() override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override;
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
 
 private:
   // Simple plots
-  MonitorElement* me_occ_zr_[2]; // [# of regions]
-  MonitorElement* me_occ_det_[2][3]; // [# of regions][# of statons]
-
+  MEMap1Key me_occ_zr_; // key = region_id
+  MEMap2Key me_occ_det_; // key(region_id, station_id)
 
   // DetailPlots
-  MonitorElement* me_detail_occ_xy_[2][3];
-  MonitorElement* me_detail_occ_zr_[2][3];
-  MonitorElement* me_detail_occ_xy_chamber_[2][3][2];
+  // key(region_id, station_id)
+  MEMap2Key me_detail_occ_xy_;
+  MEMap2Key me_detail_occ_zr_;
+  // key(region_id, station_id)
+  MEMap2Key me_detail_occ_phi_pad_;
+  MEMap2Key me_detail_occ_pad_;
+  MEMap2Key me_detail_bx_;
 
-  MonitorElement* me_detail_occ_phi_pad_[2][3];
-  MonitorElement* me_detail_occ_pad_[2][3];
-  MonitorElement* me_detail_bx_[2][3];
-
+  // ParameterSet
   int minBXGEM_, maxBXGEM_;
   edm::EDGetToken InputTagToken_;
   int nBinXY_;
   bool detailPlot_;
+  std::string folder_;
+
+  // Custom Constants
+  std::string kLogCategory_ = "GEMCoPadDigiValidation";
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_

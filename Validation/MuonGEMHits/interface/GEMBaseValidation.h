@@ -1,6 +1,6 @@
 #ifndef VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
 #define VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
-
+// FIXME 
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
@@ -14,6 +14,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+
 class GEMBaseValidation : public DQMEDAnalyzer
 {
 public:
@@ -24,82 +25,68 @@ public:
 protected:
   const GEMGeometry* initGeometry(const edm::EventSetup&);
 
+
   // MonitorElement
   MonitorElement* bookZROccupancy(DQMStore::IBooker & ibooker,
+                                  Int_t region_id,
                                   const char* name_prfix,
-                                  const char* title_prefix,
-                                  int region_id,
-                                  int station_id=999,
-                                  int layer_id=999);
+                                  const char* title_prefix);
 
+  template <typename MEMapKey>
+  MonitorElement* bookZROccupancy(DQMStore::IBooker & ibooker,
+                                  MEMapKey key,
+                                  const char* name_prfix,
+                                  const char* title_prefix);
+
+  template <typename MEMapKey>
   MonitorElement* bookXYOccupancy(DQMStore::IBooker & ibooker,
+                                  MEMapKey key,
                                   const char* name_prefix,
-                                  const char* title_prefix,
-                                  int region_id,
-                                  int station_id=999,
-                                  int layer_id=999);
+                                  const char* title_prefix);
 
+  template <typename MEMapKey>
   MonitorElement* bookPolarOccupancy(DQMStore::IBooker & ibooker,
+                                     MEMapKey key,
                                      const char* name_prefix,
-                                     const char* title_prefix,
-                                     int region_id,
-                                     int station_id,
-                                     int layer_id);
+                                     const char* title_prefix);
 
+  template <typename MEMapKey>
   MonitorElement* bookDetectorOccupancy(DQMStore::IBooker& ibooker,
-                                  const GEMStation* station,
-                                  const char* name_prfix,
-                                  const char* title_prefix,
-                                  int region_id);
+                                        MEMapKey key,
+                                        const GEMStation* station,
+                                        const char* name_prfix,
+                                        const char* title_prefix);
 
+  template <typename MEMapKey>
   MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
+                             MEMapKey key,
                              const char* name, const char* title,
-                             int nbinsx, double xlow, double xup,
-                             int region_id,
-                             const char* x_title="", const char* y_title="");
+                             Int_t nbinsx, Double_t xlow, Double_t xup,
+                             const char* x_title="", const char* y_title="Entries");
 
-  MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
+  template <typename MEMapKey>
+  MonitorElement* bookHist2D(DQMStore::IBooker& ibooker,
+                             MEMapKey key,
                              const char* name, const char* title,
-                             int nbinsx, double xlow, double xup,
-                             int region_id, int station_id, int layer_id,
-                             const char* x_title="", const char* y_title="");
+                             Int_t nbinsx, Double_t xlow, Double_t xup,
+                             Int_t nbinsy, Double_t ylow, Double_t yup,
+                             const char* x_title="", const char* y_title="Entries");
 
-  MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
-                             const char* name, const char* title,
-                             int nbinsx, double xlow, double xup,
-                             int region_id, int station_id, int layer_id,
-                             bool is_odd_chamber,
-                             const char* x_title="", const char* y_title="");
 
-  inline unsigned getRegionIndex(int region_id) {
-    return static_cast<unsigned>(region_id == -1 ? 0 : 1);
-  }
 
-  inline unsigned getStationIndex(int station_id) {
-    return static_cast<unsigned>(station_id - 1);
-  }
-
-  inline unsigned getLayerIndex(int layer_id) {
-    return static_cast<unsigned>(layer_id - 1);
+  inline Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
+    return 2 * chamber_id + layer_id - 2;
   }
 
   // Parameters
-  int nBinXY_;
-  std::vector<double> nBinZR_;
-  std::vector<double> RangeZR_;
+  Int_t nBinXY_;
+  std::vector<Double_t> nBinZR_;
+  std::vector<Double_t> RangeZR_;
 
   // Cosntants
-  int kMuonPDGId_ = 13;
-
-
-private :
-  std::vector<TString> region_label_;
-  std::vector<TString> layer_label_;
-
-  edm::EDGetToken InputTagToken_;
-
-  bool detailPlot_;
+  Int_t kMuonPDGId_ = 13;
 
 };
 
+#include "Validation/MuonGEMHits/src/GEMBaseValidation.tpp"
 #endif // VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
