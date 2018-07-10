@@ -21,7 +21,7 @@ public:
 
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
   void ProcessBooking( DQMStore::IBooker& , DQMStore::IGetter&, const char* label, TString suffix, TH1F* track_hist, TH1F* sh_hist );
-  TProfile* computeEff(TH1F* passed, TH1F* total);
+  TProfile* computeEff(const TH1F & passed, const TH1F & total);
 
 private:
   std::string dbe_path_;

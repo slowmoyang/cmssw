@@ -66,51 +66,48 @@ MuonGEMRecHitsHarvestor::MuonGEMRecHitsHarvestor(const edm::ParameterSet& ps) {
 }
 
 
-MuonGEMRecHitsHarvestor::~MuonGEMRecHitsHarvestor()
-{
+MuonGEMRecHitsHarvestor::~MuonGEMRecHitsHarvestor() {
 }
 
 
-TProfile* MuonGEMRecHitsHarvestor::computeEff(TH1F* passed, TH1F* total)
-{
-  std::string name  = "eff_" + std::string(passed->GetName());
-  std::string title = "Eff. " + std::string(passed->GetTitle());
+TProfile* MuonGEMRecHitsHarvestor::computeEff(const TH1F & passed,
+                                              const TH1F & total) {
+  std::string name  = "eff_" + std::string(passed.GetName());
+  std::string title = "Eff. " + std::string(passed.GetTitle());
   TProfile * eff_profile = new TProfile(name.c_str(),
                                         title.c_str(),
-                                        total->GetXaxis()->GetNbins(),
-                                        total->GetXaxis()->GetXmin(),
-                                        total->GetXaxis()->GetXmax());
+                                        total.GetXaxis()->GetNbins(),
+                                        total.GetXaxis()->GetXmin(),
+                                        total.GetXaxis()->GetXmax());
 
 
-  if(TEfficiency::CheckConsistency(*passed, *total)) {
-    TEfficiency        eff(*passed, *total);
+  if(TEfficiency::CheckConsistency(passed, total)) {
+    TEfficiency        eff(passed, total);
     TGraphAsymmErrors* eff_graph = eff.CreateGraph();
-    TAxis* x_axis = passed->GetXaxis();
+    auto x_axis = passed.GetXaxis();
     // TH1F* eff_hist = dynamic_cast<TH1F*>(eff_graph->GetHistogram()->Clone());
 
     // for (int bin = 1; bin <= eff_hist->GetNbinsX(); bin++)
     for(int i = 0; i < eff_graph->GetN(); ++i) {
 
       double x, y, error;
-      bool get_point_fails = eff_graph->GetPoint(i, x, y) == -1;
+      bool invalid_request = eff_graph->GetPoint(i, x, y) == -1;
 
-      if(get_point_fails) {
+      if(invalid_request) {
         edm::LogError("MuonGEMRecHitsHarvestor") << "GetPoint failed" << std::endl;
         continue;
       }
 
-      error = eff_graph->GetErrorYhigh(i);
+      error = eff_graph->GetErrorY(i);
       int bin = x_axis->FindBin(x);
-      // double content = eff_hist->GetBinContent(bin);
-      // double error = eff_hist->GetBinError(bin);
       eff_profile->SetBinContent(bin, y);
       eff_profile->SetBinError(bin, error);
       eff_profile->SetBinEntries(bin, 1);
     }
   } else {
     edm::LogError("MuonGEMRecHitsHarvestor") << "TEfficiency Inconsistency Error" << std::endl;
-    std::cout << passed->GetName() << std::endl;
-    std::cout << total->GetName() << std::endl;
+    std::cout << passed.GetName() << std::endl;
+    std::cout << total.GetName() << std::endl;
 
     name += "_inconsistent";
     title += " inconsistent";
@@ -144,28 +141,11 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
           if(auto tmp_me = ig.get(sim_path)) {
             sim_occupancy = dynamic_cast<TH1F*>(tmp_me->getTH1F()->Clone());
           } else {
-            if(tmp_me == nullptr) {
-              edm::LogError(kLogCategory_) << "NULLPTR" << std::endl;
-            } else {
-              edm::LogError(kLogCategory_) << tmp_me->getName() << std::endl;
-            }
-
-
-            edm::LogError(kLogCategory_) << "failed to get " << sim_name
-                                         << "\n | name_suffix: " << name_suffix
-                                         << "\n | title_suffix: " << title_suffix
-                                         << "\n | rec_name: " << rec_name << std::endl;
-
-
-            // for(const auto & each : ig.getAllContents(dbe_path_)) {
-            for(const auto & each : ig.getMEs()) {
-              edm::LogError(kLogCategory_) << each;
-            }
-
+            edm::LogError(kLogCategory_) << "failed to get " << sim_name << std::endl;
             continue;
           }
-
-          sim_occupancy->Sumw2(); // XXX Reason?
+          // XXX reason ?
+          sim_occupancy->Sumw2();
 
           TH1F* rec_occupancy;
           if(auto tmp_me = ig.getElement(rec_path)) {
@@ -178,7 +158,7 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
           }
           rec_occupancy->Sumw2();
 
-          TProfile* eff = computeEff(rec_occupancy, sim_occupancy);
+          TProfile* eff = computeEff(*rec_occupancy, *sim_occupancy);
 
           TString title = TString::Format("Efficiency %s :%s", axis, title_suffix.Data());
           TString x_title = TString::Format("#%s", axis);

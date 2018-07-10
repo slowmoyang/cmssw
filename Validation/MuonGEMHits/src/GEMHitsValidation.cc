@@ -7,36 +7,36 @@
 
 #include <exception>
 
-using namespace std;
+  using namespace std;
 
-GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& ps) : GEMBaseValidation(ps) {
-  edm::LogInfo(kLogCategory) << "Call ctor\n";
+  GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& ps) : GEMBaseValidation(ps) {
+    edm::LogInfo(kLogCategory_) << "Call ctor\n";
 
-  auto simhit_label = ps.getParameter<edm::InputTag>("simInputLabel");
-  SimHitToken_ = consumes<edm::PSimHitContainer>(simhit_label);
+    auto simhit_label = ps.getParameter<edm::InputTag>("simInputLabel");
+    SimHitToken_ = consumes<edm::PSimHitContainer>(simhit_label);
 
-  TOFRange_ = ps.getUntrackedParameter<std::vector<Double_t> >("TOFRange");
-  detailPlot_ = ps.getParameter<Bool_t>("detailPlot");
-  folder_ = ps.getParameter<std::string>("folder");
+    TOFRange_ = ps.getUntrackedParameter<std::vector<Double_t> >("TOFRange");
+    detailPlot_ = ps.getParameter<Bool_t>("detailPlot");
+    folder_ = ps.getParameter<std::string>("folder");
 
-  edm::LogInfo(kLogCategory) << "Exit ctor\n";
-}
-
-
-GEMHitsValidation::~GEMHitsValidation() {
-  edm::LogInfo(kLogCategory) << "Start dtor\n";
-  edm::LogInfo(kLogCategory) << "Finsih off dtor\n";
-}
+    edm::LogInfo(kLogCategory_) << "Exit ctor\n";
+  }
 
 
-void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
-                                       edm::Run const & Run,
-                                       edm::EventSetup const & iSetup) {
-  edm::LogInfo(kLogCategory) << "Call bookHistograms\n";
+  GEMHitsValidation::~GEMHitsValidation() {
+    edm::LogInfo(kLogCategory_) << "Start dtor\n";
+    edm::LogInfo(kLogCategory_) << "Finsih off dtor\n";
+  }
+
+
+  void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
+                                         edm::Run const & Run,
+                                         edm::EventSetup const & iSetup) {
+    edm::LogInfo(kLogCategory_) << "Call bookHistograms\n";
 
   const GEMGeometry* kGEMGeom = initGeometry(iSetup);
   if ( kGEMGeom == nullptr) {
-    edm::LogError("GEMHitsValidation") << "Cannot initialise GEMGeometry in the "
+    edm::LogError(kLogCategory_) << "Cannot initialise GEMGeometry in the "
                                        << "bookHistograms step.\n";
     return;
   }
@@ -70,7 +70,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       me_occ_zr_[region_id] = tmp_me;
     } else {
       // TODO LogError MEssage
-      edm::LogError("GEMHitsValidation") << "failed to book\n";
+      edm::LogError(kLogCategory_) << "failed to book\n";
     }
 
     for(const auto & station : region->stations()) {
@@ -80,7 +80,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       if(auto tmp_me = bookDetectorOccupancy(ibooker, key, station, "simhit", "SimHit")) {
         me_occ_det_[key] = tmp_me;
       } else {
-        edm::LogError("GEMHitsValidation") << "Cannot book "
+        edm::LogError(kLogCategory_) << "Cannot book "
                                            << "GEMHits Detector Occ "
                                            << "Region " << region_id << " "
                                            << "Station " << station_id << " \n";
@@ -156,41 +156,41 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
     me_gem_eta_phi_->Fill(eta, phi);
   }
 
-  edm::LogInfo(kLogCategory) << "Exit bookHistograms.\n";
+  edm::LogInfo(kLogCategory_) << "Exit bookHistograms.\n";
 }
 
 
 std::tuple<Double_t, Double_t> GEMHitsValidation::getTOFRange(Int_t station_id) {
-  edm::LogInfo(kLogCategory) << "Call GEMHitsValidation::getTOFRange." << std::endl;
+  edm::LogInfo(kLogCategory_) << "Call GEMHitsValidation::getTOFRange." << std::endl;
   unsigned start_index = station_id == 1 ? 0 : 2;
   Double_t tof_min = TOFRange_[start_index];
   Double_t tof_max = TOFRange_[start_index + 1];
-  edm::LogInfo(kLogCategory) << "Exit getTOFRange." << std::endl;
+  edm::LogInfo(kLogCategory_) << "Exit getTOFRange." << std::endl;
   return std::make_tuple(tof_min, tof_max);
 }
 
 
 void GEMHitsValidation::analyze(const edm::Event& e,
                                 const edm::EventSetup& iSetup) {
-  edm::LogInfo(kLogCategory) << "Call GEMHitsValidation::analyze." << std::endl;
+  edm::LogInfo(kLogCategory_) << "Call GEMHitsValidation::analyze." << std::endl;
 
   const GEMGeometry* kGEMGeom = initGeometry(iSetup) ;
   if(kGEMGeom == nullptr) {
-    edm::LogError(kLogCategory) << "Failed to init GEMGeometry." << std::endl; 
+    edm::LogError(kLogCategory_) << "Failed to init GEMGeometry." << std::endl; 
     return ;
   }
 
   edm::Handle<edm::PSimHitContainer> simhit_container;
   e.getByToken(SimHitToken_, simhit_container);
   if (not simhit_container.isValid()) {
-    edm::LogError("GEMHitsValidation") << "Cannot get GEMHits by Token simInputTagToken";
+    edm::LogError(kLogCategory_) << "Cannot get GEMHits by Token simInputTagToken";
     return ;
   }
 
   for(const auto & simhit : *simhit_container.product()) {
     const GEMDetId gem_id(simhit.detUnitId());
     if ( kGEMGeom->idToDet(gem_id) == nullptr) {
-      edm::LogInfo("GEMHitsValidation") << "simHit did not matched with GEMGeometry.\n";
+      edm::LogInfo(kLogCategory_) << "simHit did not matched with GEMGeometry.\n";
       continue;
     }
 
@@ -214,12 +214,12 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     Float_t energy_loss = kEnergyCF_ * simhit.energyLoss();
     Float_t tof = simhit.timeOfFlight();
 
-    me_occ_zr_[region_id]->Fill(std::fabs(g_z), g_r);
+    me_occ_zr_[region_id]->Fill(g_z, g_r);
 
     Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
 
     // if(me_occ_det_.find(key2) == me_occ_det_.end()) {
-    //  edm::LogError("GEMHitsValidation") << "Cannot find key";
+    //  edm::LogError(kLogCategory_) << "Cannot find key";
     me_occ_det_[key2]->Fill(bin_x, roll_id);
 
     if (std::abs(simhit.particleType()) == kMuonPDGId_) {
@@ -230,12 +230,7 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     if( detailPlot_ ) {
 
       // First, fill variable has no condition.
-      if(me_detail_occ_zr_.find(key3) == me_detail_occ_zr_.end()) {
-        edm::LogError("GEMHitsValidation") << "Cannot find key";
-      } else {
-        me_detail_occ_zr_[key3]->Fill(g_z, g_r);
-      }
-
+      me_detail_occ_zr_[key3]->Fill(g_z, g_r);
       me_detail_occ_xy_[key3]->Fill(g_x, g_y);
 
       me_detail_tof_[key3]->Fill(tof);

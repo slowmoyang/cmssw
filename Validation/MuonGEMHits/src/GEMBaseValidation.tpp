@@ -6,20 +6,19 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                    const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
-
+  // TODO Logging
   const unsigned long key_size = std::tuple_size<MEMapKey>::value;
   if(key_size < 2) {
     MonitorElement* me = nullptr;
     return me;
   }
+  int region_id = std::get<0>(key);
   int station_id = std::get<1>(key);
-
-
 
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
-  TString name = TString::Format("%s_zr_occ%s", name_prefix, name_suffix);
+  TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
   TString title = TString::Format("%s ZR Occupancy%s; Global Z [cm] ; Global R [cm]",
                                   title_prefix, title_suffix);
 
@@ -30,8 +29,10 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   // st1 xmin xmax, ymin, ymax | st2 xmin, xmax, ymin ymax
   // station1 --> 0 1 
   unsigned i = station_id == 1 ? 0 : 4;
-  double xlow = RangeZR_[i];
-  double xup = RangeZR_[i+1];
+  // z
+  double xlow = region_id == 1 ? RangeZR_[i] : -RangeZR_[i+1];
+  double xup = region_id == 1 ? RangeZR_[i+1] : -RangeZR_[i];
+  // r
   double ylow = RangeZR_[i+2];
   double yup = RangeZR_[i+3];
 
@@ -46,7 +47,7 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
                                                    const char* title_prefix) {
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
-  TString name = TString::Format("%s_xy_occ%s", name_prefix, name_suffix);
+  TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
   TString title = TString::Format("%s XY Occupancy%s;GlobalX [cm]; GlobalY[cm]",
                                   title_prefix, title_suffix);
   return ibooker.book2D(name, title, nBinXY_, -360, 360, nBinXY_, -360, 360); 
@@ -60,7 +61,7 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker
                                                       const char* title_prefix) {
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
-  TString name = TString::Format("%s_polar_occ%s", name_prefix, name_suffix);
+  TString name = TString::Format("%s_occ_polar%s", name_prefix, name_suffix);
   TString title = TString::Format("%s Polar Occupancy%s", title_prefix, title_suffix);
   // TODO # of bins
   MonitorElement* me = ibooker.book2D(name, title,
@@ -80,7 +81,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& iboo
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
-  TString name = TString::Format("%s_det_occ%s", name_prefix, name_suffix); 
+  TString name = TString::Format("%s_occ_det%s", name_prefix, name_suffix); 
   TString title = TString::Format("%s Occupancy for detector component%s;;#eta-partition",
                                   title_prefix, title_suffix);
 

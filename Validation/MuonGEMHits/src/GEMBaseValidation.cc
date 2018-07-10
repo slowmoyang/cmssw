@@ -45,7 +45,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   const char* name_suffix = GEMUtils::getSuffixName(region_id).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(region_id).Data();
 
-  TString name = TString::Format("%s_zr_occupancy%s", name_prefix, name_suffix);
+  TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
   TString title = TString::Format("%s ZR Occupancy%s; Global Z [cm] ; Global R [cm]",
                                   title_prefix, title_suffix);
 

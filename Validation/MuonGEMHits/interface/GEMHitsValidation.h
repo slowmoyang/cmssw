@@ -41,7 +41,7 @@ private:
   // temporary constant
   // energy loss conversion factor
   const Float_t kEnergyCF_ = 1.e9;
-  const std::string kLogCategory = "GEMHitsValidation";
+  const std::string kLogCategory_ = "GEMHitsValidation";
 
   // TODO
   edm::EDGetToken SimHitToken_;

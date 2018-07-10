@@ -209,7 +209,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
 
         // DataFormats/GeometryVector/interface/extBasic3DVector.h
         // ::perp() Magnitude of transverse component 
-        me_occ_zr_[region_id]->Fill(std::fabs(rec_global.z()), rec_global.perp());
+        me_occ_zr_[region_id]->Fill(rec_global.z(), rec_global.perp());
 
         Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
         me_occ_det_[key2]->Fill(bin_x, roll_id);
