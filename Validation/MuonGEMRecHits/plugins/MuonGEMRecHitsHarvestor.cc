@@ -22,6 +22,7 @@
 #include "TEfficiency.h"
 #include "TProfile.h"
 #include "TAxis.h"
+#include "TSystem.h"
 
 
 ///Data Format
@@ -81,22 +82,19 @@ TProfile* MuonGEMRecHitsHarvestor::computeEff(TH1F* passed, TH1F* total)
                                         total->GetXaxis()->GetXmax());
 
 
-  if(TEfficiency::CheckConsistency(*passed, *total))
-  {
+  if(TEfficiency::CheckConsistency(*passed, *total)) {
     TEfficiency        eff(*passed, *total);
     TGraphAsymmErrors* eff_graph = eff.CreateGraph();
     TAxis* x_axis = passed->GetXaxis();
     // TH1F* eff_hist = dynamic_cast<TH1F*>(eff_graph->GetHistogram()->Clone());
 
     // for (int bin = 1; bin <= eff_hist->GetNbinsX(); bin++)
-    for(int i = 0; i < eff_graph->GetN(); ++i)
-    {
+    for(int i = 0; i < eff_graph->GetN(); ++i) {
 
       double x, y, error;
       bool get_point_fails = eff_graph->GetPoint(i, x, y) == -1;
 
-      if(get_point_fails)
-      {
+      if(get_point_fails) {
         edm::LogError("MuonGEMRecHitsHarvestor") << "GetPoint failed" << std::endl;
         continue;
       }
@@ -109,9 +107,7 @@ TProfile* MuonGEMRecHitsHarvestor::computeEff(TH1F* passed, TH1F* total)
       eff_profile->SetBinError(bin, error);
       eff_profile->SetBinEntries(bin, 1);
     }
-  }
-  else
-  {
+  } else {
     edm::LogError("MuonGEMRecHitsHarvestor") << "TEfficiency Inconsistency Error" << std::endl;
     std::cout << passed->GetName() << std::endl;
     std::cout << total->GetName() << std::endl;
@@ -128,55 +124,72 @@ TProfile* MuonGEMRecHitsHarvestor::computeEff(TH1F* passed, TH1F* total)
 
 void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
                                         DQMStore::IGetter& ig) {
-  ig.setCurrentFolder(dbe_path_.Data());
+  // ig.setCurrentFolder(dbe_path_);
+  ig.cd(dbe_path_);
 
-  for(int region_id : region_ids_) {
-    for(int station_id : station_ids_) {
-      for(int layer_id : layer_ids_) {
-        for(bool is_odd_chamber: {false, true}) {
-          for(const char* axis : {"eta", "phi"}) {
+  for(Int_t region_id : region_ids_) {
+    for(Int_t station_id : station_ids_) {
+      for(Int_t layer_id : layer_ids_) {
+        for(const char* axis : kAxes_) {
+          TString name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id);
+          TString title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
 
-            const char* name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id, is_odd_chamber);
-            const char* title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id, is_odd_chamber);
+          TString sim_name = TString::Format("simhit_occ_%s%s", axis, name_suffix.Data());
+          TString rec_name = TString::Format("rechit_occ_%s%s", axis, name_suffix.Data());
 
-            const char* sim_name = TString::Format("sim_occ_%s%s", axis, name_suffix);
-            const char* rec_name = TString::Format("rec_occ_%s%s", axis, name_suffix);
+          const std::string sim_path = gSystem->ConcatFileName(dbe_path_.c_str(), sim_name);
+          const std::string rec_path = gSystem->ConcatFileName(dbe_path_.c_str(), rec_name);
 
-            TH1F* sim_occupancy;
-            if(MonitorElement* tmp_sim = ig.get(sim_name)) {
-              sim_occupancy = dynamic_cast<TH1F*>(tmp_sim->getTH1F()->Clone());
+          TH1F* sim_occupancy;
+          if(auto tmp_me = ig.get(sim_path)) {
+            sim_occupancy = dynamic_cast<TH1F*>(tmp_me->getTH1F()->Clone());
+          } else {
+            if(tmp_me == nullptr) {
+              edm::LogError(kLogCategory_) << "NULLPTR" << std::endl;
             } else {
-              edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
-                                                       << sim_name
-                                                       << std::endl;
-              continue;
+              edm::LogError(kLogCategory_) << tmp_me->getName() << std::endl;
             }
-            sim_occupancy->Sumw2(); // XXX Reason?
 
-            TH1F* rec_occupancy;
-            if(MonitorElement* tmp_rec = ig.get(rec_name)) {
-              rec_occupancy = dynamic_cast<TH1F*>(tmp_rec->getTH1F()->Clone());
-            } else {
-              edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
-                                                       << rec_name
-                                                       << std::endl;
-              continue;
+
+            edm::LogError(kLogCategory_) << "failed to get " << sim_name
+                                         << "\n | name_suffix: " << name_suffix
+                                         << "\n | title_suffix: " << title_suffix
+                                         << "\n | rec_name: " << rec_name << std::endl;
+
+
+            // for(const auto & each : ig.getAllContents(dbe_path_)) {
+            for(const auto & each : ig.getMEs()) {
+              edm::LogError(kLogCategory_) << each;
             }
-            rec_occupancy->Sumw2();
 
-            TProfile* eff = computeEff(rec_occupancy, sim_occupancy);
+            continue;
+          }
 
-            TString title = TString::Format("Efficiency %s :%s", axis, title_suffix);
-            TString x_title = TString::Format("#%s", axis);
+          sim_occupancy->Sumw2(); // XXX Reason?
 
-            eff->SetTitle(title);
-            eff->SetXTitle(x_title);
+          TH1F* rec_occupancy;
+          if(auto tmp_me = ig.getElement(rec_path)) {
+            rec_occupancy = dynamic_cast<TH1F*>(tmp_me->getTH1F()->Clone());
+          } else {
+            edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
+                                                     << rec_name
+                                                     << std::endl;
+            continue;
+          }
+          rec_occupancy->Sumw2();
 
-            TString name = TString::Format("eff_%s%s", axis, name_suffix);
+          TProfile* eff = computeEff(rec_occupancy, sim_occupancy);
 
-            ibooker.bookProfile(name, eff);
-          } // axis loop
-        } // is_odd_chamber loop
+          TString title = TString::Format("Efficiency %s :%s", axis, title_suffix.Data());
+          TString x_title = TString::Format("#%s", axis);
+
+          eff->SetTitle(title);
+          eff->SetXTitle(x_title);
+
+          TString name = TString::Format("eff_%s%s", axis, name_suffix.Data());
+
+          ibooker.bookProfile(name, eff);
+        } // axis loop
       } // Layer Id END
     } // Station Id END
   } // Region Id END
