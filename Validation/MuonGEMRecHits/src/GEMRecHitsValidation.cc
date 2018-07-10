@@ -57,8 +57,8 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       }
     } // station loop end
 
-    me_pull_x_[region_id] = bookHist1D(ibooker, region_id, "pullX", "Pull Of X", 100, -50, 50);
-    me_pull_y_[region_id] = bookHist1D(ibooker, region_id, "pullY", "Pull Of Y", 100, -50, 50);
+    me_pull_x_[region_id] = bookHist1D(ibooker, region_id, "pull_x", "Pull Of X", 100, -50, 50);
+    me_pull_y_[region_id] = bookHist1D(ibooker, region_id, "pull_y", "Pull Of Y", 100, -50, 50);
 
   } // region loop end
 
@@ -84,6 +84,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           me_detail_cls_[key] = bookHist1D(
               ibooker, key, "cls", "ClusterSize Distribution", 11, -0.5, 10.5);
 
+          // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_pull_x_[key] = bookHist1D(
               ibooker, key, "pull_x", "Pull Of X", 100, -50, 50);
 
@@ -91,16 +92,16 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
               ibooker, key, "pull_y", "Pull Of Y", 100, -50, 50);
 
           me_detail_sim_occ_eta_[key] = bookHist1D(
-              ibooker, key, "sh_occ_eta", "SimHit Eta Occupancy", 51, -4, 4);
+              ibooker, key, "simhit_occ_eta", "SimHit Eta Occupancy", 51, -4, 4, "#eta");
 
           me_detail_rec_occ_eta_[key] = bookHist1D(
-              ibooker, key, "rh_occ_eta", "RecHit Eta Occupancy", 51, -4, 4);
+              ibooker, key, "rechit_occ_eta", "RecHit Eta Occupancy", 51, -4, 4, "#eta");
 
           me_detail_sim_occ_phi_[key] = bookHist1D(
-              ibooker, key, "sh_occ_phi", "SimHit", 51, -TMath::Pi(), TMath::Pi());
+              ibooker, key, "simhit_occ_phi", "SimHit", 51, -TMath::Pi(), TMath::Pi(), "#phi");
 
           me_detail_rec_occ_phi_[key] = bookHist1D(
-              ibooker, key, "rh_occ_phi", "RecHit", 51, -TMath::Pi(), TMath::Pi());
+              ibooker, key, "rechit_occ_phi", "RecHit", 51, -TMath::Pi(), TMath::Pi(), "#phi");
 
         } // layer loop
       } // station loop
@@ -137,6 +138,11 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     return ;
   }
 
+  // rechit occupancy only
+
+
+
+  // TODO if(isMC) {
   for(const auto & simhit : *simhit_container.product()) {
 
     if (not (std::abs(simhit.particleType()) == kMuonPDGId_)) {
@@ -165,7 +171,8 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     LocalPoint sim_local = simhit.localPosition();
     GlobalPoint sim_global = kGEMGeometry->idToDet(sim_id)->surface().toGlobal(sim_local);
 
-    Int_t sim_fired_strip = kGEMGeometry->etaPartition(kSimDetUnitId)->strip(sim_local);
+    // TODO +1 reason
+    Int_t sim_fired_strip = kGEMGeometry->etaPartition(kSimDetUnitId)->strip(simhit.localPosition()) + 1;
 
     if(detailPlot_) {
       me_detail_sim_occ_eta_[key3]->Fill(sim_global.eta());
@@ -218,8 +225,11 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
           me_detail_occ_zr_[key3]->Fill(rec_global.z(), rec_global.perp());
           me_detail_occ_xy_[key3]->Fill(rec_global.x(), rec_global.y());
           me_detail_occ_polar_[key3]->Fill(rec_global.phi().phi(), rec_global.perp());
-          me_detail_rec_occ_eta_[key3]->Fill(rec_global.eta());
-          me_detail_rec_occ_phi_[key3]->Fill(rec_global.phi());
+
+          // FIXME If we use global position of rechit,
+          // 'inconsistent bin contents' exception may occur.
+          me_detail_rec_occ_eta_[key3]->Fill(sim_global.eta());
+          me_detail_rec_occ_phi_[key3]->Fill(sim_global.phi());
         }
 
         break;
