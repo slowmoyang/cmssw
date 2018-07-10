@@ -25,8 +25,8 @@ public:
   explicit MuonGEMHitsHarvestor(const edm::ParameterSet&);
   /// destructor
   ~MuonGEMHitsHarvestor() override;
-
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
+
   void ProcessBooking( DQMStore::IBooker& , DQMStore::IGetter&, std::string label_suffix, TH1F* track_hist, TH1F* sh_hist=nullptr );
   TProfile* ComputeEff(TH1F* passed, TH1F* total );
   

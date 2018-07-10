@@ -12,7 +12,7 @@ gemSimHitValidation = DQMEDAnalyzer('GEMHitsValidation',
                                           792, 802, 120, 390),
 
     nBinGlobalXY = cms.untracked.int32(720),
-    detailPlot = cms.bool(False), 
+    detailPlot = cms.bool(True), 
     # station1 min / station1 max / station2 min / station2 max                     
     TOFRange = cms.untracked.vdouble(18, 22, 26, 30),
 )

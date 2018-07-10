@@ -11,10 +11,10 @@ gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   # st1 xmin xmax, st2 xmin xmax, st1 ymin ymax, st2 ymin ymax
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390), 
   nBinGlobalXY = cms.untracked.int32(360),
-  detailPlot = cms.bool(False), 
+  detailPlot = cms.bool(True), 
   nStripsGE11 =  cms.untracked.int32(384),
   nStripsGE21 =  cms.untracked.int32(768),
-  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask/Strip"),
 )
 
 
@@ -25,8 +25,8 @@ gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   nBinGlobalZR = cms.untracked.vdouble(200,200,150,250), 
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390), 
   nBinGlobalXY = cms.untracked.int32(360), 
-  detailPlot = cms.bool(False), 
-  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
+  detailPlot = cms.bool(True), 
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask/Pad"),
 )
 
 
@@ -37,10 +37,10 @@ gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   nBinGlobalZR = cms.untracked.vdouble(200,200,150,250), 
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390), 
   nBinGlobalXY = cms.untracked.int32(360), 
-  detailPlot = cms.bool(False), 
+  detailPlot = cms.bool(True), 
   minBXGEM = cms.int32(-1),
   maxBXGEM = cms.int32(1),
-  folder = cms.string("MuonGEMDigisV/GEMDigisTask"),
+  folder = cms.string("MuonGEMDigisV/GEMDigisTask/CoPad"),
 )
 
 

@@ -50,6 +50,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
     Double_t tof_min, tof_max;
     std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
+    // FIXME
     const char* name_tof  = TString::Format("tof_mu_st%d", station_id).Data();
     const char* title_tof = TString::Format("SimHit TOF (Muon only) : Station %d ; Time of flight [ns] ; entries", station_id).Data();
     me_tof_mu_[station_id] = ibooker.book1D(name_tof, title_tof, 40, tof_min, tof_max);
@@ -65,9 +66,10 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
   for(const auto & region : kGEMGeom->regions()) {
     Int_t region_id = region->region();
 
-    if(auto simpleZR = bookZROccupancy(ibooker, region_id, "simhit", "SimHit")) {
-      me_occ_zr_[region_id] = simpleZR;
+    if(auto tmp_me = bookZROccupancy(ibooker, region_id, "simhit", "SimHit")) {
+      me_occ_zr_[region_id] = tmp_me;
     } else {
+      // TODO LogError MEssage
       edm::LogError("GEMHitsValidation") << "failed to book\n";
     }
 
@@ -75,8 +77,8 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       Int_t station_id = station->station();
       ME2IdsKey key(region_id, station_id);
 
-      if(auto det_occ_tmp = bookDetectorOccupancy(ibooker, key, station, "sh", "SimHit")) {
-        me_occ_det_[key] = det_occ_tmp;
+      if(auto tmp_me = bookDetectorOccupancy(ibooker, key, station, "simhit", "SimHit")) {
+        me_occ_det_[key] = tmp_me;
       } else {
         edm::LogError("GEMHitsValidation") << "Cannot book "
                                            << "GEMHits Detector Occ "
@@ -192,22 +194,23 @@ void GEMHitsValidation::analyze(const edm::Event& e,
       continue;
     }
 
-    Int_t region_id = gem_id.region();
+    Int_t region_id  = gem_id.region();
     Int_t station_id =  gem_id.station();
-    Int_t layer_id = gem_id.layer();
+    Int_t layer_id   = gem_id.layer();
     Int_t chamber_id =  gem_id.chamber();
-    Int_t roll_id =  gem_id.roll(); // eta partition
+    Int_t roll_id    =  gem_id.roll(); // eta partition
 
     ME2IdsKey key2(region_id, station_id);
     ME3IdsKey key3(region_id, station_id, layer_id);
 
-    const LocalPoint kSimLocal(simhit.localPosition());
-    const GlobalPoint sim_gp(kGEMGeom->idToDet(simhit.detUnitId())->surface().toGlobal(kSimLocal));
+    const LocalPoint kSimHitLocal(simhit.localPosition());
+    const GlobalPoint kSimHitGlobal(kGEMGeom->idToDet(simhit.detUnitId())->surface().toGlobal(kSimHitLocal));
 
-    Float_t g_r = sim_gp.perp();
-    Float_t g_x = sim_gp.x();
-    Float_t g_y = sim_gp.y();
-    Float_t g_z = sim_gp.z();
+    Float_t g_r = kSimHitGlobal.perp();
+    Float_t g_x = kSimHitGlobal.x();
+    Float_t g_y = kSimHitGlobal.y();
+    Float_t g_z = kSimHitGlobal.z();
+
     Float_t energy_loss = kEnergyCF_ * simhit.energyLoss();
     Float_t tof = simhit.timeOfFlight();
 

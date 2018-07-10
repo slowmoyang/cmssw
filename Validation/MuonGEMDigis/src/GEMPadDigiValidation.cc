@@ -21,7 +21,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
     return ;
   }
 
-  ibooker.setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
+  ibooker.setCurrentFolder(folder_);
   LogDebug("GEMPadDigiValidation")<<"ibooker set current folder\n";
 
   // FIXME

@@ -14,6 +14,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "TDatabasePDG.h"
 
 class GEMBaseValidation : public DQMEDAnalyzer
 {
@@ -34,39 +35,39 @@ protected:
 
   template <typename MEMapKey>
   MonitorElement* bookZROccupancy(DQMStore::IBooker & ibooker,
-                                  MEMapKey key,
+                                  const MEMapKey & key,
                                   const char* name_prfix,
                                   const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookXYOccupancy(DQMStore::IBooker & ibooker,
-                                  MEMapKey key,
+                                  const MEMapKey & key,
                                   const char* name_prefix,
                                   const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookPolarOccupancy(DQMStore::IBooker & ibooker,
-                                     MEMapKey key,
+                                     const MEMapKey & key,
                                      const char* name_prefix,
                                      const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookDetectorOccupancy(DQMStore::IBooker& ibooker,
-                                        MEMapKey key,
+                                        const MEMapKey & key,
                                         const GEMStation* station,
                                         const char* name_prfix,
                                         const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
-                             MEMapKey key,
+                             const MEMapKey & key,
                              const char* name, const char* title,
                              Int_t nbinsx, Double_t xlow, Double_t xup,
                              const char* x_title="", const char* y_title="Entries");
 
   template <typename MEMapKey>
   MonitorElement* bookHist2D(DQMStore::IBooker& ibooker,
-                             MEMapKey key,
+                             const MEMapKey & key,
                              const char* name, const char* title,
                              Int_t nbinsx, Double_t xlow, Double_t xup,
                              Int_t nbinsy, Double_t ylow, Double_t yup,
@@ -84,7 +85,8 @@ protected:
   std::vector<Double_t> RangeZR_;
 
   // Cosntants
-  Int_t kMuonPDGId_ = 13;
+  // const Int_t kMuonPDGId_ = TDatabasePDG().GetParticle("mu-")->PdgCode();
+  const Int_t kMuonPDGId_ = 13;
 
 };
 

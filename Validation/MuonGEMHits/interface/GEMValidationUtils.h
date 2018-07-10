@@ -23,16 +23,16 @@ namespace GEMUtils {
   TString getSuffixName(Int_t region_id, Int_t station_id, Int_t layer_id);
   TString getSuffixName(Int_t region_id, Int_t station_id, Int_t layer_id, Bool_t is_odd_chamber);
 
-  TString getSuffixName(ME2IdsKey key);
-  TString getSuffixName(ME3IdsKey key);
+  TString getSuffixName(const ME2IdsKey & key);
+  TString getSuffixName(const ME3IdsKey & key);
 
   TString getSuffixTitle(Int_t region_id);
   TString getSuffixTitle(Int_t region_id, Int_t station_id);
   TString getSuffixTitle(Int_t region_id, Int_t station_id, Int_t layer_id);
   TString getSuffixTitle(Int_t region_id, Int_t station_id, Int_t layer_id, Bool_t is_odd_chamber);
 
-  TString getSuffixTitle(ME2IdsKey key);
-  TString getSuffixTitle(ME3IdsKey key);
+  TString getSuffixTitle(const ME2IdsKey & key);
+  TString getSuffixTitle(const ME3IdsKey & key);
 }
 
 

@@ -3,11 +3,11 @@
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
-                                                   MEMapKey key,
+                                                   const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
 
-  const unsigned long key_size = std::tuple_size<decltype(key)>::value;
+  const unsigned long key_size = std::tuple_size<MEMapKey>::value;
   if(key_size < 2) {
     MonitorElement* me = nullptr;
     return me;
@@ -19,7 +19,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
-  TString name = TString::Format("%s_zr_occupancy%s", name_prefix, name_suffix);
+  TString name = TString::Format("%s_zr_occ%s", name_prefix, name_suffix);
   TString title = TString::Format("%s ZR Occupancy%s; Global Z [cm] ; Global R [cm]",
                                   title_prefix, title_suffix);
 
@@ -41,7 +41,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
-                                                   MEMapKey key,
+                                                   const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
@@ -55,7 +55,7 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker,
-                                                      MEMapKey key,
+                                                      const MEMapKey & key,
                                                       const char* name_prefix,
                                                       const char* title_prefix) {
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
@@ -72,7 +72,7 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& ibooker,
-                                                         MEMapKey key,
+                                                         const MEMapKey & key,
                                                          const GEMStation* station,
                                                          const char* name_prefix,
                                                          const char* title_prefix) {
@@ -109,7 +109,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& iboo
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
-                                              MEMapKey key,
+                                              const MEMapKey & key,
                                               const char* name, const char* title,
                                               int nbinsx, double xlow, double xup,
                                               const char* x_title,
@@ -127,7 +127,7 @@ MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
 
 template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& ibooker,
-                                              MEMapKey key,
+                                              const MEMapKey & key,
                                               const char* name, const char* title,
                                               int nbinsx, double xlow, double xup,
                                               int nbinsy, double ylow, double yup,

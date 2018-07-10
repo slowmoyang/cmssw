@@ -24,8 +24,13 @@ public:
   TProfile* computeEff(TH1F* passed, TH1F* total);
 
 private:
-  TString dbe_path_;
+  std::string dbe_path_;
   std::vector<int> region_ids_, station_ids_, layer_ids_;
+
+
+  // Coonst
+  const std::string kLogCategory_ = "MuonGEMRecHitsHarvestor";
+  const std::vector<const char*> kAxes_ = {"eta", "phi"};
 };
 
 #endif // VALIDATION_MUONGEMRECHITS_PLUGINS_MUONGEMRECHITSHARVESTOR_H_

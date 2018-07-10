@@ -69,24 +69,24 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
           ME3IdsKey key3(region_id, station_id, layer_id);
 
-          me_detail_occ_zr_[key3] = bookZROccupancy(ibooker, key3, "strip_digi", "Strip Digi");
-          me_detail_occ_xy_[key3] = bookXYOccupancy(ibooker, key3, "strip_digi", "Strip Digi");
+          me_detail_occ_zr_[key3] = bookZROccupancy(ibooker, key3, "strip", "Strip Digi");
+          me_detail_occ_xy_[key3] = bookXYOccupancy(ibooker, key3, "strip", "Strip Digi");
 
           me_detail_occ_phi_strip_[key3] = bookHist2D(ibooker, key3,
-                                                      "strip_digi_occ_phi_strip",
+                                                      "strip_occ_phi_strip",
                                                       "Strip DIGI Occupancy",
                                                       280, -TMath::Pi(), TMath::Pi(),
                                                       num_strips / 2, 0, num_strips,
                                                       "#phi [rad]", "strip number");
 
           me_detail_occ_strip_[key3] = bookHist1D(ibooker, key3,
-                                                  "strip_digi_occ_strip",
+                                                  "strip_occ_strip",
                                                   "Strip DIGI Occupancy per strip number",
                                                   num_strips, 0.5, num_strips + 0.5,
                                                   "strip number");
 
           me_detail_bx_[key3] = bookHist1D(ibooker, key3,
-                                           "strip_digi_bx",
+                                           "strip_bx",
                                            "Strip DIGI Bunch Crossing",
                                            11, -5.5, 5.5,
                                            "bunch crossing");
