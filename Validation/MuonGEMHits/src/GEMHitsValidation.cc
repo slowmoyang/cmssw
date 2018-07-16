@@ -7,32 +7,32 @@
 
 #include <exception>
 
-  using namespace std;
+using namespace std;
 
-  GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& ps) : GEMBaseValidation(ps) {
-    edm::LogInfo(kLogCategory_) << "Call ctor\n";
+GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& ps) : GEMBaseValidation(ps) {
+  edm::LogInfo(kLogCategory_) << "Call ctor\n";
 
-    auto simhit_label = ps.getParameter<edm::InputTag>("simInputLabel");
-    SimHitToken_ = consumes<edm::PSimHitContainer>(simhit_label);
+  auto simhit_label = ps.getParameter<edm::InputTag>("simInputLabel");
+  SimHitToken_ = consumes<edm::PSimHitContainer>(simhit_label);
 
-    TOFRange_ = ps.getUntrackedParameter<std::vector<Double_t> >("TOFRange");
-    detailPlot_ = ps.getParameter<Bool_t>("detailPlot");
-    folder_ = ps.getParameter<std::string>("folder");
+  TOFRange_ = ps.getUntrackedParameter<std::vector<Double_t> >("TOFRange");
+  detailPlot_ = ps.getParameter<Bool_t>("detailPlot");
+  folder_ = ps.getParameter<std::string>("folder");
 
-    edm::LogInfo(kLogCategory_) << "Exit ctor\n";
-  }
-
-
-  GEMHitsValidation::~GEMHitsValidation() {
-    edm::LogInfo(kLogCategory_) << "Start dtor\n";
-    edm::LogInfo(kLogCategory_) << "Finsih off dtor\n";
-  }
+  edm::LogInfo(kLogCategory_) << "Exit ctor\n";
+}
 
 
-  void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
-                                         edm::Run const & Run,
-                                         edm::EventSetup const & iSetup) {
-    edm::LogInfo(kLogCategory_) << "Call bookHistograms\n";
+GEMHitsValidation::~GEMHitsValidation() {
+  edm::LogInfo(kLogCategory_) << "Start dtor\n";
+  edm::LogInfo(kLogCategory_) << "Finsih off dtor\n";
+}
+
+
+void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
+                                       edm::Run const & Run,
+                                       edm::EventSetup const & iSetup) {
+  edm::LogInfo(kLogCategory_) << "Call bookHistograms\n";
 
   const GEMGeometry* kGEMGeom = initGeometry(iSetup);
   if ( kGEMGeom == nullptr) {
@@ -51,11 +51,11 @@
     std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
     // FIXME
-    const char* name_tof  = TString::Format("tof_mu_st%d", station_id).Data();
+    const char* name_tof  = TString::Format("simhit_tof_mu_st%d", station_id).Data();
     const char* title_tof = TString::Format("SimHit TOF (Muon only) : Station %d ; Time of flight [ns] ; entries", station_id).Data();
     me_tof_mu_[station_id] = ibooker.book1D(name_tof, title_tof, 40, tof_min, tof_max);
 
-    const char* name_eloss  = TString::Format("eloss_mu_st%d", station_id).Data();
+    const char* name_eloss  = TString::Format("simhit_eloss_mu_st%d", station_id).Data();
     const char* title_eloss = TString::Format("SimHit Energy Loss (Muon only) : Station %d ; Energy loss [eV] ; entries", station_id).Data();
     me_eloss_mu_[station_id] = ibooker.book1D(name_eloss, title_eloss, 60, 0.0, 6000.0);
   } // STATION LOOP END
@@ -138,22 +138,30 @@
     } // REGION LOOP END
   } // detailPlot IF END
 
-  me_gem_eta_phi_ = ibooker.book2D(
-      "eta_phi",
+  me_gem_geom_xyz_ = ibooker.book3D(
+      "gem_geom_xyz",
+      "GEM Roll Position;x [cm];y [cm];z [cm]",
+      160, -800.0, 800.0,
+      160, -800.0, 800.0, 
+      240, -1200.0, 1200.0);
+      
+
+  me_gem_geom_eta_phi_ = ibooker.book2D(
+      "gem_geom_eta_phi",
       "GEM Roll Position; #eta; #phi",
       101, -4, 4,
       101, -TMath::Pi(), TMath::Pi());
 
   // XXX This histogram does not need to be filled repeatedly.
+  const LocalPoint kLocalOrigin(0.0, 0.0, 0.0);
   for(const auto & det_id : kGEMGeom->detUnitIds()) {
     GEMDetId gem_id(det_id);
 
     const GEMEtaPartition* kEtaPartition = kGEMGeom->etaPartition(gem_id);
-    LocalPoint local_origin(0.0, 0.0, 0.0);
-    GlobalPoint gp = kEtaPartition->toGlobal(local_origin);
-    auto eta = gp.eta();
-    auto phi = gp.phi();
-    me_gem_eta_phi_->Fill(eta, phi);
+    GlobalPoint gp = kEtaPartition->toGlobal(kLocalOrigin);
+
+    me_gem_geom_xyz_->Fill(gp.x(), gp.y(), gp.z());
+    me_gem_geom_eta_phi_->Fill(gp.eta(), gp.phi());
   }
 
   edm::LogInfo(kLogCategory_) << "Exit bookHistograms.\n";
@@ -209,12 +217,12 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     Float_t g_r = kSimHitGlobal.perp();
     Float_t g_x = kSimHitGlobal.x();
     Float_t g_y = kSimHitGlobal.y();
-    Float_t g_z = kSimHitGlobal.z();
+    Float_t g_abs_z = std::fabs(kSimHitGlobal.z());
 
     Float_t energy_loss = kEnergyCF_ * simhit.energyLoss();
     Float_t tof = simhit.timeOfFlight();
 
-    me_occ_zr_[region_id]->Fill(g_z, g_r);
+    me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
 
     Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
 
@@ -230,7 +238,7 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     if( detailPlot_ ) {
 
       // First, fill variable has no condition.
-      me_detail_occ_zr_[key3]->Fill(g_z, g_r);
+      me_detail_occ_zr_[key3]->Fill(g_abs_z, g_r);
       me_detail_occ_xy_[key3]->Fill(g_x, g_y);
 
       me_detail_tof_[key3]->Fill(tof);

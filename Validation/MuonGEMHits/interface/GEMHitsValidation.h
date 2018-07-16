@@ -36,7 +36,8 @@ private:
   MEMap3Key me_detail_eloss_;
   MEMap3Key me_detail_eloss_mu_;
 
-  MonitorElement* me_gem_eta_phi_;
+  MonitorElement* me_gem_geom_xyz_;
+  MonitorElement* me_gem_geom_eta_phi_;
 
   // temporary constant
   // energy loss conversion factor

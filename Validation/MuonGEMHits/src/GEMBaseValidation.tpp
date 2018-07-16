@@ -12,14 +12,14 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
     MonitorElement* me = nullptr;
     return me;
   }
-  int region_id = std::get<0>(key);
-  int station_id = std::get<1>(key);
+
+  Int_t station_id = std::get<1>(key);
 
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
   TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s ZR Occupancy%s; Global Z [cm] ; Global R [cm]",
+  TString title = TString::Format("%s ZR Occupancy%s; |Z| [cm] ; R [cm]",
                                   title_prefix, title_suffix);
 
   // st1, st2 of xbin, st1, st2 of ybin
@@ -28,10 +28,11 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
 
   // st1 xmin xmax, ymin, ymax | st2 xmin, xmax, ymin ymax
   // station1 --> 0 1 
+  // start index
   unsigned i = station_id == 1 ? 0 : 4;
   // z
-  double xlow = region_id == 1 ? RangeZR_[i] : -RangeZR_[i+1];
-  double xup = region_id == 1 ? RangeZR_[i+1] : -RangeZR_[i];
+  double xlow = RangeZR_[i];
+  double xup = RangeZR_[i+1];
   // r
   double ylow = RangeZR_[i+2];
   double yup = RangeZR_[i+3];
@@ -48,7 +49,7 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
   TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s XY Occupancy%s;GlobalX [cm]; GlobalY[cm]",
+  TString title = TString::Format("%s XY Occupancy%s;X [cm];Y [cm]",
                                   title_prefix, title_suffix);
   return ibooker.book2D(name, title, nBinXY_, -360, 360, nBinXY_, -360, 360); 
 }

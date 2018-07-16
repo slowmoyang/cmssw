@@ -46,7 +46,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   const char* title_suffix = GEMUtils::getSuffixTitle(region_id).Data();
 
   TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s ZR Occupancy%s; Global Z [cm] ; Global R [cm]",
+  TString title = TString::Format("%s ZR Occupancy%s;|Z| [cm];R [cm]",
                                   title_prefix, title_suffix);
 
 
@@ -64,13 +64,13 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   }
 
   Int_t nbinsx = xbins_vector.size() - 1;
-  auto xbins = static_cast<Double_t*>(&xbins_vector[0]);
+  // auto xbins = static_cast<Double_t*>(&xbins_vector[0]);
 
   Int_t nbinsy = nBinZR_[2]; 
   Double_t ylow = std::min({RangeZR_[2], RangeZR_[6]});
-  Double_t yup = std::max({RangeZR_[4], RangeZR_[7]});
+  Double_t yup = std::max({RangeZR_[3], RangeZR_[7]});
 
-  auto hist = new TH2F(name, title, nbinsx, xbins, nbinsy, ylow, yup);
+  auto hist = new TH2F(name, title, nbinsx, &xbins_vector[0], nbinsy, ylow, yup);
   return ibooker.book2D(name, hist);
 }
 

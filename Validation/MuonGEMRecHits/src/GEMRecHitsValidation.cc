@@ -30,7 +30,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
   const GEMGeometry* kGEMGeometry = initGeometry(iSetup);
   if ( kGEMGeometry == nullptr) {
-    edm::LogError("GEMRecHitsValidation") << "Failed to initialise GEMGeometry in the bookHistograms step." << std::endl;
+    edm::LogError(kLogCategory_) << "Failed to initialise GEMGeometry in the bookHistograms step." << std::endl;
     return ;  
   }
 
@@ -43,7 +43,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
     if(auto tmp_me = bookZROccupancy(ibooker, region_id, "rechit", "RecHit")) {
       me_occ_zr_[region_id] = tmp_me;
     } else {
-      edm::LogError("GEMRecHitsValidation") << "Failed to create simpleZR histograms" << std::endl;
+      edm::LogError(kLogCategory_) << "Failed to create simpleZR histograms" << std::endl;
     }
 
     for(const auto & station : region->stations()) {
@@ -53,7 +53,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       if (auto tmp_me = bookDetectorOccupancy(ibooker, key2, station, "rechit", "RecHit")) {
         me_occ_det_[key2] = tmp_me;
       } else {
-        edm::LogError("GEMRecHitsValidation") << "Failed to create occupancy per detector component" << std::endl;
+        edm::LogError(kLogCategory_) << "Failed to create occupancy per detector component" << std::endl;
       }
     } // station loop end
 
@@ -62,9 +62,10 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
   } // region loop end
 
-  me_cls_ = ibooker.book1D("gem_cls_tot", "ClusterSize Distribution", 11, -0.5, 10.5);
+  me_cls_ = ibooker.book1D("cls_tot", "Cluster Size Distribution", 11, -0.5, 10.5);
  
   // TODO logging 
+  const Double_t kPi = TMath::Pi();
   if(detailPlot_) {
     for(const auto & region : kGEMGeometry->regions()) {
       Int_t region_id = region->region();
@@ -75,14 +76,14 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         // TODO
         for(Int_t layer_id : {1, 2}) {
 
-          ME3IdsKey key{region_id, station_id, layer_id};
+          ME3IdsKey key(region_id, station_id, layer_id);
           me_detail_occ_zr_[key] = bookZROccupancy(ibooker, key, "rechit", "RecHits");
           me_detail_occ_xy_[key] = bookXYOccupancy(ibooker, key, "rechit", "RecHits");
           me_detail_occ_polar_[key] = bookPolarOccupancy(ibooker, key, "rechit", "recHits");
 
           // bookHist1D(ibooker, name, title, nbinsx, xlow, xup, region_id, station_id, layer_id)
           me_detail_cls_[key] = bookHist1D(
-              ibooker, key, "cls", "ClusterSize Distribution", 11, -0.5, 10.5);
+              ibooker, key, "cls", "Cluster Size Distribution", 11, -0.5, 10.5);
 
           // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_pull_x_[key] = bookHist1D(
@@ -98,10 +99,10 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
               ibooker, key, "rechit_occ_eta", "RecHit Eta Occupancy", 51, -4, 4, "#eta");
 
           me_detail_sim_occ_phi_[key] = bookHist1D(
-              ibooker, key, "simhit_occ_phi", "SimHit", 51, -TMath::Pi(), TMath::Pi(), "#phi");
+              ibooker, key, "simhit_occ_phi", "SimHit Phi Occupancy", 51, -kPi, kPi, "#phi");
 
           me_detail_rec_occ_phi_[key] = bookHist1D(
-              ibooker, key, "rechit_occ_phi", "RecHit", 51, -TMath::Pi(), TMath::Pi(), "#phi");
+              ibooker, key, "rechit_occ_phi", "RecHit Phi Occupancy", 51, -kPi, kPi, "#phi");
 
         } // layer loop
       } // station loop
@@ -120,21 +121,21 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
 
   const GEMGeometry* kGEMGeometry  = initGeometry(iSetup);
   if ( kGEMGeometry == nullptr) {
-    edm::LogError("GEMRecHitsValidation") << "Failed to init GEMGeometry.\n";
+    edm::LogError(kLogCategory_) << "Failed to init GEMGeometry.\n";
     return; 
   }
 
   edm::Handle<edm::PSimHitContainer> simhit_container;
   e.getByToken(sim_hit_token_, simhit_container);
   if (not simhit_container.isValid()) {
-    edm::LogError("GEMRecHitsValidation") << "Failed to get PSimHitContainer.\n";
+    edm::LogError(kLogCategory_) << "Failed to get PSimHitContainer.\n";
     return ;
   }
 
   edm::Handle<GEMRecHitCollection> rechit_collection;
   e.getByToken(rec_hit_token_, rechit_collection);
   if (not rechit_collection.isValid()) {
-    edm::LogError("GEMRecHitsValidation") << "Failed to get GEMRecHitCollection\n";
+    edm::LogError(kLogCategory_) << "Failed to get GEMRecHitCollection\n";
     return ;
   }
 
@@ -222,7 +223,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
           me_detail_cls_[key3]->Fill(cls);
           me_detail_pull_x_[key3]->Fill(pull_x);
           me_detail_pull_y_[key3]->Fill(pull_y);
-          me_detail_occ_zr_[key3]->Fill(rec_global.z(), rec_global.perp());
+          me_detail_occ_zr_[key3]->Fill(std::fabs(rec_global.z()), rec_global.perp());
           me_detail_occ_xy_[key3]->Fill(rec_global.x(), rec_global.y());
           me_detail_occ_polar_[key3]->Fill(rec_global.phi().phi(), rec_global.perp());
 

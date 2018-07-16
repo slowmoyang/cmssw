@@ -189,8 +189,8 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& e,
         me_detail_occ_pad_[key2]->Fill(pad1);
         me_detail_bx_[key2]->Fill(bx1);
         me_detail_bx_[key2]->Fill(bx2);
-        me_detail_occ_zr_[key2]->Fill(g_z1, g_r1);
-        me_detail_occ_zr_[key2]->Fill(g_z2, g_r2);
+        me_detail_occ_zr_[key2]->Fill(std::fabs(g_z1), g_r1);
+        me_detail_occ_zr_[key2]->Fill(std::fabs(g_z2), g_r2);
 
       } // detailPlot_ 
 

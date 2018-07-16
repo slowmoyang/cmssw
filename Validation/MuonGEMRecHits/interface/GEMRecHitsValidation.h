@@ -44,7 +44,7 @@ private:
   std::string folder_;
 
   // Constatns
-  std::string kLogCategory = "GEMRecHitsValidation";
+  std::string kLogCategory_ = "GEMRecHitsValidation";
 };
 
 #endif // VALIDATION_MUONGEMRECHITS_INTERFACE_GEMRECHITSVALIDATION_H_

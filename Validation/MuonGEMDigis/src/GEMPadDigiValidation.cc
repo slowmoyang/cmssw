@@ -32,21 +32,21 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
   }
 
 
-  for(auto& region : kGEMGeom->regions()) {
+  for(const auto & region : kGEMGeom->regions()) {
     Int_t region_id = region->region();
 
-    if(auto simpleZR = bookZROccupancy(ibooker, region_id, "pad_digi", "Pad DIGI")) {
-      me_occ_zr_[region_id] = simpleZR;
+    if(auto tmp_me = bookZROccupancy(ibooker, region_id, "pad_digi", "Pad DIGI")) {
+      me_occ_zr_[region_id] = tmp_me;
     } else {
       // TODO
       edm::LogError(kLogCategory_) << "Failed to book\n";
     }
 
-    for(auto& station : region->stations()) {
+    for(const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key(region_id, station_id);
-      if(auto dcEta = bookDetectorOccupancy(ibooker, key, station, "pad_digi", "Pad DIGI")) {
-        me_occ_det_[key] = dcEta;
+      if(auto tmp_me = bookDetectorOccupancy(ibooker, key, station, "pad_digi", "Pad DIGI")) {
+        me_occ_det_[key] = tmp_me;
       } else {
         // TODO
         edm::LogError(kLogCategory_) << "Failed to book\n";
@@ -168,7 +168,7 @@ void GEMPadDigiValidation::analyze(const edm::Event& e,
         me_detail_occ_phi_pad_[key3]->Fill(g_phi,pad);
         me_detail_occ_pad_[key3]->Fill(pad);
         me_detail_bx_[key3]->Fill(bx);
-        me_detail_occ_zr_[key3]->Fill(g_z,g_r);
+        me_detail_occ_zr_[key3]->Fill(std::fabs(g_z), g_r);
       } // detailPlot_
 
     }

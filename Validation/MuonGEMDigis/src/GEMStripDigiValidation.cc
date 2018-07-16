@@ -166,7 +166,7 @@ void GEMStripDigiValidation::analyze(const edm::Event& e,
 
       // Detail Plots
       if ( detailPlot_) {
-        me_detail_occ_zr_[key3]->Fill(g_z, g_r);
+        me_detail_occ_zr_[key3]->Fill(std::fabs(g_z), g_r);
         me_detail_occ_xy_[key3]->Fill(g_x, g_y);     
         me_detail_occ_phi_strip_[key3]->Fill(g_phi, strip);
         me_detail_occ_strip_[key3]->Fill(strip);
