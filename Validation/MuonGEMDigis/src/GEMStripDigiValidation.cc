@@ -159,7 +159,7 @@ void GEMStripDigiValidation::analyze(const edm::Event& e,
       Float_t g_z   = digi_global.z();
 
       // Simple Plots
-      me_occ_zr_[region_id]->Fill(g_z, g_r);
+      me_occ_zr_[region_id]->Fill(std::fabs(g_z), g_r);
 
       Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
       me_occ_det_[key2]->Fill(bin_x, roll_id); 

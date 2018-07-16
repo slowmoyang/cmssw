@@ -173,8 +173,8 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& e,
       Float_t g_y =  gp1.y();
 
       // Fill normal plots.
-      me_occ_zr_[region_id]->Fill(g_z1, g_r1);
-      me_occ_zr_[region_id]->Fill(g_z2, g_r2);
+      me_occ_zr_[region_id]->Fill(std::fabs(g_z1), g_r1);
+      me_occ_zr_[region_id]->Fill(std::fabs(g_z2), g_r2);
 
       Int_t binX = getDetOccBinX(chamber_id, layer_id);
 
