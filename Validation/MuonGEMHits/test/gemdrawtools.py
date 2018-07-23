@@ -11,6 +11,7 @@ from ROOT import gPad
 import re
 import os
 import sys
+import warnings
 
 
 class Directory(object):
@@ -31,77 +32,80 @@ class Directory(object):
         return entries
 
 
+def get_suffix_title(det_id):
+    title_suffix = ""
+    if det_id["re"] is not None:
+        title_suffix += " Region {}".format(det_id["re"])
+    if det_id["st"] is not None:
+        title_suffix += " Station {}".format(det_id["st"])
+    if det_id["la"] is not None:
+        title_suffix += " Layer {}".format(det_id["la"])
+    if det_id["ch"] is not None:
+        title_suffix += " Chamber {}".format(det_id["ch"])
+    return title_suffix
+
+def _to_int(x):
+    return int(x.replace("_", "-")) 
+
+def convert_to_title_suffix(name_suffix):
+    name_suffix = name_suffix.strip("_")
+
+    det_id = {each: None for each in ["re", "st", "la", "ch"]}
+
+    # FIXME too messy..
+    if "ch" in name_suffix:
+        name_suffix, chamber_id = name_suffix.strip("_").rsplit("ch")
+        det_id["ch"] = _to_int(chamber_id)
+    if "la" in name_suffix: 
+        name_suffix, layer_id = name_suffix.strip("_").rsplit("la")
+        det_id["la"] = _to_int(layer_id)
+    if "st" in name_suffix: 
+        name_suffix, station_id = name_suffix.strip("_").rsplit("st")
+        det_id["st"] = _to_int(station_id)
+    if "re" in name_suffix: 
+        name_suffix, region_id = name_suffix.strip("_").rsplit("re")
+        det_id["re"] = _to_int(region_id)
+    title_suffix = get_suffix_title(det_id)
+
+    return title_suffix
+
 
 class BasePainter(object):
     def __init__(self,
-                 sim_dir,
+                 task_dir,
                  out_dir,
-                 chamber_id=None,
-                 layer_id=None,
-                 roll_id=None,
-                 vfat_id=None,
                  **kwargs):
         """
         Args:
-          sim_dir:
+          task_dir:
           out_dir:
-          chamber_id:
         """
-        self.sim_dir = sim_dir
+        self.task_dir = task_dir
         self.out_dir = out_dir
-
-        self.chamber_id = chamber_id
-        self.layer_id = layer_id
-        self.roll_id = roll_id
-        self.vfat_id = vfat_id
 
         self.kwargs = kwargs
 
-        self.det_id = {
-            "chamber_id": chamber_id,
-            "layer_id": layer_id,
-            "roll_id": roll_id,
-            "vfat_id": vfat_id}
-
         self.can = TCanvas()
         self.can.cd()
-        self._draw()
-        self._makeup()
 
-        out_fmt = self._make_out_fmt()
-        self.can.SaveAs(out_fmt.format(ext="png"))
-        self.can.SaveAs(out_fmt.format(ext="pdf"))
+        self.draw()
+        self.makeup()
+        self.save()
 
-    def _draw(self):
+    def draw(self):
         raise NotImplementedError()
 
-    def _makeup(self):
+    def makeup(self):
         raise NotImplementedError()
 
     def _make_out_fmt(self):
         out_fmt = os.path.join(self.out_dir, self.name + ".{ext}")
         return out_fmt
 
-
-class BaseHistPainter(BasePainter):
-    def __init__(self,
-                 name,
-                 sim_dir,
-                 out_dir,
-                 chamber_id=None,
-                 layer_id=None,
-                 roll_id=None,
-                 vfat_id=None,
-                 **kwargs):
-        self.name = name
-        super(BaseHistPainter, self).__init__(
-            sim_dir, out_dir, chamber_id, layer_id, roll_id, vfat_id, **kwargs)
-
-    def _draw(self):
-        self.hist = self.sim_dir.Get(self.name)
-
-    def _makeup(self):
-        raise NotImplementedError()
+    def save(self):
+        out_fmt = self._make_out_fmt()
+        self.can.SaveAs(out_fmt.format(ext="png"))
+        self.can.SaveAs(out_fmt.format(ext="pdf"))
 
 
 class BaseEffPainter(BasePainter):
@@ -109,76 +113,48 @@ class BaseEffPainter(BasePainter):
                  passed_name,
                  total_name,
                  name,
-                 sim_dir,
+                 task_dir,
                  out_dir,
-                 chamber_id=None,
-                 layer_id=None,
-                 roll_id=None,
-                 vfat_id=None,
                  **kwargs):
+
         self.passed_name = passed_name
         self.total_name = total_name
         self.name = name
-        super(BaseEffPainter, self).__init__(
-            sim_dir, out_dir, chamber_id, layer_id, roll_id, vfat_id, **kwargs)
 
-    def _draw(self):
-        passed = self.sim_dir.Get(self.passed_name)
-        total = self.sim_dir.Get(self.total_name)
-        if not TEfficiency.CheckConsistency(passed, total):
+        super(BaseEffPainter, self).__init__(task_dir, out_dir, **kwargs)
+
+    def draw(self):
+        self.passed = self.task_dir.Get(self.passed_name)
+        self.total = self.task_dir.Get(self.total_name)
+        if not TEfficiency.CheckConsistency(self.passed, self.total):
+            # TODO
+            warnings.warn("inconsisntency {} {}".format(passed_name, total_name))
             return None
-        eff = TEfficiency(passed, total)
-        self.hist = eff.CreateHistogram()
+        self.eff = TEfficiency(self.passed, self.total)
 
-    def _makeup(self):
+    def makeup(self):
         raise NotImplementedError()
 
 
-class Hist1DPainter(BaseHistPainter):
-    def _draw(self):
-        self.hist = self.sim_dir.Get(self.name)
-    def _makeup(self):
-        # Histogram
-        if self.kwargs.has_key("draw_opt"):
-            self.hist.Draw(self.kwargs["draw_opt"])
-        else:
-            self.hist.Draw("HIST E")
-        if self.kwargs.has_key("title"):
-            self.hist.SetTitle(self.kwargs["title"])
-        if self.kwargs.has_key("x_title"):
-            self.hist.GetXaxis().SetTitle(self.kwargs["x_title"])
-        if self.kwargs.has_key("y_title"):
-            self.hist.GetYaxis().SetTitle(self.kwargs["y_title"])
-        if self.kwargs.has_key("line_color"):
-            self.hist.SetFillColor(self.kwargs["line_color"])
-        if self.kwargs.has_key("line_width"):
-            self.hist.SetLineWidth(self.kwargs["line_width"])
-        else:
-            self.hist.SetLineWidth(3)
-        if self.kwargs.has_key("line_color"):
-            self.hist.SetFillColor(self.kwargs["line_color"])
-        if self.kwargs.has_key("line_color_alpha"):
-            self.hist.SetFillColorAlpha(*self.kwargs["line_color_alpha"])
-        # Canvas
-        if self.kwargs.has_key("log_y"):
-            self.can.SetLogy()
-        if self.kwargs.has_key("grid"):
-            self.can.SetGrid()
-        # Style
-
-
-class Hist2DPainter(BaseHistPainter):
-    def _makeup(self):
-        self.hist.Draw("COLZ TEXT")
-        gStyle.SetPaintTextFormat("g")
-
-
 class Eff1DPainter(BaseEffPainter):
-    def _makeup(self):
-        self.hist.Draw("HIST")
+    def makeup(self):
+        self.eff.Draw("AP")
+        self.eff.SetLineWidth(2)
+        self.eff.SetLineColor(ROOT.kBlue)
+        self.can.SetGrid(True)
 
+        if self.kwargs.has_key("title"):
+            title = self.kwargs["title"]
 
-class Eff2DPainter(BaseEffPainter):
-    def _makeup(self):
-        self.hist.Draw("COLZ TEXT")
-        gStyle.SetPaintTextFormat(".3f")
+        if self.kwargs.has_key("x_title"):
+            x_title = self.kwargs["x_title"]
+        else:
+            x_title = self.passed.GetXaxis().GetTitle()
+
+        if self.kwargs.has_key("y_title"):
+            y_title = self.kwargs["y_title"]
+        else:
+            y_title = "eff." 
+
+        self.eff.SetTitle("{};{};{}".format(title, x_title, y_title))
+            
