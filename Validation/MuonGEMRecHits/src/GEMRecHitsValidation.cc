@@ -8,7 +8,7 @@
 using namespace std;
 
 
-GEMRecHitsValidation::GEMRecHitsValidation(const edm::ParameterSet& ps): GEMBaseValidation(ps) {
+GEMRecHitsValidation::GEMRecHitsValidation(const edm::ParameterSet& ps) : GEMBaseValidation(ps) {
   auto sim_hit_label = ps.getParameter<edm::InputTag>("simInputLabel");
   auto rec_hit_label = ps.getParameter<edm::InputTag>("recHitsInputLabel");
 
@@ -79,6 +79,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           ME3IdsKey key(region_id, station_id, layer_id);
           me_detail_occ_zr_[key] = bookZROccupancy(ibooker, key, "rechit", "RecHits");
           me_detail_occ_xy_[key] = bookXYOccupancy(ibooker, key, "rechit", "RecHits");
+          me_detail_occ_xy_ch1_[key] = bookXYOccupancy(ibooker, key, "rechit", "RecHits", "ch1", "(Chamber 1 Only)");
           me_detail_occ_polar_[key] = bookPolarOccupancy(ibooker, key, "rechit", "recHits");
 
           // bookHist1D(ibooker, name, title, nbinsx, xlow, xup, region_id, station_id, layer_id)
@@ -139,7 +140,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     return ;
   }
 
-  // rechit occupancy only
+  // TODO if not isMC rechit occupancy only
 
 
 
@@ -156,7 +157,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
       continue;
     }
 
-    const unsigned kSimDetUnitId = simhit.detUnitId();
+    const UInt_t kSimDetUnitId = simhit.detUnitId();
     GEMDetId sim_id(kSimDetUnitId);
 
     Int_t region_id = sim_id.region();
@@ -172,12 +173,15 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     LocalPoint sim_local = simhit.localPosition();
     GlobalPoint sim_global = kGEMGeometry->idToDet(sim_id)->surface().toGlobal(sim_local);
 
+    Float_t simhit_global_eta = sim_global.eta();
+    Float_t simhit_global_phi = sim_global.phi();
+
     // TODO +1 reason
-    Int_t sim_fired_strip = kGEMGeometry->etaPartition(kSimDetUnitId)->strip(simhit.localPosition()) + 1;
+    Int_t sim_fired_strip = kGEMGeometry->etaPartition(kSimDetUnitId)->strip(sim_local) + 1;
 
     if(detailPlot_) {
-      me_detail_sim_occ_eta_[key3]->Fill(sim_global.eta());
-      me_detail_sim_occ_phi_[key3]->Fill(sim_global.phi());
+      me_detail_sim_occ_eta_[key3]->Fill(simhit_global_eta);
+      me_detail_sim_occ_phi_[key3]->Fill(simhit_global_phi);
     }
 
     GEMRecHitCollection::range range = rechit_collection->get(sim_id);
@@ -199,7 +203,14 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
         LocalPoint rec_local = rechit->localPosition();
         GlobalPoint rec_global = kGEMGeometry->idToDet(kSimDetUnitId)->surface().toGlobal(rec_local);
 
-        // XXX
+        // RecHit Global 
+        Float_t rechit_global_x = rec_global.x();
+        Float_t rechit_global_y = rec_global.y();
+        Float_t rechit_global_abs_z = std::fabs(rec_global.z());
+        Float_t rechit_global_r = rec_global.perp();
+        Float_t rechit_global_phi = rec_global.phi();
+
+        // XXX sqrt
         Float_t  resolution_x = std::sqrt(rechit->localPositionError().xx());
         Float_t  resolution_y = std::sqrt(rechit->localPositionError().yy());
 
@@ -208,9 +219,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
         Float_t pull_x = residual_x / resolution_x;
         Float_t pull_y = residual_y / resolution_y;
 
-        // DataFormats/GeometryVector/interface/extBasic3DVector.h
-        // ::perp() Magnitude of transverse component 
-        me_occ_zr_[region_id]->Fill(std::fabs(rec_global.z()), rec_global.perp());
+        me_occ_zr_[region_id]->Fill(rechit_global_abs_z, rechit_global_r);
 
         Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
         me_occ_det_[key2]->Fill(bin_x, roll_id);
@@ -223,9 +232,14 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
           me_detail_cls_[key3]->Fill(cls);
           me_detail_pull_x_[key3]->Fill(pull_x);
           me_detail_pull_y_[key3]->Fill(pull_y);
-          me_detail_occ_zr_[key3]->Fill(std::fabs(rec_global.z()), rec_global.perp());
-          me_detail_occ_xy_[key3]->Fill(rec_global.x(), rec_global.y());
-          me_detail_occ_polar_[key3]->Fill(rec_global.phi().phi(), rec_global.perp());
+          me_detail_occ_zr_[key3]->Fill(rechit_global_abs_z, rechit_global_r);
+          me_detail_occ_xy_[key3]->Fill(rechit_global_x, rechit_global_y);
+          me_detail_occ_polar_[key3]->Fill(rechit_global_phi, rechit_global_r);
+
+          if(chamber_id == 1) {
+            me_detail_occ_xy_ch1_[key3]->Fill(rechit_global_x, rechit_global_y);
+          }
+
 
           // FIXME If we use global position of rechit,
           // 'inconsistent bin contents' exception may occur.
