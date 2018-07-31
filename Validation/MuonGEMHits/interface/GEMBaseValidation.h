@@ -45,6 +45,15 @@ protected:
                                   const char* name_prefix,
                                   const char* title_prefix);
 
+  // FIXME overloading vs default arguments
+  template <typename MEMapKey>
+  MonitorElement* bookXYOccupancy(DQMStore::IBooker & ibooker,
+                                  const MEMapKey & key,
+                                  const char* name_prefix,
+                                  const char* title_prefix,
+                                  const char* name_extra_suffix,
+                                  const char* title_extra_suffix);
+
   template <typename MEMapKey>
   MonitorElement* bookPolarOccupancy(DQMStore::IBooker & ibooker,
                                      const MEMapKey & key,

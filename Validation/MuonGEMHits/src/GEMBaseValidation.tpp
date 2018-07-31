@@ -56,6 +56,23 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
 
 
 template <typename MEMapKey>
+MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
+                                                   const MEMapKey & key,
+                                                   const char* name_prefix,
+                                                   const char* title_prefix,
+                                                   const char* extra_name_suffix,
+                                                   const char* extra_title_suffix) {
+  const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
+  const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
+  TString name = TString::Format("%s_occ_xy%s_%s", name_prefix, name_suffix, extra_name_suffix);
+  TString title = TString::Format("%s XY Occupancy%s %s;X [cm];Y [cm]",
+                                  title_prefix, title_suffix, extra_title_suffix);
+  return ibooker.book2D(name, title, nBinXY_, -360, 360, nBinXY_, -360, 360); 
+}
+
+
+
+template <typename MEMapKey>
 MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker,
                                                       const MEMapKey & key,
                                                       const char* name_prefix,
@@ -86,8 +103,10 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& iboo
   TString title = TString::Format("%s Occupancy for detector component%s;;#eta-partition",
                                   title_prefix, title_suffix);
 
-  // int nXbins = station->rings().front()->nSuperChambers()*2; //Fine for the complete geometry, but not for the Slice Test geometry
-  // FIXME
+  // previous comment
+  // Fine for the complete geometry, but not for the Slice Test geometry
+  // int nXbins = station->rings().front()->nSuperChambers()*2;
+  // TODO don't use  hardcoded number
   int nXbins = 72; //Maximum number of chambers is for GE1/1
   int nYbins = station->rings().front()->superChambers().front()->chambers().front()->nEtaPartitions();
 

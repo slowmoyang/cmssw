@@ -4,20 +4,20 @@
 
 TString GEMUtils::getSuffixName(int region_id) {
   auto suffix = TString::Format("_re%d", region_id);
-  suffix = suffix.ReplaceAll("-", "_");
+  // suffix = suffix.ReplaceAll("-", "_");
   return suffix;
 }
 
 
 TString GEMUtils::getSuffixName(int region_id, int station_id) {
   auto suffix = TString::Format("_re%d_st%d", region_id, station_id);
-  suffix = suffix.ReplaceAll("-", "_");
+  // suffix = suffix.ReplaceAll("-", "_");
   return suffix;
 }
 
 TString GEMUtils::getSuffixName(int region_id, int station_id, int layer_id) {
   auto suffix =  TString::Format("_re%d_st%d_la%d", region_id, station_id, layer_id);
-  suffix = suffix.ReplaceAll("-", "_");
+  // suffix = suffix.ReplaceAll("-", "_");
   return suffix;
 }
 
@@ -29,7 +29,7 @@ TString GEMUtils::getSuffixName(int region_id,
   const char* chamber_parity = is_odd_chamber ? "odd" : "even";
   auto suffix =  TString::Format("_re%d_st%d_la%d_%s",
                                  region_id, station_id, layer_id, chamber_parity);
-  suffix = suffix.ReplaceAll("-", "_");
+  // suffix = suffix.ReplaceAll("-", "_");
   return suffix;
 }
 

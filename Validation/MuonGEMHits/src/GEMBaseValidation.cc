@@ -19,6 +19,9 @@ GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
 }
 
 
+GEMBaseValidation::~GEMBaseValidation() { }
+
+
 const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & iSetup) {
   const GEMGeometry* kGEMGeometry = nullptr;
 
@@ -35,7 +38,6 @@ const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & iSetu
 }
 
 
-GEMBaseValidation::~GEMBaseValidation() { }
 
 
 MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
@@ -67,6 +69,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   // auto xbins = static_cast<Double_t*>(&xbins_vector[0]);
 
   Int_t nbinsy = nBinZR_[2]; 
+  // FIXME
   Double_t ylow = std::min({RangeZR_[2], RangeZR_[6]});
   Double_t yup = std::max({RangeZR_[3], RangeZR_[7]});
 
