@@ -26,9 +26,12 @@ private:
   //Detaile Plots
   // key = (region_id, station_id, layer_id)
   MEMap3Key me_detail_occ_xy_;
+  MEMap3Key me_detail_occ_xy_ch1_;
   MEMap3Key me_detail_occ_zr_;
   MEMap3Key me_detail_occ_polar_;
   MEMap3Key me_detail_cls_;
+  MEMap3Key me_detail_residual_x_;
+  MEMap3Key me_detail_residual_y_;
   MEMap3Key me_detail_pull_x_;
   MEMap3Key me_detail_pull_y_;
   // moved from GEMRecHitTrackMatch
@@ -37,6 +40,8 @@ private:
   MEMap3Key me_detail_sim_occ_phi_;
   MEMap3Key me_detail_rec_occ_phi_;
 
+  // Debug
+  MEMap3Key me_debug_unmatched_strip_diff_;
 
   edm::EDGetToken sim_hit_token_, rec_hit_token_;
   Int_t nBinXY_;
