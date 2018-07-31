@@ -28,6 +28,9 @@ public:
   MonitorElement* me0_rh_PullX[2][6];
   MonitorElement* me0_rh_PullY[2][6];
 
+  // NOTE
+  MonitorElement* me_occ_xy_ch1_[2][6];
+
   edm::EDGetToken InputTagToken_RecHit;
 
   Int_t npart;

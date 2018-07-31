@@ -23,6 +23,8 @@ void ME0RecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run 
       me0_rh_zr[region_num] = BookHistZR(ibooker,"me0_rh_tot","Digi",region_num);
       for( unsigned int layer_num = 0 ; layer_num < 6 ; layer_num++) {
           me0_rh_xy[region_num][layer_num] = BookHistXY(ibooker,"me0_rh","RecHit",region_num,layer_num);
+          me_occ_xy_ch1_[region_num][layer_num] = BookHistXY(
+              ibooker, "rehit_occ_ch1", "RecHit", region_num, layer_num);
 
           std::string histo_name_DeltaX = std::string("me0_rh_DeltaX_r")+regionLabel[region_num]+"_l"+layerLabel[layer_num];
           std::string histo_name_DeltaY = std::string("me0_rh_DeltaY_r")+regionLabel[region_num]+"_l"+layerLabel[layer_num];
@@ -39,6 +41,8 @@ void ME0RecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run 
 
           me0_rh_PullX[region_num][layer_num] = ibooker.book1D(histo_name_PullX.c_str(), histo_label_DeltaX.c_str(),100,-10,10);
           me0_rh_PullY[region_num][layer_num] = ibooker.book1D(histo_name_PullY.c_str(), histo_label_DeltaY.c_str(),100,-10,10);
+
+
       }
   }
 }
@@ -148,6 +152,10 @@ void ME0RecHitsValidation::analyze(const edm::Event& e,
          me0_rh_PullX[region_num][layer_num]->Fill(pullX);
          me0_rh_PullY[region_num][layer_num]->Fill(pullY);
 
+         // NOTE
+         if(chamber == 1) {
+           me_occ_xy_ch1_[region_num][layer_num]->Fill(globalX, globalY);
+         }
        }
 
   }
