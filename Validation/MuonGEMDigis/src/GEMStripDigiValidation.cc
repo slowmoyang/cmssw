@@ -26,15 +26,15 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
                                             edm::Run const & Run,
                                             edm::EventSetup const & iSetup ) {
     
-  const GEMGeometry* kGEMGeom  = initGeometry(iSetup);
-  if ( kGEMGeom == nullptr) {
-    edm::LogError(kLogCategory) << "Failed to initialise kGEMGeom\n";
+  const GEMGeometry* kGEM  = initGeometry(iSetup);
+  if ( kGEM == nullptr) {
+    edm::LogError(kLogCategory) << "Failed to initialise kGEM\n";
     return ;
   }
 
   ibooker.setCurrentFolder(folder_);
 
-  for(const auto & region : kGEMGeom->regions()) {
+  for(const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
     if(auto tmp_zr = bookZROccupancy(ibooker, region_id, "strip", "Strip")) {
@@ -58,7 +58,7 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
   // Booking detail plot.
   if(detailPlot_) {
-    for(const auto & region : kGEMGeom->regions()) {
+    for(const auto & region : kGEM->regions()) {
       Int_t region_id = region->region();
 
       for(const auto & station : region->stations()) {
@@ -107,24 +107,27 @@ GEMStripDigiValidation::~GEMStripDigiValidation() {
 void GEMStripDigiValidation::analyze(const edm::Event& e,
                                      const edm::EventSetup& iSetup) {
 
-  const GEMGeometry* kGEMGeom = initGeometry(iSetup);
-  if ( kGEMGeom == nullptr) {
-    edm::LogError(kLogCategory) << "Failed to initialise kGEMGeom\n";
+  const GEMGeometry* kGEM = initGeometry(iSetup);
+  if ( kGEM == nullptr) {
+    edm::LogError(kLogCategory) << "Failed to initialise kGEM\n";
     return ;
   }
 
-  edm::Handle<GEMDigiCollection> gem_digis;
-  e.getByToken(InputTagToken_, gem_digis);
-  if (not gem_digis.isValid()) {
+  edm::Handle<GEMDigiCollection> digi_collection;
+  e.getByToken(InputTagToken_, digi_collection);
+  if (not digi_collection.isValid()) {
     edm::LogError(kLogCategory) << "Cannot get strips by Token stripToken.\n";
     return ;
   }
 
-  for (auto range_iter = gem_digis->begin(); range_iter != gem_digis->end(); range_iter++) {
+  for (auto range_iter = digi_collection->begin();
+            range_iter != digi_collection->end();
+            range_iter++) {
+
     GEMDetId id = (*range_iter).first;
     const GEMDigiCollection::Range& range = (*range_iter).second;
 
-    const GeomDet* geom_det = kGEMGeom->idToDet(id);
+    const GeomDet* geom_det = kGEM->idToDet(id);
     if (geom_det == nullptr) { 
       std::cout << "Getting DetId failed. Discard this gem strip hit. "
                 << "Maybe it comes from unmatched geometry."
@@ -133,7 +136,7 @@ void GEMStripDigiValidation::analyze(const edm::Event& e,
     }
 
     const BoundPlane & surface = geom_det->surface();
-    const GEMEtaPartition* roll = kGEMGeom->etaPartition(id);
+    const GEMEtaPartition* roll = kGEM->etaPartition(id);
 
     Int_t region_id  = id.region();
     Int_t layer_id   = id.layer();
@@ -171,7 +174,6 @@ void GEMStripDigiValidation::analyze(const edm::Event& e,
         me_detail_occ_phi_strip_[key3]->Fill(g_phi, strip);
         me_detail_occ_strip_[key3]->Fill(strip);
         me_detail_bx_[key3]->Fill(bx);
-
       } // detailPlot_ if end
     } // digi loop end
   }

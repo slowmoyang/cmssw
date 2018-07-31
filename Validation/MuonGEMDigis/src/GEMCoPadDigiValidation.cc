@@ -17,8 +17,8 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
                                             edm::Run const & Run,
                                             edm::EventSetup const & iSetup) {
 
-  const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
-  if ( GEMGeometry_ == nullptr) {
+  const GEMGeometry* kGEM = initGeometry(iSetup);
+  if ( kGEM == nullptr) {
     LogDebug("GEMCoPadDigiValidation") << "failed\n";
     return ;
   }
@@ -26,13 +26,13 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
   ibooker.setCurrentFolder(folder_);
 
   // FIXME
-  Int_t npadsGE11 = GEMGeometry_->regions()[0]->stations()[0]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
+  Int_t npadsGE11 = kGEM->regions()[0]->stations()[0]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
   Int_t npadsGE21 = 0;
-  if (GEMGeometry_->regions()[0]->stations().size() > 1 and not (GEMGeometry_->regions()[0]->stations()[1]->superChambers().empty())) {
-    npadsGE21  = GEMGeometry_->regions()[0]->stations()[1]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
+  if (kGEM->regions()[0]->stations().size() > 1 and not (kGEM->regions()[0]->stations()[1]->superChambers().empty())) {
+    npadsGE21  = kGEM->regions()[0]->stations()[1]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
   }
 
-  for(const auto & region : GEMGeometry_->regions()) {
+  for(const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
     if(auto tmp_zr = bookZROccupancy(ibooker, region_id, "copad", "CoPad") ) {
@@ -54,7 +54,7 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
 
   if ( detailPlot_) {
-    for(const auto &  region : GEMGeometry_->regions()) {
+    for(const auto &  region : kGEM->regions()) {
       Int_t region_id = region->region();
 
       for(const auto & station : region->stations() ) {
@@ -100,21 +100,23 @@ GEMCoPadDigiValidation::~GEMCoPadDigiValidation() {
 
 void GEMCoPadDigiValidation::analyze(const edm::Event& e,
                                      const edm::EventSetup& iSetup) {
-  const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
-  if ( GEMGeometry_ == nullptr) {
-    LogDebug("GEMCoPadDigiValidation") << "failed\n";
+  const GEMGeometry* kGEM = initGeometry(iSetup);
+  if ( kGEM == nullptr) {
+    edm::LogError(kLogCategory_) << "failed\n";
     return ;
   }
 
-  edm::Handle<GEMCoPadDigiCollection> gem_copad_digis;
-  e.getByToken(InputTagToken_, gem_copad_digis);
-  if (not gem_copad_digis.isValid()) {
+  edm::Handle<GEMCoPadDigiCollection> copad_digi_collection;
+  e.getByToken(InputTagToken_, copad_digi_collection);
+  if (not copad_digi_collection.isValid()) {
     edm::LogError(kLogCategory_) << "Cannot get pads by token.";
     return ;
   }
 
   // GEMCoPadDigiCollection::DigiRangeIterator
-  for (auto range_iter = gem_copad_digis->begin(); range_iter != gem_copad_digis->end(); range_iter++) {
+  for (auto range_iter = copad_digi_collection->begin();
+            range_iter != copad_digi_collection->end();
+            range_iter++) {
     GEMDetId id = (*range_iter).first;
     const GEMCoPadDigiCollection::Range& range = (*range_iter).second;
 
@@ -133,27 +135,26 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& e,
 
       Int_t roll_id = (*digi).roll();
 
-      const GeomDet* geom_det = GEMGeometry_->idToDet(schId);
+      const GeomDet* geom_det = kGEM->idToDet(schId);
       if ( geom_det == nullptr) {
-        edm::LogError(kLogCategory_)<<schId<<" : This detId cannot be loaded from GEMGeometry // Original"<<id<<" station : "<<station_id;
-        edm::LogError(kLogCategory_)<<"Getting DetId failed. Discard this gem copad hit. ";
+        edm::LogError(kLogCategory_) << schId << " : This detId cannot be "
+                                     << "loaded from GEMGeometry // Original"
+                                     << id << " station : " << station_id << std::endl
+                                     << "Getting DetId failed. Discard this gem copad hit.\n";
         continue; 
       }
 
       const BoundPlane & surface = geom_det->surface();
-      const GEMSuperChamber * superChamber = GEMGeometry_->superChamber(schId);
+      const GEMSuperChamber * superChamber = kGEM->superChamber(schId);
 
-      Short_t pad1 = (Short_t) digi->pad(1);
-      Short_t pad2 = (Short_t) digi->pad(2);
-      Short_t bx1  = (Short_t) digi->bx(1);
-      Short_t bx2  = (Short_t) digi->bx(2);
-
-      LogDebug("GEMCoPadDigiValidation")<<" copad #1 pad : "<<pad1<<"  bx : "<<bx1;
-      LogDebug("GEMCoPadDigiValidation")<<" copad #2 pad : "<<pad2<<"  bx : "<<bx2;
+      Int_t pad1 = digi->pad(1);
+      Int_t pad2 = digi->pad(2);
+      Int_t bx1  = digi->bx(1);
+      Int_t bx2  = digi->bx(2);
 
       // Filtered using BX
-      if ( bx1 < (Short_t) minBXGEM_ or bx1 > (Short_t) maxBXGEM_) continue;
-      if ( bx2 < (Short_t) minBXGEM_ or bx2 > (Short_t) maxBXGEM_) continue;
+      if ( bx1 < minBXGEM_ or bx1 > maxBXGEM_) continue;
+      if ( bx2 < minBXGEM_ or bx2 > maxBXGEM_) continue;
 
       //  const GEMChamber* chamber(nnt layer) const;
       LocalPoint lp1 = superChamber->chamber(1)->etaPartition(roll_id)->centreOfPad(pad1);
@@ -177,7 +178,6 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& e,
       me_occ_zr_[region_id]->Fill(std::fabs(g_z2), g_r2);
 
       Int_t binX = getDetOccBinX(chamber_id, layer_id);
-
       me_occ_det_[key2]->Fill(binX, roll_id);
       me_occ_det_[key2]->Fill(binX + 1, roll_id);
 

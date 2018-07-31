@@ -15,8 +15,8 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
                                           edm::Run const & Run,
                                           edm::EventSetup const & iSetup) {
     
-  const GEMGeometry* kGEMGeom = initGeometry(iSetup);
-  if ( kGEMGeom == nullptr) {
+  const GEMGeometry* kGEM = initGeometry(iSetup);
+  if ( kGEM == nullptr) {
     edm::LogError(kLogCategory_) << "Failed to initialise GEMGeometry in 'bookHistograms' step\n";
     return ;
   }
@@ -25,14 +25,14 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
   LogDebug("GEMPadDigiValidation")<<"ibooker set current folder\n";
 
   // FIXME
-  Int_t npadsGE11 = kGEMGeom->regions()[0]->stations()[0]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
+  Int_t npadsGE11 = kGEM->regions()[0]->stations()[0]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
   Int_t npadsGE21 = 0;
-  if (kGEMGeom->regions()[0]->stations().size() > 1 and not kGEMGeom->regions()[0]->stations()[1]->superChambers().empty()) {
-    npadsGE21 = kGEMGeom->regions()[0]->stations()[1]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
+  if (kGEM->regions()[0]->stations().size() > 1 and not kGEM->regions()[0]->stations()[1]->superChambers().empty()) {
+    npadsGE21 = kGEM->regions()[0]->stations()[1]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
   }
 
 
-  for(const auto & region : kGEMGeom->regions()) {
+  for(const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
     if(auto tmp_me = bookZROccupancy(ibooker, region_id, "pad_digi", "Pad DIGI")) {
@@ -57,7 +57,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
 
   if (detailPlot_) {
-    for( auto& region : kGEMGeom->regions() ) {
+    for( auto& region : kGEM->regions() ) {
       Int_t region_id = region->region();
 
       for( auto& station : region->stations() ) {
@@ -104,36 +104,38 @@ GEMPadDigiValidation::~GEMPadDigiValidation() { }
 void GEMPadDigiValidation::analyze(const edm::Event& e,
                                    const edm::EventSetup& iSetup) {
   // FIXME unify
-  const GEMGeometry* kGEMGeom = initGeometry(iSetup);
-  if(kGEMGeom == nullptr) {
-    edm::LogError(kLogCategory_) << "Failed to initialise kGEMGeom\n";
+  const GEMGeometry* kGEM = initGeometry(iSetup);
+  if(kGEM == nullptr) {
+    edm::LogError(kLogCategory_) << "Failed to initialise kGEM\n";
     return ;
   }
 
   // typedef MuonDigiCollection<GEMDetId, GEMPadDigi> GEMPadDigiCollection;
-  edm::Handle<GEMPadDigiCollection> gem_pad_digis;
-  e.getByToken(InputTagToken_, gem_pad_digis);
-  if (not gem_pad_digis.isValid()) {
+  edm::Handle<GEMPadDigiCollection> pad_digi_collection;
+  e.getByToken(InputTagToken_, pad_digi_collection);
+  if (not pad_digi_collection.isValid()) {
     edm::LogError(kLogCategory_) << "Cannot get pads by label GEMPadToken.";
     return;
   }
 
   // GEMPadDigiCollection::DigiRangeIterator;
-  for (auto range_iter = gem_pad_digis->begin(); range_iter != gem_pad_digis->end(); range_iter++) {
+  for (auto range_iter = pad_digi_collection->begin();
+            range_iter != pad_digi_collection->end();
+            range_iter++) {
+
     GEMDetId id = (*range_iter).first;
     const GEMPadDigiCollection::Range& range = (*range_iter).second;
 
-
-    const GeomDet* geom_det = kGEMGeom->idToDet(id);
-
+    // FIXME re-name
+    const GeomDet* geom_det = kGEM->idToDet(id);
     if ( geom_det == nullptr) { 
       std::cout << "Getting DetId failed. Discard this gem pad hit. "
                 << "Maybe it comes from unmatched geometry."<<std::endl;
       continue; 
     }
 
-    const BoundPlane & surface = geom_det->surface();
-    const GEMEtaPartition * roll = kGEMGeom->etaPartition(id);
+    const BoundPlane & surface = kGEM->idToDet(id)->surface();
+    const GEMEtaPartition * roll = kGEM->etaPartition(id);
 
     Int_t region_id  = id.region();
     Int_t station_id = id.station();
@@ -164,8 +166,8 @@ void GEMPadDigiValidation::analyze(const edm::Event& e,
       me_occ_det_[key2]->Fill(bin_x, roll_id); 
 
       if ( detailPlot_) {
-        me_detail_occ_xy_[key3]->Fill(g_x,g_y);
-        me_detail_occ_phi_pad_[key3]->Fill(g_phi,pad);
+        me_detail_occ_xy_[key3]->Fill(g_x, g_y);
+        me_detail_occ_phi_pad_[key3]->Fill(g_phi, pad);
         me_detail_occ_pad_[key3]->Fill(pad);
         me_detail_bx_[key3]->Fill(bx);
         me_detail_occ_zr_[key3]->Fill(std::fabs(g_z), g_r);
