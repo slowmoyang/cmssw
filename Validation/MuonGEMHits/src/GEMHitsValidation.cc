@@ -189,6 +189,12 @@ void GEMHitsValidation::analyze(const edm::Event& e,
 
   for(const auto & simhit : *simhit_container.product()) {
     const GEMDetId kGEMId(simhit.detUnitId());
+
+    if (std::abs(simhit.particleType()) != kMuonPDGId_) {
+      edm::LogInfo(kLogCategory_) << "PSimHit is not muon.\n";
+      continue;
+    }
+
     if ( kGEM->idToDet(kGEMId) == nullptr) {
       // NOTE LogInfo or LogError
       edm::LogInfo(kLogCategory_) << "simHit did not matched with GEMGeometry.\n";
