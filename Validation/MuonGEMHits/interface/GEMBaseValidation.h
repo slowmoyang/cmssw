@@ -14,16 +14,14 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "TDatabasePDG.h"
 
-class GEMBaseValidation : public DQMEDAnalyzer
-{
+class GEMBaseValidation : public DQMEDAnalyzer {
 public:
   explicit GEMBaseValidation(const edm::ParameterSet& ps);
   ~GEMBaseValidation() override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override = 0 ;
 
-protected:
+ protected:
   const GEMGeometry* initGeometry(const edm::EventSetup&);
 
 
@@ -74,16 +72,34 @@ protected:
                              Int_t nbinsx, Double_t xlow, Double_t xup,
                              const char* x_title="", const char* y_title="Entries");
 
+  // NOTE range is [xlow, xup] --> nbinsx = xup - xlow + 1
+  template <typename MEMapKey>
+  MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
+                             const MEMapKey & key,
+                             const char* name, const char* title,
+                             Int_t xlow, Int_t xup,
+                             const char* x_title="", const char* y_title="Entries");
+
+
   template <typename MEMapKey>
   MonitorElement* bookHist2D(DQMStore::IBooker& ibooker,
                              const MEMapKey & key,
                              const char* name, const char* title,
                              Int_t nbinsx, Double_t xlow, Double_t xup,
                              Int_t nbinsy, Double_t ylow, Double_t yup,
-                             const char* x_title="", const char* y_title="Entries");
+                             const char* x_title="", const char* y_title="");
+
+  // NOTE range is [xlow, xup] --> nbinsx = xup - xlow + 1
+  template <typename MEMapKey>
+  MonitorElement* bookHist2D(DQMStore::IBooker& ibooker,
+                             const MEMapKey & key,
+                             const char* name, const char* title,
+                             Int_t xlow, Int_t xup,
+                             Int_t ylow, Int_t yup,
+                             const char* x_title="", const char* y_title="");
 
 
-
+  // FIXME move to tpp
   inline Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
     return 2 * chamber_id + layer_id - 2;
   }
