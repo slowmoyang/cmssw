@@ -2,10 +2,16 @@ import FWCore.ParameterSet.Config as cms
 
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 
+_RANGE_GLOBAL_ZR = [
+    564, 574, 110, 290, # station 1 
+    792, 802, 120, 390 # station 2
+]
+
+
 gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   outputFile = cms.string(''),
   stripLabel= cms.InputTag('muonGEMDigis'),
-  simInputLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
+  simHitLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
   # st1, st2 of xbin, st1, st2 of ybin
   nBinGlobalZR = cms.untracked.vdouble(200,200,150,250), 
   # st1 xmin xmax, st2 xmin xmax, st1 ymin ymax, st2 ymin ymax

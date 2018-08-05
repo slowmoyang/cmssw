@@ -28,8 +28,18 @@ private:
   MEMap3Key me_detail_occ_strip_;
   MEMap3Key me_detail_bx_;
 
+  MEMap3Key me_debug_simhit_occ_eta_;
+  MEMap3Key me_debug_simhit_occ_phi_;
+  MEMap3Key me_debug_digi_occ_eta_;
+  MEMap3Key me_debug_digi_occ_phi_;
+  MEMap3Key me_debug_unmatched_strip_diff_;
+
   // ParameterSet
-  edm::EDGetToken InputTagToken_;
+  edm::EDGetToken simhit_token_;
+  edm::EDGetToken digi_token_;
+
+
+
   int nBinXY_;
   bool detailPlot_;
   int nStripsGE11_;
@@ -38,7 +48,7 @@ private:
 
   // Constants
   const char* kMENamePrefix_ = "strip_digi";
-  std::string kLogCategory = "GEMStripDigiValidation";
+  std::string kLogCategory_ = "GEMStripDigiValidation";
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_

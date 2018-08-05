@@ -1,3 +1,7 @@
+#include "Validation/MuonGEMDigis/plugins/MuonGEMDigisHarvestor.h"
+
+#include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
+
 // system include files
 #include <memory>
 
@@ -9,11 +13,18 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+
 #include "TTree.h"
 #include "TFile.h"
 #include "TGraphAsymmErrors.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-#include "FWCore/Utilities/interface/InputTag.h"
+#include "TH1F.h"
+#include "TEfficiency.h"
+#include "TProfile.h"
+#include "TAxis.h"
+#include "TSystem.h"
+
 
 ///Data Format
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
@@ -43,83 +54,134 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "Validation/MuonGEMDigis/plugins/MuonGEMDigisHarvestor.h"
 
-MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps)
-{
-  dbe_path_ = ps.getParameter<std::string>("dbePath");
-  dbe_hist_prefix_ = ps.getParameter<std::string>("dbeHistPrefix");
-  compareable_dbe_path_ = ps.getParameter<std::string>("compareDBEPath");
-  compareable_dbe_hist_prefix_ = ps.getParameter<std::string>("compareDBEHistPrefix");
+MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps) {
+  // dbe_path_ = "MuonGEMDigisV/GEMDigisTask/";
+  dbe_path_ = ps.getUntrackedParameter<std::string>("dbePath");
+  strip_digi_path_ = ps.getParameter<std::string>("stripDigiPath");
+  region_ids_ = ps.getUntrackedParameter< std::vector<int> >("regionIds");
+  station_ids_ = ps.getUntrackedParameter< std::vector<int> >("stationIds");
+  layer_ids_ = ps.getUntrackedParameter< std::vector<int> >("layerIds");
+}
+
+
+MuonGEMDigisHarvestor::~MuonGEMDigisHarvestor() {
 
 }
 
 
-MuonGEMDigisHarvestor::~MuonGEMDigisHarvestor()
-{
-}
-TProfile* MuonGEMDigisHarvestor::ComputeEff(TH1F* num, TH1F* denum )
-{
-  std::string name  = "eff_"+std::string(num->GetName());
-  std::string title = "Eff. "+std::string(num->GetTitle());
-  TProfile * efficHist = new TProfile(name.c_str(), title.c_str(),denum->GetXaxis()->GetNbins(), denum->GetXaxis()->GetXmin(),denum->GetXaxis()->GetXmax());
+TProfile* MuonGEMDigisHarvestor::computeEff(const TH1F & passed,
+                                            const TH1F & total) {
 
-  for (int i=1; i <= denum->GetNbinsX(); i++) {
+  std::string name  = "eff_" + std::string(passed.GetName());
+  std::string title = "Eff. " + std::string(passed.GetTitle());
 
-    double nNum = num->GetBinContent(i);
-    double nDenum = denum->GetBinContent(i);
-    if ( nDenum == 0 || nNum ==0  ) {
-      continue;
+  TProfile* eff_profile = new TProfile(name.c_str(),
+                                       title.c_str(),
+                                       total.GetXaxis()->GetNbins(),
+                                       total.GetXaxis()->GetXmin(),
+                                       total.GetXaxis()->GetXmax());
+
+
+  if(TEfficiency::CheckConsistency(passed, total)) {
+    TEfficiency        eff(passed, total);
+    TGraphAsymmErrors* eff_graph = eff.CreateGraph();
+    auto x_axis = passed.GetXaxis();
+    // TH1F* eff_hist = dynamic_cast<TH1F*>(eff_graph->GetHistogram()->Clone());
+
+    // for (int bin = 1; bin <= eff_hist->GetNbinsX(); bin++)
+    for(int i = 0; i < eff_graph->GetN(); ++i) {
+
+      double x, y, error;
+      bool invalid_request = eff_graph->GetPoint(i, x, y) == -1;
+
+      if(invalid_request) {
+        edm::LogError(kLogCategory_) << "GetPoint failed" << std::endl;
+        continue;
+      }
+
+      error = eff_graph->GetErrorY(i);
+      // const double errLo = TEfficiency::ClopperPearson((int)nDenum,(int)nNum,0.683,false);
+      // const double errUp = TEfficiency::ClopperPearson((int)nDenum,(int)nNum,0.683,true);
+      // const double errVal = (effVal - errLo > errUp - effVal) ? effVal - errLo : errUp - effVal;
+
+      int bin = x_axis->FindBin(x);
+      eff_profile->SetBinContent(bin, y);
+      eff_profile->SetBinError(bin, error);
+      eff_profile->SetBinEntries(bin, 1);
     }
-    if ( nNum > nDenum ) {
-      double temp = nDenum;
-      nDenum = nNum;
-      nNum = temp;
-      LogDebug("MuonGEMDigisHarvestor")<<"Alert! specific bin's num is bigger than denum";
-    }
-    const double effVal = nNum/nDenum;
-    efficHist->SetBinContent(i, effVal);
-    efficHist->SetBinEntries(i,1);
-    efficHist->SetBinError(i,0);
-    const double errLo = TEfficiency::ClopperPearson((int)nDenum,(int)nNum,0.683,false);
-    const double errUp = TEfficiency::ClopperPearson((int)nDenum,(int)nNum,0.683,true);
-    const double errVal = (effVal - errLo > errUp - effVal) ? effVal - errLo : errUp - effVal;
-    efficHist->SetBinError(i, sqrt(effVal * effVal + errVal * errVal));
-  }
-  return efficHist;
-}
+  } else {
+    edm::LogError(kLogCategory_) << "TEfficiency Inconsistency Error" << std::endl;
+    std::cout << passed.GetName() << std::endl;
+    std::cout << total.GetName() << std::endl;
 
-void MuonGEMDigisHarvestor::ProcessBooking( DQMStore::IBooker& ibooker, DQMStore::IGetter& ig, const char* label, TString suffix, TH1F* track_hist, TH1F* sh_hist )
-{
-  TString dbe_label = TString(dbe_path_)+label+suffix;
-  if( ig.get(dbe_label.Data()) != nullptr && sh_hist !=nullptr && track_hist !=nullptr ) {
-    TH1F* hist =    (TH1F*)ig.get( dbe_label.Data() )->getTH1F()->Clone();
-    TProfile* profile = ComputeEff( hist, track_hist);
-    TProfile* profile_sh = ComputeEff( hist, sh_hist );
-    profile_sh->SetName( (profile->GetName()+std::string("_sh")).c_str());
-    TString x_axis_title = TString(hist->GetXaxis()->GetTitle());
-    TString title  = TString::Format("Eff. for a SimTrack to have an associated GEM digi in %s;%s;Eff.",suffix.Data(),x_axis_title.Data());
-    TString title2 = TString::Format("Eff. for a SimTrack to have an associated GEM digi in %s with a matched SimHit;%s;Eff.",suffix.Data(),x_axis_title.Data() );
-    profile->SetTitle( title.Data());
-    profile_sh->SetTitle( title2.Data() );
-    ibooker.bookProfile( profile->GetName(),profile); 
-    ibooker.bookProfile( profile_sh->GetName(),profile_sh); 
+    name += "_inconsistent";
+    title += " inconsistent";
+    eff_profile->SetName(name.c_str());
+    eff_profile->SetTitle(title.c_str());
   }
-  else {
-    LogDebug("MuonGEMDigisHarvestor")<<"Can not found histogram of "<<dbe_label; 
-    if ( track_hist == nullptr) LogDebug("MuonGEMDigisHarvestor")<<"track not found";
-    if ( sh_hist    == nullptr) LogDebug("MuonGEMDigisHarvestor")<<"sh_hist not found";
-  }
-  return;
+
+  return eff_profile;
 }
 
 
-void  MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker& ibooker, DQMStore::IGetter& ig)
-{
-  ig.setCurrentFolder(dbe_path_);
-  LogDebug("MuonGEMDigisHarvestor")<<":D\n";
+void MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker & ibooker,
+                                      DQMStore::IGetter & igetter) {
+
+  // TODO harvsetStripDigi();
+  igetter.setCurrentFolder(strip_digi_path_);
+
+  for(Int_t region_id : region_ids_) {
+    for(Int_t station_id : station_ids_) {
+      for(Int_t layer_id : layer_ids_) {
+        for(const char* axis : kAxes_) {
+          TString name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id);
+          TString title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
+
+          TString sim_name = TString::Format("simhit_occ_%s%s", axis, name_suffix.Data());
+          TString digi_name = TString::Format("digi_occ_%s%s", axis, name_suffix.Data());
+
+          const std::string sim_path = gSystem->ConcatFileName(strip_digi_path_.c_str(), sim_name);
+          const std::string digi_path = gSystem->ConcatFileName(strip_digi_path_.c_str(), digi_name);
+
+          TH1F* sim_occupancy;
+          if(auto tmp_me = igetter.get(sim_path)) {
+            sim_occupancy = dynamic_cast<TH1F*>(tmp_me->getTH1F()->Clone());
+          } else {
+            edm::LogError(kLogCategory_) << "failed to get " << sim_name << std::endl;
+            continue;
+          }
+          // XXX reason ?
+          sim_occupancy->Sumw2();
+
+          TH1F* digi_occupancy;
+          if(auto tmp_me = igetter.get(digi_path)) {
+            digi_occupancy = dynamic_cast<TH1F*>(tmp_me->getTH1F()->Clone());
+          } else {
+            edm::LogError(kLogCategory_) << "failed to get " << digi_name << std::endl;
+            continue;
+          }
+          digi_occupancy->Sumw2();
+
+          TProfile* eff = computeEff(*digi_occupancy, *sim_occupancy);
+
+          // FIXME move to computeEff
+          TString title = TString::Format("Efficiency %s :%s", axis, title_suffix.Data());
+          TString x_title = TString::Format("#%s", axis);
+
+          eff->SetTitle(title);
+          eff->SetXTitle(x_title);
+
+          TString name = TString::Format("eff_%s%s", axis, name_suffix.Data());
+
+          ibooker.bookProfile(name, eff);
+        } // axis loop
+      } // Layer Id END
+    } // Station Id END
+  } // Region Id END
 }
 
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(MuonGEMDigisHarvestor);
+
