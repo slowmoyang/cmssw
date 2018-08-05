@@ -35,6 +35,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
   }
 
   ibooker.setCurrentFolder(folder_);
+  // TODO subdirectory
 
   // Book histograms
   for(const auto & region : kGEM->regions()) {
@@ -50,15 +51,13 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      if (auto tmp_me = bookDetectorOccupancy(ibooker, key2, station, "rechit", "RecHit")) {
-        me_occ_det_[key2] = tmp_me;
-      } else {
-        edm::LogError(kLogCategory_) << "Failed to create occupancy per detector component\n";
-      }
+      // FIXME 
+      me_sim_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "simhit", "SimHit");
+      me_rec_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "rechit", "RecHit");
     } // station loop end
 
-    me_pull_x_[region_id] = bookHist1D(ibooker, region_id, "pull_x", "Pull Of X", 100, -50, 50);
-    me_pull_y_[region_id] = bookHist1D(ibooker, region_id, "pull_y", "Pull Of Y", 100, -50, 50);
+    me_pull_x_[region_id] = bookHist1D(ibooker, region_id, "pull_x", "Pull Of X", 100, -5, 5);
+    me_pull_y_[region_id] = bookHist1D(ibooker, region_id, "pull_y", "Pull Of Y", 100, -5, 5);
 
   } // region loop end
 
@@ -90,7 +89,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
           // bookHist1D(ibooker, name, title, nbinsx, xlow, xup, region_id, station_id, layer_id)
           me_detail_cls_[key] = bookHist1D(
-              ibooker, key, "cls", "Cluster Size Distribution", 11, -0.5, 10.5);
+              ibooker, key, "cls", "Cluster Size Distribution", 0, 10, "# of fired strips");
 
           // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_residual_x_[key] = bookHist1D(
@@ -124,7 +123,15 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           me_debug_unmatched_strip_diff_[key] = bookHist1D(
               ibooker, key, "debug_unmatched_strip_diff",
               "SimHit-Rechit Unmatched Case Strip Distance",
-              384*2+1, -384 -0.5, 384 + 0.5, "rec - sim");
+              -10, 10, "# of strips");
+
+          me_debug_unmatched_cls_strip_diff_[key] = bookHist2D(
+              ibooker, key, "debug_unmatched_cls_strip_diff",
+              "SimHit-Rechit Unmatched Case cls vs. Strip Distance",
+              -10, 10, // [xlow, xup]
+              0, 10, // [ylow, yup]
+              "# of strips", "cls");
+
 
         } // end loop over layers
       } // station loop
@@ -163,7 +170,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
 
   for(const auto & simhit : *simhit_container.product()) {
 
-    if (std::abs(simhit.particleType()) == kMuonPDGId_) {
+    if (std::abs(simhit.particleType()) != kMuonPDGId_) {
       edm::LogInfo(kLogCategory_) << "PSimHit is not muon.\n";
       continue;
     }
@@ -178,71 +185,77 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     const UInt_t kSimDetUnitId = simhit.detUnitId();
     GEMDetId gem_id(kSimDetUnitId);
 
-    Int_t region_id = gem_id.region();
-    Int_t station_id = gem_id.station();
-    Int_t layer_id = gem_id.layer();
-    Int_t chamber_id = gem_id.chamber();
-    Int_t roll_id = gem_id.roll();
+    // FIXME change the name
+    const Int_t region_id = gem_id.region();
+    const Int_t station_id = gem_id.station();
+    const Int_t layer_id = gem_id.layer();
+    const Int_t chamber_id = gem_id.chamber();
+    const Int_t roll_id = gem_id.roll();
 
     ME2IdsKey key2(region_id, station_id);
     ME3IdsKey key3(region_id, station_id, layer_id);
 
     // FIXME find good names
     LocalPoint sim_local = simhit.localPosition();
-    LocalPoint sim_entry = simhit.entryPoint();
     GlobalPoint sim_global = kGEM->idToDet(gem_id)->surface().toGlobal(sim_local);
 
     Float_t simhit_global_eta = sim_global.eta();
     Float_t simhit_global_phi = sim_global.phi();
 
+    // NOTE
     // GEMGeometry.h
     // returns fractional strip number [0..nstrips] for a LocalPoint
     // E.g., if local point hit strip #2, the fractional strip number would be
     // somewhere in the (1., 2] interval
-    Int_t sim_fired_strip = static_cast<Int_t>(std::ceil(kGEM->etaPartition(kSimDetUnitId)->strip(sim_local)));
+    const Int_t kSimHitStrip = static_cast<Int_t>(std::ceil(kGEM->etaPartition(kSimDetUnitId)->strip(sim_local)));
 
     if(detailPlot_) {
       me_detail_sim_occ_eta_[key3]->Fill(simhit_global_eta);
       me_detail_sim_occ_phi_[key3]->Fill(simhit_global_phi);
     }
 
+    const Int_t kDetOccBinX = getDetOccBinX(chamber_id, layer_id);
+    me_sim_occ_det_[key2]->Fill(kDetOccBinX, roll_id);
+
     GEMRecHitCollection::range range = rechit_collection->get(gem_id);
     // GEMRecHitCollection::const_iterator;
     for(auto rechit = range.first; rechit != range.second; ++rechit) {
-
       Int_t cls = rechit->clusterSize();
-
       ///////////////////////////////
-      // NOTE matching conditions
+      // NOTE Start matching conditions
       ///////////////////////////
       Bool_t matched;
       if ( cls == 1 ) {
-        matched = sim_fired_strip == rechit->firstClusterStrip();
+        matched = kSimHitStrip == rechit->firstClusterStrip();
+
         if(not matched) {
-          Int_t strip_diff = rechit->firstClusterStrip() - sim_fired_strip; 
+          Int_t strip_diff = rechit->firstClusterStrip() - kSimHitStrip;
           me_debug_unmatched_strip_diff_[key3]->Fill(strip_diff);
+          me_debug_unmatched_cls_strip_diff_[key3]->Fill(strip_diff, cls);
         }
+
       } else {
         // fired strips
-        Int_t rec_first_fired_strip = rechit->firstClusterStrip();
-        Int_t rec_last_fired_strip = rec_first_fired_strip + cls - 1;
+        const Int_t rec_first_strip = rechit->firstClusterStrip();
+        const Int_t rec_last_strip = rec_first_strip + cls - 1;
 
-        matched = (sim_fired_strip >= rec_first_fired_strip) and (sim_fired_strip <= rec_last_fired_strip);
+        matched = (kSimHitStrip >= rec_first_strip) and (kSimHitStrip <= rec_last_strip);
 
         if(not matched) {
-          Int_t strip_diff = std::min(
-                {rec_first_fired_strip - sim_fired_strip,
-                 rec_last_fired_strip - sim_fired_strip});
-          me_debug_unmatched_strip_diff_[key3]->Fill(strip_diff);
-        }
+          Int_t first_diff = rec_first_strip - kSimHitStrip;
+          Int_t last_diff = rec_last_strip - kSimHitStrip;
 
+          Int_t strip_diff = std::abs(first_diff) < std::abs(last_diff) ? first_diff : last_diff;
+
+          me_debug_unmatched_strip_diff_[key3]->Fill(strip_diff);
+          me_debug_unmatched_cls_strip_diff_[key3]->Fill(strip_diff, cls);
+        }
       }
+      ////////////////////////////////////////////
+      // NOTE End Matching
+      ///////////////////////////////////////////
 
       if(matched) {
-        /////////////////////////////////
-        // evaluate
-        ////////////////////////////////////
-
         LocalPoint rec_local = rechit->localPosition();
         GlobalPoint rec_global = kGEM->idToDet(kSimDetUnitId)->surface().toGlobal(rec_local);
 
@@ -268,8 +281,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
 
         me_occ_zr_[region_id]->Fill(rechit_global_abs_z, rechit_global_r);
 
-        Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
-        me_occ_det_[key2]->Fill(bin_x, roll_id);
+        me_rec_occ_det_[key2]->Fill(kDetOccBinX, roll_id);
 
         me_cls_->Fill(cls);
         me_pull_x_[region_id]->Fill(pull_x);
@@ -293,20 +305,18 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
           me_detail_rec_occ_eta_[key3]->Fill(simhit_global_eta);
           me_detail_rec_occ_phi_[key3]->Fill(simhit_global_phi);
 
-
           if(chamber_id == 1) {
             me_detail_occ_xy_ch1_[key3]->Fill(rechit_global_x, rechit_global_y);
           }
 
         }
 
-        // FIXME is translation okay?
         // If we find a RecHit that matches a given SimHit,
         // then break the loop over RecHits and go to the next SimHit.
         break;
 
       } // matched if block
-    } // RecHits Loop End
-  } // SimHit Loop End
+    } // end loop over rechits
+  } // end loop over simhits
 
 }

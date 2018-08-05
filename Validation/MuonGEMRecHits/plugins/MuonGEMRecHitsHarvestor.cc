@@ -173,6 +173,76 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
       } // Layer Id END
     } // Station Id END
   } // Region Id END
+
+  ////////////////////////////////////
+  // FIXME
+  // 
+  //////////////////////////////////////
+  for(Int_t region_id : region_ids_) {
+    for(Int_t station_id : station_ids_) {
+      TString name_suffix = GEMUtils::getSuffixName(region_id, station_id);
+      TString title_suffix = GEMUtils::getSuffixTitle(region_id, station_id);
+
+      TString sim_name = TString::Format("simhit_occ_det%s", name_suffix.Data());
+      TString rec_name = TString::Format("rechit_occ_det%s", name_suffix.Data());
+
+      const std::string sim_path = gSystem->ConcatFileName(dbe_path_.c_str(), sim_name);
+      const std::string rec_path = gSystem->ConcatFileName(dbe_path_.c_str(), rec_name);
+
+      TH2F* sim_occupancy;
+      if(auto tmp_me = ig.get(sim_path)) {
+        sim_occupancy = dynamic_cast<TH2F*>(tmp_me->getTH2F()->Clone());
+      } else {
+        edm::LogError(kLogCategory_) << "failed to get " << sim_name << std::endl;
+        continue;
+      }
+      // XXX reason ?
+      sim_occupancy->Sumw2();
+
+      TH2F* rec_occupancy;
+      if(auto tmp_me = ig.getElement(rec_path)) {
+        rec_occupancy = dynamic_cast<TH2F*>(tmp_me->getTH2F()->Clone());
+      } else {
+        edm::LogError("MuonGEMRecHitsHarvestor") << "failed to get "
+                                                 << rec_name
+                                                 << std::endl;
+        continue;
+      }
+      rec_occupancy->Sumw2();
+
+
+      TEfficiency eff(*rec_occupancy, *sim_occupancy);
+
+      TH2F* eff_hist = dynamic_cast<TH2F*>(eff.CreateHistogram());
+
+      TString name = TString::Format("eff_det%s", name_suffix.Data());
+      TString title = TString::Format("Efficiency Detector Component%s", title_suffix.Data());
+
+      eff_hist->SetName(name);
+      eff_hist->SetTitle(title);
+      // eff_hist->GetXaxis()->SetTitle("Chamber-Layer");
+      eff_hist->GetYaxis()->SetTitle("Eta Partition");
+
+      for(Int_t chamber_id = 1; chamber_id <= 36; chamber_id++) {
+        for(Int_t layer_id = 1; layer_id <= 2; layer_id++) {
+          Int_t bin = 2 * chamber_id + layer_id - 2;
+          TString label = TString::Format("C%dL%d", chamber_id, layer_id);
+          eff_hist->GetXaxis()->SetBinLabel(bin, label.Data());
+        }
+      }
+
+      for(Int_t ieta = 1; ieta <= 8; ieta++) {
+          TString label = TString::Format("%d", ieta);
+          eff_hist->GetYaxis()->SetBinLabel(ieta, label);
+      }
+
+      ibooker.book2D(name.Data(), eff_hist);
+
+
+    } // end loop over station ids
+  } // end loop over region ids
+
+
 }
 
 

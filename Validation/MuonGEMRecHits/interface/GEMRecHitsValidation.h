@@ -18,7 +18,6 @@ public:
 private:
   //Simple Plots
   MEMap1Key me_occ_zr_; // [# of region]
-  MEMap2Key me_occ_det_; // [# of region][# of station]
   MonitorElement* me_cls_;
   MEMap1Key me_pull_x_; // key: region
   MEMap1Key me_pull_y_; // key: region
@@ -42,6 +41,10 @@ private:
 
   // Debug
   MEMap3Key me_debug_unmatched_strip_diff_;
+  MEMap3Key me_debug_unmatched_cls_strip_diff_;
+
+  MEMap2Key me_sim_occ_det_;
+  MEMap2Key me_rec_occ_det_;
 
   edm::EDGetToken sim_hit_token_, rec_hit_token_;
   Int_t nBinXY_;
