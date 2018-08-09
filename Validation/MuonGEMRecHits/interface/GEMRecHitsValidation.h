@@ -42,6 +42,7 @@ private:
   // Debug
   MEMap3Key me_debug_unmatched_strip_diff_;
   MEMap3Key me_debug_unmatched_cls_strip_diff_;
+  MEMap3Key me_debug_roll_cls_;
 
   MEMap2Key me_sim_occ_det_;
   MEMap2Key me_rec_occ_det_;

@@ -63,7 +63,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
   me_cls_ = ibooker.book1D("cls_tot", "Cluster Size Distribution", 11, -0.5, 10.5);
  
-  // TODO logging 
   const Double_t kPi = TMath::Pi();
 
   if(detailPlot_) {
@@ -73,7 +72,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       for(const auto & station : region->stations()) {
         Int_t station_id = station->station();
 
-        // TODO
+        // TODO do not use hard-coded layer ids
         for(Int_t layer_id : {1, 2}) {
 
           ME3IdsKey key(region_id, station_id, layer_id);
@@ -90,6 +89,13 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           // bookHist1D(ibooker, name, title, nbinsx, xlow, xup, region_id, station_id, layer_id)
           me_detail_cls_[key] = bookHist1D(
               ibooker, key, "cls", "Cluster Size Distribution", 0, 10, "# of fired strips");
+
+          me_debug_roll_cls_[key] = bookHist2D(
+              ibooker, key,
+              "debug_roll_cls", "Cluster Size vs i#eta",
+              1, 8, 1, 10, "ieta", "cls");
+
+
 
           // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_residual_x_[key] = bookHist1D(
@@ -120,6 +126,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
               ibooker, key, "rechit_occ_phi", "RecHit Phi Occupancy",
               51, -kPi, kPi, "#phi");
 
+          // FIXME DEBUG
           me_debug_unmatched_strip_diff_[key] = bookHist1D(
               ibooker, key, "debug_unmatched_strip_diff",
               "SimHit-Rechit Unmatched Case Strip Distance",
@@ -131,14 +138,13 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
               -10, 10, // [xlow, xup]
               0, 10, // [ylow, yup]
               "# of strips", "cls");
-
-
         } // end loop over layers
       } // station loop
     } // region loop
-
   } // detailPlot 
 
+
+  return;
 }
 
 
@@ -207,7 +213,8 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     // returns fractional strip number [0..nstrips] for a LocalPoint
     // E.g., if local point hit strip #2, the fractional strip number would be
     // somewhere in the (1., 2] interval
-    const Int_t kSimHitStrip = static_cast<Int_t>(std::ceil(kGEM->etaPartition(kSimDetUnitId)->strip(sim_local)));
+    const Int_t kSimHitStrip = static_cast<Int_t>(
+        std::ceil(kGEM->etaPartition(kSimDetUnitId)->strip(sim_local)));
 
     if(detailPlot_) {
       me_detail_sim_occ_eta_[key3]->Fill(simhit_global_eta);
@@ -221,6 +228,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
     // GEMRecHitCollection::const_iterator;
     for(auto rechit = range.first; rechit != range.second; ++rechit) {
       Int_t cls = rechit->clusterSize();
+
       ///////////////////////////////
       // NOTE Start matching conditions
       ///////////////////////////
@@ -289,6 +297,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& e,
 
         if(detailPlot_) {
           me_detail_cls_[key3]->Fill(cls);
+          me_debug_roll_cls_[key3]->Fill(roll_id, cls);
 
           me_detail_residual_x_[key3]->Fill(residual_x);
           me_detail_residual_y_[key3]->Fill(residual_y);

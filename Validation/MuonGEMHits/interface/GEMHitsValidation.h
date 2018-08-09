@@ -21,7 +21,7 @@ private:
 
   // Simple plots
   MEMap1Key me_occ_zr_; // [regions]
-  MEMap1Key me_tof_mu_; // [stations]
+  std::map<Int_t, MonitorElement*> me_tof_mu_; // [stations]
   MEMap1Key me_eloss_mu_; // [stations]
 
   MEMap2Key me_occ_det_; // [r][s]
@@ -38,6 +38,9 @@ private:
 
   MonitorElement* me_gem_geom_xyz_;
   MonitorElement* me_gem_geom_eta_phi_;
+
+  // FIXME debug
+  std::map<Int_t, MonitorElement*> me_debug_segment_x_; // region, station, layer, roll
 
   // temporary constant
   // energy loss conversion factor

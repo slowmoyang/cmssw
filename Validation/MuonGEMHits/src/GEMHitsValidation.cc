@@ -5,6 +5,10 @@
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
+// ROOT classes
+#include "TSystem.h"
+
+// std classes
 #include <exception>
 
 using namespace std;
@@ -35,7 +39,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
   ibooker.setCurrentFolder(folder_);
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Region independant part.\n";
+  // NOTE region-independent
   for(const auto & station : kGEM->regions()[0]->stations()) {
     Int_t station_id = station->station();
 
@@ -43,7 +47,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
     Double_t tof_min, tof_max;
     std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
-    // FIXME
+    // FIXME too long..
     const char* name_tof  = TString::Format("simhit_tof_mu_st%d", station_id).Data();
     const char* title_tof = TString::Format("SimHit TOF (Muon only) : Station %d;Time of flight [ns];entries", station_id).Data();
     me_tof_mu_[station_id] = ibooker.book1D(name_tof, title_tof, 40, tof_min, tof_max);
@@ -54,36 +58,18 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
   } // STATION LOOP END
 
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Region+Station part.\n";
   // Regions, Region+station
   for(const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
-
-    if(auto tmp_me = bookZROccupancy(ibooker, region_id, "simhit", "SimHit")) {
-      me_occ_zr_[region_id] = tmp_me;
-    } else {
-      // TODO LogError MEssage
-      edm::LogError(kLogCategory_) << "failed to book zr occupacny "
-                                   << "region " << region_id << std::endl;
-      // FIXME return ; ???
-    }
+    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "simhit", "SimHit");
 
     for(const auto & station : region->stations()) {
       Int_t station_id = station->station();
-      ME2IdsKey key(region_id, station_id);
+      ME2IdsKey key2(region_id, station_id);
+      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "simhit", "SimHit");
+    } // end loop over station ids;
+  } // end loop over region ids
 
-      if(auto tmp_me = bookDetectorOccupancy(ibooker, key, station, "simhit", "SimHit")) {
-        me_occ_det_[key] = tmp_me;
-      } else {
-        // TODO log error
-        edm::LogError(kLogCategory_) << "failed to book zr occupacny "
-                                     << "region " << region_id 
-                                     << " station " << station_id << std::endl;
-        // FIXME return ; ???
-      }
-
-    } // STATION LOOP END
-  } // REGION LOOP END
 
   if(detailPlot_ ) {
     for(const auto & region : kGEM->regions()) {
@@ -95,6 +81,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         Double_t tof_min, tof_max;
         std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
+        // FIXME
         for(Int_t layer_id : {1, 2}) {
 
           ME3IdsKey key(region_id, station_id, layer_id);
@@ -126,19 +113,18 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
               60, 0., 6000.0,
               "Energy loss [eV]", "entries");
 
-        } // LAYER LOOP END
-
-      } // STATION LOOP END
-    } // REGION LOOP END
+        } // end loop over layer ids
+      } // end loop over station ids
+    } // end loop over retion ids
   } // detailPlot IF END
 
+  // NOTE
   me_gem_geom_xyz_ = ibooker.book3D(
       "gem_geom_xyz",
       "GEM Roll Position;x [cm];y [cm];z [cm]",
       160, -800.0, 800.0,
       160, -800.0, 800.0, 
       240, -1200.0, 1200.0);
-      
 
   me_gem_geom_eta_phi_ = ibooker.book2D(
       "gem_geom_eta_phi",
@@ -146,7 +132,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       101, -4, 4,
       101, -TMath::Pi(), TMath::Pi());
 
-  // XXX This histogram does not need to be filled repeatedly.
+  // NOTE This histogram does not need to be filled repeatedly.
   const LocalPoint kLocalOrigin(0.0, 0.0, 0.0);
   for(const auto & det_id : kGEM->detUnitIds()) {
     GEMDetId kGEMId(det_id);
@@ -158,6 +144,22 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
     me_gem_geom_eta_phi_->Fill(gp.eta(), gp.phi());
   }
 
+  // FIXME debugging
+
+  std::string debug_dir = gSystem->ConcatFileName(folder_.c_str(), "debug");
+  ibooker.setCurrentFolder(debug_dir);
+
+  for(const auto & station : kGEM->regions()[0]->stations()) {
+    Int_t station_id = station->station();
+
+    me_debug_segment_x_[station_id] = ibooker.book1D(
+        TString::Format("debug_segment_xi_st%d", station_id).Data(),
+        TString::Format("Segment X : Station %d;exit.x - entry.x [cm];entries", station_id).Data(),
+        800, -0.4, -0.4);
+  }
+
+  ibooker.setCurrentFolder(folder_);
+  return;
 }
 
 
@@ -190,25 +192,22 @@ void GEMHitsValidation::analyze(const edm::Event& e,
   for(const auto & simhit : *simhit_container.product()) {
     const GEMDetId kGEMId(simhit.detUnitId());
 
-    if (std::abs(simhit.particleType()) != kMuonPDGId_) {
-      edm::LogInfo(kLogCategory_) << "PSimHit is not muon.\n";
-      continue;
-    }
-
     if ( kGEM->idToDet(kGEMId) == nullptr) {
       // NOTE LogInfo or LogError
       edm::LogInfo(kLogCategory_) << "simHit did not matched with GEMGeometry.\n";
       continue;
     }
 
-    Int_t region_id  = kGEMId.region();
-    Int_t station_id = kGEMId.station();
-    Int_t layer_id   = kGEMId.layer();
-    Int_t chamber_id = kGEMId.chamber();
-    Int_t roll_id    = kGEMId.roll(); // eta partition
+    // FIXME follow naiming convention
+    const Int_t region_id  = kGEMId.region();
+    const Int_t station_id = kGEMId.station();
+    const Int_t layer_id   = kGEMId.layer();
+    const Int_t chamber_id = kGEMId.chamber();
+    const Int_t roll_id    = kGEMId.roll(); // eta partition
 
-    ME2IdsKey key2(region_id, station_id);
-    ME3IdsKey key3(region_id, station_id, layer_id);
+    const ME2IdsKey key2(region_id, station_id);
+    const ME3IdsKey key3(region_id, station_id, layer_id);
+    const ME4IdsKey key4(region_id, station_id, layer_id, roll_id);
 
     const LocalPoint kSimHitLocal = simhit.localPosition();
     const GlobalPoint kSimHitGlobal = kGEM->idToDet(kGEMId)->surface().toGlobal(kSimHitLocal);
@@ -229,6 +228,10 @@ void GEMHitsValidation::analyze(const edm::Event& e,
     if (std::abs(simhit.particleType()) == kMuonPDGId_) {
       me_tof_mu_[station_id]->Fill(tof);
       me_eloss_mu_[station_id]->Fill(energy_loss);
+
+      // FIXME debugging
+      Float_t segment_x = simhit.exitPoint().x() - simhit.entryPoint().x();
+      me_debug_segment_x_[station_id]->Fill(segment_x);
     }
 
     if( detailPlot_ ) {

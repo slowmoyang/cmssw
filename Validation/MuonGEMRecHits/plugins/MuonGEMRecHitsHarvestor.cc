@@ -223,7 +223,10 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
       // eff_hist->GetXaxis()->SetTitle("Chamber-Layer");
       eff_hist->GetYaxis()->SetTitle("Eta Partition");
 
-      for(Int_t chamber_id = 1; chamber_id <= 36; chamber_id++) {
+      // FIXME
+      Int_t max_chamber_id = station_id == 1 ? 36 : 18;
+
+      for(Int_t chamber_id = 1; chamber_id <= max_chamber_id; chamber_id++) {
         for(Int_t layer_id = 1; layer_id <= 2; layer_id++) {
           Int_t bin = 2 * chamber_id + layer_id - 2;
           TString label = TString::Format("C%dL%d", chamber_id, layer_id);
