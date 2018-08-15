@@ -288,34 +288,35 @@ std::vector<std::pair<int, int> > GEMSimpleModel::simulateClustering(
     const int bx,
     CLHEP::HepRandomEngine* engine) {
 
-  const LocalPoint& hit_entry(simHit->entryPoint());
-  const LocalPoint& hit_exit(simHit->exitPoint());
+  const LocalPoint & hit_entry(simHit->entryPoint());
+  const LocalPoint & hit_exit(simHit->exitPoint());
 
-  float hit_entry_x = hit_entry.x();
-  float hit_exit_x = hit_exit.x();
-
-  if (hit_entry_x > hit_exit_x) {
-    hit_entry_x = hit_exit.x();
-    hit_exit_x = hit_entry.x();
+  LocalPoint start_point, end_point;
+  if(hit_entry.x() < hit_exit.x()) {
+    start_point = hit_entry;
+    end_point = hit_exit;
+  } else {
+    start_point = hit_exit;
+    end_point = hit_entry;
   }
 
-  float hit_entry_smeardX = hit_entry_x - std::abs(CLHEP::RandGaussQ::shoot(engine, 0, resolutionX_));
-  float hit_exit_smeardX = hit_exit_x + std::abs(CLHEP::RandGaussQ::shoot(engine, 0, resolutionX_));
+  // Add Gaussian noise to the points towards outside. 
+  float smeared_start_x = start_point.x() - std::abs(CLHEP::RandGaussQ::shoot(engine, 0, resolutionX_));
+  float smeared_end_x = end_point.x() + std::abs(CLHEP::RandGaussQ::shoot(engine, 0, resolutionX_));
 
-  LocalPoint inPoint(hit_entry_smeardX, hit_entry.y(), hit_entry.z());
-  LocalPoint outPoint(hit_exit_smeardX, hit_exit.y(), hit_exit.z());
+  LocalPoint smeared_start_point(smeared_start_x, start_point.y(), start_point.z());
+  LocalPoint smeared_end_point(smeared_end_x, end_point.y(), end_point.z());
 
-  int clusterStart = static_cast<int>(std::ceil(roll->strip(inPoint)));
-  int clusterEnd = static_cast<int>(std::ceil(roll->strip(outPoint)));
+  // Round up for preventing truncation caused by typecasting.
+  // If local point hit strip #2, the fractional strip number would be somewhere
+  // in the (1., 2] interval. (ref. GEMGeometry/interface/GEMEtaPartition.h)
+  int cluster_start = std::ceil(roll->strip(smeared_start_point));
+  int cluster_end = std::ceil(roll->strip(smeared_end_point));
 
-  std::vector< std::pair<int, int> > cluster_;
-  cluster_.clear();
-
-  for (int i = clusterStart; i<= clusterEnd ; i++) {
-    cluster_.emplace_back(i, bx);
+  std::vector< std::pair<int, int> > cluster;
+  for (int strip = cluster_start; strip <= cluster_end; strip++) {
+    cluster.emplace_back(strip, bx);
   }
 
-  return cluster_;
+  return cluster;
 }
-
-
