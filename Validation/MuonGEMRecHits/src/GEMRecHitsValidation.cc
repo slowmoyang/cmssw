@@ -157,8 +157,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         10, 0.5, 10.5,
         num_rolls, 0.5, num_rolls + 0.5,
         "The number of adjacent strips", "i#eta");
-   
-
 
       if (detail_plot_) {
         // NOTE Phi Ocuupancy for efficiency
@@ -200,7 +198,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         me_detail_rechit_occ_det_.second[key2] = bookDetectorOccupancy(
             ibooker, key2, station,
             "loose_rechit", "RecHit Matched to Loose Muon");
-      }
+      } // end detail plot
 
 
       for (const auto & chamber : super_chamber->chambers()) {
@@ -330,6 +328,26 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
 
     reco::TransientTrack && transient_track = transient_track_builder->build(muon_track);
 
+
+    std::vector<const GEMRecHit*> gem_rechits;
+    for (trackingRecHit_iterator iter = muon_track->recHitsBegin();
+                                 iter != muon_track->recHitsEnd();
+                                 iter++) {
+      
+      if (not (*iter)->isValid()) {
+        edm::LogInfo(log_category_) << "invalid tracking rechit" << std::endl;
+        continue;
+      }
+
+      // Check if TrackingRecHit is the GEMRecHit
+      DetId && rechit_detid = (*iter)->geographicalId();
+      if (rechit_detid.det() != DetId::Detector::Muon) continue;
+      if (rechit_detid.subdetId() != MuonSubdetId::GEM) continue;
+
+      auto rechit = dynamic_cast<const GEMRecHit*>(*iter);
+      gem_rechits.push_back(rechit);
+    }
+
     for (const auto & chamber : kGEM->chambers()) {
       TrajectoryStateOnSurface && traj_state = propagator->propagate(
           transient_track.outermostMeasurementState(),
@@ -361,8 +379,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       LocalPoint && traj_local_pos = roll->toLocal(traj_global_pos);
 
       if (not traj_state.hasError()) {
-        edm::LogError(log_category_) << "TrajectoryStateOnSurface does't have error"
-                                    << std::endl;
+        edm::LogError(log_category_) << "TrajectoryStateOnSurface does't have error" << std::endl;
         continue;
       }
       LocalError && traj_local_err = traj_state.localError().positionError();
@@ -396,22 +413,8 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       ///////////////////////////////
       // NOTE TrackingRecHit
       ////////////////////////////////
-      for (trackingRecHit_iterator iter = muon_track->recHitsBegin();
-                                   iter != muon_track->recHitsEnd();
-                                   iter++) {
+      for (const auto & rechit : gem_rechits) {
         
-        if (not (*iter)->isValid()) {
-          edm::LogInfo(log_category_) << "invalid tracking rechit" << std::endl;
-          continue;
-        }
-
-        // Check if TrackingRecHit is the GEMRecHit
-        DetId && rechit_detid = (*iter)->geographicalId();
-        if (rechit_detid.det() != DetId::Detector::Muon) continue;
-        if (rechit_detid.subdetId() != MuonSubdetId::GEM) continue;
-
-        auto rechit = dynamic_cast<GEMRecHit*>(*iter);
-
         if (traj_gemid != rechit->gemId()) continue;
 
         LocalPoint && rechit_local_pos = rechit->localPosition();
@@ -425,10 +428,10 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
           continue;
         }
 
-        // local
+        // local coordinates of RecHit
         Float_t rechit_l_x = rechit_local_pos.x();
         Float_t rechit_l_y = rechit_local_pos.y();
-        // global
+        // global coordinates of RecHit
         Float_t rechit_g_x   = rechit_global_pos.x();
         Float_t rechit_g_y   = rechit_global_pos.y();
         Float_t rechit_g_z   = std::abs(rechit_global_pos.z());
@@ -448,6 +451,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
         me_cls_->Fill(cls);
 
         me_rechit_occ_zr_[region_id]->Fill(rechit_g_z, rechit_g_r);
+    
         me_residual_x_[region_id]->Fill(residual_x);
         me_residual_y_[region_id]->Fill(residual_y);
         me_pull_x_[region_id]->Fill(pull_x);
@@ -493,7 +497,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
 
         } // detail plot
 
-        // NOTE  If we find a TrackingRecHit on GEM
+        // NOTE  If we find a TrackingRecHit on GEM, exit loop
         break;
       } // end loop over tracking rechits
 
