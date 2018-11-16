@@ -37,7 +37,8 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       "cls_tot",
       "Cluster Size Distribution;The number of adjacent strips;Entries",
       10, 0.5, 10.5);
- 
+
+  // FIXME Chamber matching
   for (const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
@@ -60,7 +61,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
 
     // For efficiency
-    // FIXME range
     me_muon_occ_eta_[region_id] = bookHist1D(
         ibooker, region_id,
         "muon_occ_eta", "Muon Eta Occupancy",
@@ -75,27 +75,28 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       // NOTE Eta Occupancy
       me_detail_muon_occ_eta_.first[region_id] = bookHist1D(
           ibooker, region_id,
-          "tight_muon_occ_eta",
-          "Tight Muon Eta Occupancy (Cut Based Id)",
-          51, eta_range_[0], eta_range_[1], "|#eta|");
-
-      me_detail_muon_occ_eta_.second[region_id] = bookHist1D(
-          ibooker, region_id,
           "loose_muon_occ_eta",
           "Loose Muon Eta Occupancy (Cut Based Id)",
           51, eta_range_[0], eta_range_[1], "|#eta|");
 
+      me_detail_muon_occ_eta_.second[region_id] = bookHist1D(
+          ibooker, region_id,
+          "tight_muon_occ_eta",
+          "Tight Muon Eta Occupancy (Cut Based Id)",
+          51, eta_range_[0], eta_range_[1], "|#eta|");
+
       me_detail_rechit_occ_eta_.first[region_id] = bookHist1D(
+          ibooker, region_id,
+          "loose_rechit_occ_eta",
+          "Eta occupancy of RecHit matched with loose muon",
+          51, eta_range_[0], eta_range_[1], "|#eta|");
+
+      me_detail_rechit_occ_eta_.second[region_id] = bookHist1D(
           ibooker, region_id,
           "tight_rechit_occ_eta",
           "Eta occupancy of RecHit matched with tight muon",
           51, eta_range_[0], eta_range_[1], "|#eta|");
 
-      me_detail_rechit_occ_eta_.second[region_id] = bookHist1D(
-          ibooker, region_id,
-          "loose_rechit_occ_eta",
-          "Eta occupancy of RecHit matched with loose muon",
-          51, eta_range_[0], eta_range_[1], "|#eta|");
     }
 
     for (const auto & station : region->stations()) {
@@ -113,6 +114,18 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           ibooker, key2,
           "rechit_occ_phi", "RecHit Phi Occupancy",
           51, -M_PI, M_PI, "#phi [rad]");
+
+      /*
+      // FIXME Chamber Matching
+      me_muon_occ_phi_[key2] = bookHist1D(
+          ibooker, key2,
+          "ch_muon_occ_phi", "Muon Phi Occupancy (Chamber Matching)",
+          51, -M_PI, M_PI, "#phi [rad]");
+      me_rechit_occ_phi_[key2] = bookHist1D(
+          ibooker, key2,
+          "ch_rechit_occ_phi", "RecHit Phi Occupancy (Chamber Matching)",
+          51, -M_PI, M_PI, "#phi [rad]");
+      */
 
       // NOTE Detector Component Occupancy for efficienc
       me_muon_occ_det_[key2] = bookDetectorOccupancy(
@@ -160,44 +173,49 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
       if (detail_plot_) {
         // NOTE Phi Ocuupancy for efficiency
-        me_detail_muon_occ_phi_.first[key2] = bookHist1D(
-            ibooker, key2,
-            "tight_muon_occ_phi",
-            "Tight Muon Phi Occupancy (Cut Based Id)",
-            51, -M_PI, M_PI, "#phi [rad]");
 
-        me_detail_muon_occ_phi_.second[key2] = bookHist1D(
+        me_detail_muon_occ_phi_.first[key2] = bookHist1D(
             ibooker, key2,
             "loose_muon_occ_phi",
             "Loose Muon Phi Occupancy (Cut Based Id)",
             51, -M_PI, M_PI, "#phi [rad]");
 
-        me_detail_rechit_occ_phi_.first[key2] = bookHist1D(
+        me_detail_muon_occ_phi_.second[key2] = bookHist1D(
             ibooker, key2,
-            "tight_rechit_occ_phi",
-            "RecHit Phi Occupancy",
+            "tight_muon_occ_phi",
+            "Tight Muon Phi Occupancy (Cut Based Id)",
             51, -M_PI, M_PI, "#phi [rad]");
 
-        me_detail_rechit_occ_phi_.second[key2] = bookHist1D(
+        me_detail_rechit_occ_phi_.first[key2] = bookHist1D(
             ibooker, key2,
             "loose_rechit_occ_phi",
             "RecHit Phi Occupancy",
             51, -M_PI, M_PI, "#phi [rad]");
 
+        me_detail_rechit_occ_phi_.second[key2] = bookHist1D(
+            ibooker, key2,
+            "tight_rechit_occ_phi",
+            "RecHit Phi Occupancy",
+            51, -M_PI, M_PI, "#phi [rad]");
+
+        ///////////////////////////////////////////////////////////////////////
         // NOTE Detector Component Occupancy for efficienc
+        ///////////////////////////////////////////////////////////////////////
         me_detail_muon_occ_det_.first[key2] = bookDetectorOccupancy(
-            ibooker, key2, station, "tight_muon", "Tight Muon");
+            ibooker, key2, station, "loose_muon", "Loose Muon");
 
         me_detail_muon_occ_det_.second[key2] = bookDetectorOccupancy(
-            ibooker, key2, station, "loose_muon", "Loose Muon");
+            ibooker, key2, station, "tight_muon", "Tight Muon");
 
         me_detail_rechit_occ_det_.first[key2] = bookDetectorOccupancy(
             ibooker, key2, station,
-            "tight_rechit", "RecHit Matched to Tight Muon");
+            "loose_rechit", "RecHit Matched to Loose Muon");
 
         me_detail_rechit_occ_det_.second[key2] = bookDetectorOccupancy(
             ibooker, key2, station,
-            "loose_rechit", "RecHit Matched to Loose Muon");
+            "tight_rechit", "RecHit Matched to Tight Muon");
+
+
       } // end detail plot
 
 
@@ -253,6 +271,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
   } // region loop
 
 
+
   return;
 }
 
@@ -294,8 +313,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
   if (kGEM == nullptr) return; 
 
   edm::ESHandle<TransientTrackBuilder> transient_track_builder;
-  event_setup.get<TransientTrackRecord>().get("TransientTrackBuilder",
-                                              transient_track_builder);
+  event_setup.get<TransientTrackRecord>().get("TransientTrackBuilder", transient_track_builder);
   muon_service_proxy_->update(event_setup);
   edm::ESHandle<Propagator> propagator = muon_service_proxy_->propagator(kPropagatorName_);
 
@@ -315,7 +333,6 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       muon_id = kLooseId_;
     }
 
-
     const reco::Track *muon_track = nullptr;  
     if (muon->globalTrack().isNonnull()) {
       muon_track = muon->globalTrack().get();
@@ -328,7 +345,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
 
     reco::TransientTrack && transient_track = transient_track_builder->build(muon_track);
 
-
+    // Find GEMRecHits
     std::vector<const GEMRecHit*> gem_rechits;
     for (trackingRecHit_iterator iter = muon_track->recHitsBegin();
                                  iter != muon_track->recHitsEnd();
@@ -348,7 +365,14 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       gem_rechits.push_back(rechit);
     }
 
+    /////////////////////////////
+    // NOTE
+    ////////////////////////////////////
     for (const auto & chamber : kGEM->chambers()) {
+      // TODO write comment
+      if (muon->eta() * chamber->id().region() < 0) continue;
+
+
       TrajectoryStateOnSurface && traj_state = propagator->propagate(
           transient_track.outermostMeasurementState(),
           chamber->surface());
@@ -398,108 +422,129 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       me_muon_occ_det_[key2]->Fill(det_occ_bin_x, roll_id);
 
       if (detail_plot_) {
-        if (muon_id == kTightId_) {
+        if (muon_id >= kLooseId_) {
           me_detail_muon_occ_eta_.first[region_id]->Fill(traj_g_eta);
           me_detail_muon_occ_phi_.first[key2]->Fill(traj_g_phi);
           me_detail_muon_occ_det_.first[key2]->Fill(det_occ_bin_x, roll_id);
-        } else if (muon_id == kLooseId_) {
+
+          if (muon_id == kTightId_) {
           me_detail_muon_occ_eta_.second[region_id]->Fill(traj_g_eta);
           me_detail_muon_occ_phi_.second[key2]->Fill(traj_g_phi);
           me_detail_muon_occ_det_.second[key2]->Fill(det_occ_bin_x, roll_id);
+          }
         }
 
       }
 
-      ///////////////////////////////
-      // NOTE TrackingRecHit
-      ////////////////////////////////
+
+      ////////////////////////////////////////////////
+      // NOTE On Eta Partition
+      ////////////////////////////////////////////////////
+      Float_t closet_distance = std::numeric_limits<Float_t>::infinity();
+      const GEMRecHit* matched_rechit = nullptr;
       for (const auto & rechit : gem_rechits) {
-        
         if (traj_gemid != rechit->gemId()) continue;
 
-        LocalPoint && rechit_local_pos = rechit->localPosition();
-        GlobalPoint && rechit_global_pos = roll->toGlobal(rechit_local_pos);
-        LocalError && rechit_local_err = rechit->localPositionError();
-        Int_t cls = rechit->clusterSize();
-
+        LocalError && rechit_local_err   = rechit->localPositionError();
         if (rechit_local_err.invalid()) {
-          edm::LogError(log_category_) << "Invalid LocalError of GEMRecHit"
-                                       << std::endl;
+          edm::LogError(log_category_) << "Invalid LocalError of GEMRecHit" << std::endl;
           continue;
         }
 
-        // local coordinates of RecHit
-        Float_t rechit_l_x = rechit_local_pos.x();
-        Float_t rechit_l_y = rechit_local_pos.y();
-        // global coordinates of RecHit
-        Float_t rechit_g_x   = rechit_global_pos.x();
-        Float_t rechit_g_y   = rechit_global_pos.y();
-        Float_t rechit_g_z   = std::abs(rechit_global_pos.z());
-        Float_t rechit_g_r   = rechit_global_pos.perp();
-        // Float_t rechit_g_eta = std::abs(rechit_global_pos.eta());
-        Float_t rechit_g_phi = rechit_global_pos.phi();
+        LocalPoint && rechit_local_pos   = rechit->localPosition();
 
-        Float_t residual_x = rechit_l_x - traj_l_x;
-        Float_t residual_y = rechit_l_y - traj_l_y;
+        //
+        Float_t residual_x = rechit_local_pos.x() - traj_l_x;
+        Float_t residual_y = rechit_local_pos.y() - traj_l_y;
 
-        Float_t resolution_x = std::sqrt(rechit_local_err.xx() + traj_local_err.xx());
-        Float_t resolution_y = std::sqrt(rechit_local_err.yy() + traj_local_err.yy());
+        Float_t distance = std::hypot(residual_x, residual_y);
 
-        Float_t pull_x = residual_x / resolution_x;
-        Float_t pull_y = residual_y / resolution_y;
+        if (distance < closet_distance) {
+          closet_distance = distance;
+          matched_rechit = rechit;
+        }
 
-        me_cls_->Fill(cls);
-
-        me_rechit_occ_zr_[region_id]->Fill(rechit_g_z, rechit_g_r);
-    
-        me_residual_x_[region_id]->Fill(residual_x);
-        me_residual_y_[region_id]->Fill(residual_y);
-        me_pull_x_[region_id]->Fill(pull_x);
-        me_pull_y_[region_id]->Fill(pull_y);
-
-        me_residual_x_roll_[key2]->Fill(residual_x, roll_id);
-        me_residual_y_roll_[key2]->Fill(residual_y, roll_id);
-        me_pull_x_roll_[key2]->Fill(pull_x, roll_id);
-        me_pull_y_roll_[key2]->Fill(pull_y, roll_id);
-
-        me_cls_roll_[key2]->Fill(cls, roll_id);
+      }
 
 
-        // NOTE Even if muon and rechit are matched, they can be filled in
-        // different bins. Therefore, the rechit occupancy is also filled
-        // with muon's one.
-        me_rechit_occ_eta_[region_id]->Fill(traj_g_eta);
-        me_rechit_occ_phi_[key2]->Fill(traj_g_phi);
-        me_rechit_occ_det_[key2]->Fill(det_occ_bin_x, roll_id);
+      if (matched_rechit == nullptr) continue;
 
-        if (detail_plot_) {
-          me_detail_cls_[key3]->Fill(cls);
+      LocalPoint && rechit_local_pos   = matched_rechit->localPosition();
+      GlobalPoint && rechit_global_pos = roll->toGlobal(rechit_local_pos);
+      LocalError && rechit_local_err = matched_rechit->localPositionError();
 
-          me_detail_rechit_occ_xy_[key3]->Fill(rechit_g_x, rechit_g_y);
-          me_detail_rechit_occ_xy_ch1_[key3]->Fill(rechit_g_x, rechit_g_y);
-          me_detail_rechit_occ_zr_[key3]->Fill(rechit_g_z, rechit_g_r);
-          me_detail_rechit_occ_polar_[key3]->Fill(rechit_g_phi, rechit_g_r);
+      Int_t cls = matched_rechit->clusterSize();
 
-          me_detail_residual_x_[key3]->Fill(residual_x);
-          me_detail_residual_y_[key3]->Fill(residual_y);
-          me_detail_pull_x_[key3]->Fill(pull_x);
-          me_detail_pull_y_[key3]->Fill(pull_y);
+      // local coordinates of RecHit
+      Float_t rechit_l_x = rechit_local_pos.x();
+      Float_t rechit_l_y = rechit_local_pos.y();
+      // global coordinates of RecHit
+      Float_t rechit_g_x   = rechit_global_pos.x();
+      Float_t rechit_g_y   = rechit_global_pos.y();
+      Float_t rechit_g_z   = std::abs(rechit_global_pos.z());
+      Float_t rechit_g_r   = rechit_global_pos.perp();
+      // Float_t rechit_g_eta = std::abs(rechit_global_pos.eta());
+      Float_t rechit_g_phi = rechit_global_pos.phi();
+
+      //
+      Float_t residual_x = rechit_l_x - traj_l_x;
+      Float_t residual_y = rechit_l_y - traj_l_y;
+
+      Float_t resolution_x = std::sqrt(rechit_local_err.xx() + traj_local_err.xx());
+      Float_t resolution_y = std::sqrt(rechit_local_err.yy() + traj_local_err.yy());
+
+      Float_t pull_x = residual_x / resolution_x;
+      Float_t pull_y = residual_y / resolution_y;
+
+      me_cls_->Fill(cls);
+
+      me_rechit_occ_zr_[region_id]->Fill(rechit_g_z, rechit_g_r);
+  
+      me_residual_x_[region_id]->Fill(residual_x);
+      me_residual_y_[region_id]->Fill(residual_y);
+      me_pull_x_[region_id]->Fill(pull_x);
+      me_pull_y_[region_id]->Fill(pull_y);
+
+      me_residual_x_roll_[key2]->Fill(residual_x, roll_id);
+      me_residual_y_roll_[key2]->Fill(residual_y, roll_id);
+      me_pull_x_roll_[key2]->Fill(pull_x, roll_id);
+      me_pull_y_roll_[key2]->Fill(pull_y, roll_id);
+
+      me_cls_roll_[key2]->Fill(cls, roll_id);
+
+      // FIXME Even if muon and rechit are matched, they can be filled in
+      // different bins. Therefore, the rechit occupancy is also filled
+      // with muon's one.
+      me_rechit_occ_eta_[region_id]->Fill(traj_g_eta);
+      me_rechit_occ_phi_[key2]->Fill(traj_g_phi);
+      me_rechit_occ_det_[key2]->Fill(det_occ_bin_x, roll_id);
+
+      if (detail_plot_) {
+        me_detail_cls_[key3]->Fill(cls);
+
+        me_detail_rechit_occ_xy_[key3]->Fill(rechit_g_x, rechit_g_y);
+        me_detail_rechit_occ_xy_ch1_[key3]->Fill(rechit_g_x, rechit_g_y);
+        me_detail_rechit_occ_zr_[key3]->Fill(rechit_g_z, rechit_g_r);
+        me_detail_rechit_occ_polar_[key3]->Fill(rechit_g_phi, rechit_g_r);
+
+        me_detail_residual_x_[key3]->Fill(residual_x);
+        me_detail_residual_y_[key3]->Fill(residual_y);
+        me_detail_pull_x_[key3]->Fill(pull_x);
+        me_detail_pull_y_[key3]->Fill(pull_y);
+
+        if (muon_id >= kLooseId_) {
+          me_detail_rechit_occ_eta_.first[region_id]->Fill(traj_g_eta);
+          me_detail_rechit_occ_phi_.first[key2]->Fill(traj_g_phi);
+          me_detail_rechit_occ_det_.first[key2]->Fill(det_occ_bin_x, roll_id);
 
           if (muon_id == kTightId_) {
-            me_detail_rechit_occ_eta_.first[region_id]->Fill(traj_g_eta);
-            me_detail_rechit_occ_phi_.first[key2]->Fill(traj_g_phi);
-            me_detail_rechit_occ_det_.first[key2]->Fill(det_occ_bin_x, roll_id);
-          } else if (muon_id == kLooseId_) {
             me_detail_rechit_occ_eta_.second[region_id]->Fill(traj_g_eta);
             me_detail_rechit_occ_phi_.second[key2]->Fill(traj_g_phi);
             me_detail_rechit_occ_det_.second[key2]->Fill(det_occ_bin_x, roll_id);
           }
+        }
 
-        } // detail plot
-
-        // NOTE  If we find a TrackingRecHit on GEM, exit loop
-        break;
-      } // end loop over tracking rechits
+      } // detail plot
 
     } // end loop over GEM chambers (trajectory state on surface)
   } // end loop over muon

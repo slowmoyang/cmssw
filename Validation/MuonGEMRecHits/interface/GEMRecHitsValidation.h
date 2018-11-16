@@ -84,7 +84,7 @@ class GEMRecHitsValidation : public GEMBaseValidation {
 
   // constants
   const std::string kPropagatorName_ = "SteppingHelixPropagatorAny";
-  const Int_t kTightId_ = 1, kLooseId_ = 2;
+  const Int_t kLooseId_ = 1, kTightId_ = 2;
 
 };
 
