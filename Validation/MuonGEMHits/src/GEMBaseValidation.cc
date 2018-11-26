@@ -35,7 +35,7 @@ const GEMGeometry* GEMBaseValidation::initGeometry(
     event_setup.get<MuonGeometryRecord>().get(geom_handle);
     kGEM = &*geom_handle;
   } catch(edm::eventsetup::NoProxyException<GEMGeometry>& e) {
-    edm::LogError(log_category_) << "+++ Error : GEM geometry is unavailable on event loop. +++\n";
+    edm::LogError(log_category_) << "GEM geometry is unavailable on event loop." << std::endl;
     return nullptr;
   }
 
@@ -48,7 +48,6 @@ Int_t GEMBaseValidation::getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
 }
 
 
-
 MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                    Int_t region_id,
                                                    const char* name_prefix,
@@ -57,9 +56,8 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   const char* title_suffix = GEMUtils::getSuffixTitle(region_id).Data();
 
   TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s ZR Occupancy%s;|Z| [cm];R [cm]",
+  TString title = TString::Format("%s ZR Occupancy :%s;|Z| [cm];R [cm]",
                                   title_prefix, title_suffix);
-
 
   Double_t station1_xmin = zr_occ_range_[0];
   Double_t station1_xmax = zr_occ_range_[1];

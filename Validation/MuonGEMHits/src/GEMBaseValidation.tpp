@@ -21,7 +21,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
   TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s ZR Occupancy%s;|Z| #[cm];R [cm]",
+  TString title = TString::Format("%s ZR Occupancy :%s;|Z| #[cm];R [cm]",
                                   title_prefix, title_suffix);
 
   // NOTE currently, only GE11 and GE21 are considered.
@@ -50,7 +50,7 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
   TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s XY Occupancy%s;X [cm];Y [cm]",
+  TString title = TString::Format("%s XY Occupancy :%s;X [cm];Y [cm]",
                                   title_prefix, title_suffix);
   return ibooker.book2D(name, title,
                         xy_occ_num_bins_, -360, 360,
@@ -68,7 +68,7 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(
   const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
   TString name = TString::Format("%s_occ_polar%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s Polar Occupancy%s", title_prefix, title_suffix);
+  TString title = TString::Format("%s Polar Occupancy :%s", title_prefix, title_suffix);
   // TODO # of bins
   MonitorElement* me = ibooker.book2D(name, title,
                                       101, -M_PI, M_PI,
@@ -90,7 +90,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
 
   TString name = TString::Format("%s_occ_det%s", name_prefix, name_suffix); 
   TString title = TString::Format(
-      "%s Occupancy for detector component%s;;Eta Partition",
+      "%s Occupancy for detector component :%s;;Eta Partition",
       title_prefix, title_suffix);
 
   std::vector<const GEMSuperChamber*> superchambers = station->superChambers();
