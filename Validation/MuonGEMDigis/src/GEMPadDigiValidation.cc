@@ -20,13 +20,13 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
   for (const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "pad", "Pad DIGI");
+    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "pad", "Pad Digi");
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "pad", "Pad DIGI");
+      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "pad", "Pad Digi");
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -42,7 +42,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
           me_detail_occ_phi_pad_[key3] = bookHist2D(
               ibooker, key3,
               "occ_phi_pad",
-              "Pad DIGI Occupancy",
+              "Pad Digi Occupancy",
               280, -M_PI, M_PI,
               num_pads / 2, 0, num_pads,
               "#phi [rad]", "Pad number");
@@ -50,7 +50,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
           me_detail_occ_pad_[key3] = bookHist1D(
               ibooker, key3,
               "occ_pad",
-              "Pad DIGI Occupancy",
+              "Pad Digi Occupancy",
               num_pads, -0.5, num_pads - 0.5,
               "GEM Pad Id");
 
@@ -90,7 +90,7 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
 
     if (kGEM->idToDet(gemid) == nullptr) { 
       edm::LogError(log_category_) << "Getting DetId failed. Discard this gem pad hit. "
-                                  << "Maybe it comes from unmatched geometry." << std::endl;
+                                   << "Maybe it comes from unmatched geometry." << std::endl;
       continue; 
     }
 
@@ -108,6 +108,7 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
 
     for (auto digi = range.first; digi != range.second; ++digi) {
       Int_t pad = digi->pad();
+      // bunch crossing
       Int_t bx  = digi->bx();
 
       LocalPoint && local_pos = roll->centreOfPad(pad);
@@ -119,7 +120,6 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
       Float_t g_y     = global_pos.y();
       Float_t g_abs_z = std::fabs(global_pos.z());
 
-      // Simple Plots
       me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
 
       Int_t bin_x = getDetOccBinX(chamber_id, layer_id);

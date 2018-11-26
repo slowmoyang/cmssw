@@ -33,7 +33,7 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
     me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "strip", "Strip");
 
-    // NOTE occupancy plots for phi efficiency
+    // NOTE occupancy plots for eta efficiency
     me_simhit_occ_eta_[region_id] = bookHist1D(
         ibooker, region_id,
         "muon_simhit_occ_eta",
@@ -193,18 +193,16 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     } // digi loop end
   } // end loop over digi_collection
 
-
-
-  // XXX if (is_mc_) {
-  //
+  // TODO if (is_mc_)
   for (const auto & simhit : *simhit_container.product()) {
     // muon only
     if (std::abs(simhit.particleType()) != kMuonPDGId_) continue;
 
     if (kGEM->idToDet(simhit.detUnitId()) == nullptr) {
-      edm::LogInfo(log_category_) << "SimHit did not match with GEMGeometry.\n";
+      edm::LogInfo(log_category_) << "SimHit did not match with GEMGeometry." << std::endl;
       continue;
     }
+
     GEMDetId simhit_gemid(simhit.detUnitId());
 
     Int_t region_id = simhit_gemid.region();
@@ -232,6 +230,8 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     me_simhit_occ_det_[key2]->Fill(bin_x, roll_id); 
 
     Bool_t found_matched_digi = false;
+
+    // GEMCoPadDigiCollection::DigiRangeIterator
     for (auto range_iter = digi_collection->begin();
               range_iter != digi_collection->end();
               range_iter++) {

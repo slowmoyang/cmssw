@@ -38,7 +38,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       "Cluster Size Distribution;The number of adjacent strips;Entries",
       10, 0.5, 10.5);
 
-  // FIXME Chamber matching
   for (const auto & region : kGEM->regions()) {
     Int_t region_id = region->region();
 
@@ -59,8 +58,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
                                        "pull_y", "Pull in Local Y",
                                        100, -5.0, 5.0);
 
-
-    // For efficiency
+    // NOTE for eta efficiencies
     me_muon_occ_eta_[region_id] = bookHist1D(
         ibooker, region_id,
         "muon_occ_eta", "Muon Eta Occupancy",
@@ -72,7 +70,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         50, eta_range_[0], eta_range_[1], "|#eta|");
 
     if (detail_plot_) {
-      // NOTE Eta Occupancy
       me_detail_muon_occ_eta_.first[region_id] = bookHist1D(
           ibooker, region_id,
           "loose_muon_occ_eta",
@@ -105,7 +102,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
 
-      // NOTE Phi Ocuupancy for efficiency
+      // NOTE for phi efficiencies
       me_muon_occ_phi_[key2] = bookHist1D(
           ibooker, key2,
           "muon_occ_phi", "Muon Phi Occupancy",
@@ -114,18 +111,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           ibooker, key2,
           "rechit_occ_phi", "RecHit Phi Occupancy",
           51, -M_PI, M_PI, "#phi [rad]");
-
-      /*
-      // FIXME Chamber Matching
-      me_muon_occ_phi_[key2] = bookHist1D(
-          ibooker, key2,
-          "ch_muon_occ_phi", "Muon Phi Occupancy (Chamber Matching)",
-          51, -M_PI, M_PI, "#phi [rad]");
-      me_rechit_occ_phi_[key2] = bookHist1D(
-          ibooker, key2,
-          "ch_rechit_occ_phi", "RecHit Phi Occupancy (Chamber Matching)",
-          51, -M_PI, M_PI, "#phi [rad]");
-      */
 
       // NOTE Detector Component Occupancy for efficienc
       me_muon_occ_det_[key2] = bookDetectorOccupancy(
@@ -173,7 +158,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
 
       if (detail_plot_) {
         // NOTE Phi Ocuupancy for efficiency
-
         me_detail_muon_occ_phi_.first[key2] = bookHist1D(
             ibooker, key2,
             "loose_muon_occ_phi",
@@ -198,9 +182,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
             "RecHit Phi Occupancy",
             51, -M_PI, M_PI, "#phi [rad]");
 
-        ///////////////////////////////////////////////////////////////////////
-        // NOTE Detector Component Occupancy for efficienc
-        ///////////////////////////////////////////////////////////////////////
+        // NOTE Detector Component Occupancy for efficies
         me_detail_muon_occ_det_.first[key2] = bookDetectorOccupancy(
             ibooker, key2, station, "loose_muon", "Loose Muon");
 
@@ -214,7 +196,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
         me_detail_rechit_occ_det_.second[key2] = bookDetectorOccupancy(
             ibooker, key2, station,
             "tight_rechit", "RecHit Matched to Tight Muon");
-
 
       } // end detail plot
 
@@ -241,14 +222,11 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
           me_detail_rechit_occ_polar_[key3] = bookPolarOccupancy(
               ibooker, key3, "rechit", "recHits");
 
-          // bookHist1D(ibooker, name, title, nbinsx, xlow, xup, x_title)
-          // NOTE include xup
           me_detail_cls_[key3] = bookHist1D(
               ibooker, key3,
               "cls", "Cluster Size Distribution",
               10, 0.5, 10.5, "The number of adjacent strips");
 
-          // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_residual_x_[key3] = bookHist1D(
               ibooker, key3,
               "residual_x", "Residual in Local X",
@@ -269,8 +247,6 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       } // end loop over layers
     } // station loop
   } // region loop
-
-
 
   return;
 }
@@ -313,9 +289,11 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
   if (kGEM == nullptr) return; 
 
   edm::ESHandle<TransientTrackBuilder> transient_track_builder;
-  event_setup.get<TransientTrackRecord>().get("TransientTrackBuilder", transient_track_builder);
+  event_setup.get<TransientTrackRecord>().get("TransientTrackBuilder",
+                                              transient_track_builder);
   muon_service_proxy_->update(event_setup);
-  edm::ESHandle<Propagator> propagator = muon_service_proxy_->propagator(kPropagatorName_);
+  edm::ESHandle<Propagator> propagator = muon_service_proxy_->propagator(
+      "SteppingHelixPropagatorAny");
 
   ///////////////////////////////////////////////////////////
   // Muon
@@ -365,18 +343,14 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       gem_rechits.push_back(rechit);
     }
 
-    /////////////////////////////
-    // NOTE
-    ////////////////////////////////////
     for (const auto & chamber : kGEM->chambers()) {
-      // TODO write comment
+      // NOTE do not consider the case where the chamber is in the opposite
+      // direction of the muon's direction of motion.
       if (muon->eta() * chamber->id().region() < 0) continue;
-
 
       TrajectoryStateOnSurface && traj_state = propagator->propagate(
           transient_track.outermostMeasurementState(),
           chamber->surface());
-
       if (not traj_state.isValid()) continue;
 
       GlobalPoint && traj_global_pos = traj_state.globalPosition();
@@ -408,10 +382,8 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       }
       LocalError && traj_local_err = traj_state.localError().positionError();
 
-      // Track Global Position on a given chamber
       Float_t traj_g_eta = std::abs(traj_global_pos.eta());
       Float_t traj_g_phi = traj_global_pos.phi();
-      // Track Local Position on a given chamber
       Float_t traj_l_x = traj_local_pos.x();
       Float_t traj_l_y = traj_local_pos.y();
       // bin x of detector occupancy plots
@@ -436,7 +408,6 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
 
       }
 
-
       ////////////////////////////////////////////////
       // NOTE On Eta Partition
       ////////////////////////////////////////////////////
@@ -451,21 +422,17 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
           continue;
         }
 
-        LocalPoint && rechit_local_pos   = rechit->localPosition();
+        LocalPoint && rechit_local_pos = rechit->localPosition();
 
-        //
         Float_t residual_x = rechit_local_pos.x() - traj_l_x;
         Float_t residual_y = rechit_local_pos.y() - traj_l_y;
 
         Float_t distance = std::hypot(residual_x, residual_y);
-
         if (distance < closet_distance) {
           closet_distance = distance;
           matched_rechit = rechit;
         }
-
       }
-
 
       if (matched_rechit == nullptr) continue;
 
@@ -475,10 +442,8 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
 
       Int_t cls = matched_rechit->clusterSize();
 
-      // local coordinates of RecHit
       Float_t rechit_l_x = rechit_local_pos.x();
       Float_t rechit_l_y = rechit_local_pos.y();
-      // global coordinates of RecHit
       Float_t rechit_g_x   = rechit_global_pos.x();
       Float_t rechit_g_y   = rechit_global_pos.y();
       Float_t rechit_g_z   = std::abs(rechit_global_pos.z());
@@ -486,7 +451,6 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
       // Float_t rechit_g_eta = std::abs(rechit_global_pos.eta());
       Float_t rechit_g_phi = rechit_global_pos.phi();
 
-      //
       Float_t residual_x = rechit_l_x - traj_l_x;
       Float_t residual_y = rechit_l_y - traj_l_y;
 

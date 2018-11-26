@@ -46,7 +46,7 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
         me_detail_occ_phi_pad_[key2] = bookHist2D(
             ibooker, key2,
             "copad_digi_occ_phi_pad",
-            "CoPad DIGI Occupancy",
+            "CoPad Digi Occupancy",
             280, -M_PI, M_PI,
             num_pads / 2, 0, num_pads,
             "#phi [rad]", "Pad number");
@@ -54,14 +54,14 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
         me_detail_occ_pad_[key2] = bookHist1D(
             ibooker, key2,
             "copad_digi_occ_pad",
-            "CoPad DIGI Ocupancy per pad number",
+            "CoPad Digi Ocupancy per pad number",
             num_pads, 0.5, num_pads + 0.5,
             "Pad number");
 
         me_detail_bx_[key2] = bookHist1D(
             ibooker, key2,
             "copad_digi_bx",
-            "CoPad DIGI Bunch Crossing",
+            "CoPad Digi Bunch Crossing",
             11, -5.5, 5.5,
             "bunch crossing");
       }
@@ -104,26 +104,26 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
 
     ME2IdsKey key2(region_id, station_id);
 
-    //loop over digis of given roll
     // GEMCoPadDigiCollection::const_iterator digi;
     for (auto digi = range.first; digi != range.second; ++digi) {
 
       // GEM copads are stored per super chamber!
       // layer_id = 0, roll_id = 0
-      GEMDetId schId = GEMDetId(region_id, ring_id, station_id, 0, chamber_id, 0);
+      GEMDetId super_chamber_id = GEMDetId(region_id, ring_id, station_id, 0, chamber_id, 0);
       Int_t roll_id = (*digi).roll();
 
-      const GeomDet* geom_det = kGEM->idToDet(schId);
+      const GeomDet* geom_det = kGEM->idToDet(super_chamber_id);
       if ( geom_det == nullptr) {
-        edm::LogError(log_category_) << schId << " : This detId cannot be "
+        edm::LogError(log_category_) << super_chamber_id << " : This detId cannot be "
                                      << "loaded from GEMGeometry // Original"
                                      << gem_id << " station : " << station_id << std::endl
-                                     << "Getting DetId failed. Discard this gem copad hit.\n";
+                                     << "Getting DetId failed. Discard this gem copad hit."
+                                     << std::endl;
         continue; 
       }
 
       const BoundPlane & surface = geom_det->surface();
-      const GEMSuperChamber * superChamber = kGEM->superChamber(schId);
+      const GEMSuperChamber * superChamber = kGEM->superChamber(super_chamber_id);
 
       Int_t pad1 = digi->pad(1);
       Int_t pad2 = digi->pad(2);
@@ -157,7 +157,6 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
 
       Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
       me_occ_det_[key2]->Fill(bin_x, roll_id);
-      // FIXME
       me_occ_det_[key2]->Fill(bin_x + 1, roll_id);
 
       // Fill detail plots.

@@ -45,7 +45,7 @@ TProfile* MuonGEMBaseHarvestor::computeEfficiency(const TH1F & passed,
         num_total, num_passed, confidence_level, false);
     Double_t upper_bound = TEfficiency::ClopperPearson(
         num_total, num_passed, confidence_level, true);
-    // FIXME with..? half-width..?
+
     Double_t width = std::max(efficiency - lower_bound, upper_bound - efficiency);
     Double_t error = std::hypot(efficiency, width);
 
