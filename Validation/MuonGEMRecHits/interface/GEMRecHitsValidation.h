@@ -26,8 +26,7 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   const GEMEtaPartition * findEtaPartition(const GEMChamber* chamber,
                                            GlobalPoint & global_point);
 
-  //Simple Plots
-  MonitorElement* me_cls_;
+  MonitorElement* me_cls_; // cluster size
 
   MEMap1Ids me_residual_x_;
   MEMap1Ids me_residual_y_;
@@ -52,10 +51,8 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   MEMap2Ids me_rechit_occ_phi_;
   MEMap2Ids me_rechit_occ_det_;
 
-  // Detaile Plots
-
   // occupancy plots for efficiency
-  // first: tight <--> second: loose
+  // first: loose <--> second: tight
   std::pair<MEMap1Ids, MEMap1Ids> me_detail_muon_occ_eta_;
   std::pair<MEMap2Ids, MEMap2Ids> me_detail_muon_occ_phi_;
   std::pair<MEMap2Ids, MEMap2Ids> me_detail_muon_occ_det_;
@@ -69,23 +66,20 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   MEMap3Ids me_detail_rechit_occ_zr_;
   MEMap3Ids me_detail_rechit_occ_polar_;
 
-  // 
   MEMap3Ids me_detail_cls_;
   MEMap3Ids me_detail_residual_x_;
   MEMap3Ids me_detail_residual_y_;
   MEMap3Ids me_detail_pull_x_;
   MEMap3Ids me_detail_pull_y_;
 
-  //  
+  // parameters 
   edm::EDGetToken rechit_token_;
   edm::EDGetTokenT<edm::View<reco::Muon> > muon_token_;
   MuonServiceProxy* muon_service_proxy_; 
   Float_t muon_pt_cut_;
 
   // constants
-  const std::string kPropagatorName_ = "SteppingHelixPropagatorAny";
   const Int_t kLooseId_ = 1, kTightId_ = 2;
-
 };
 
 #endif // VALIDATION_MUONGEMRECHITS_INTERFACE_GEMRECHITSVALIDATION_H_
