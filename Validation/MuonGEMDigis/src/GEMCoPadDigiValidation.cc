@@ -12,8 +12,9 @@ GEMCoPadDigiValidation::GEMCoPadDigiValidation(const edm::ParameterSet& ps)
   copad_token_ = consumes<GEMCoPadDigiCollection>(copad_label);
 
   // FIXME
-  minBXGEM_ = ps.getParameter<Int_t>("minBXGEM"); 
-  maxBXGEM_ = ps.getParameter<Int_t>("maxBXGEM"); 
+  auto gem_bx_range = ps.getParameter<std::vector<Int_t> >("GEMBXRange");
+  gem_bx_min_ = gem_bx_range[0];
+  gem_bx_max_ = gem_bx_range[1];
 }
 
 
@@ -131,8 +132,8 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
       Int_t bx2  = digi->bx(2);
 
       // Filtered using BX
-      if ( bx1 < minBXGEM_ or bx1 > maxBXGEM_) continue;
-      if ( bx2 < minBXGEM_ or bx2 > maxBXGEM_) continue;
+      if ( bx1 < gem_bx_min_ or bx1 > gem_bx_max_) continue;
+      if ( bx2 < gem_bx_min_ or bx2 > gem_bx_max_) continue;
 
       //  const GEMChamber* chamber(nnt layer) const;
       LocalPoint lp1 = superChamber->chamber(1)->etaPartition(roll_id)->centreOfPad(pad1);

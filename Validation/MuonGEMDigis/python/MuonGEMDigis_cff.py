@@ -7,21 +7,18 @@ gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   folder = cms.string("MuonGEMDigisV/GEMDigisTask/Strip"),
   logCategory = cms.string("GEMStripDigiValidation"),
   detailPlot = cms.bool(True), 
-  # InputTag
+  # input tag
   stripLabel= cms.InputTag("muonGEMDigis"),
   simhitLabel = cms.InputTag('g4SimHits', "MuonGEMHits"),
-  # Additional
-  nStripsGE11 =  cms.untracked.int32(384),
-  nStripsGE21 =  cms.untracked.int32(768),
 )
 
 
 gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   GEMValidationCommonParameters,
-  logCategory = cms.string("GEMPadDigiValidation"),
   folder = cms.string("MuonGEMDigisV/GEMDigisTask/Pad"),
+  logCategory = cms.string("GEMPadDigiValidation"),
   detailPlot = cms.bool(True), 
-  # Input Label
+  # input tag
   padLabel = cms.InputTag('simMuonGEMPadDigis'),
   simhitLabel = cms.InputTag('g4SimHits', "MuonGEMHits"),
 )
@@ -29,15 +26,14 @@ gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
 
 gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   GEMValidationCommonParameters,
-  logCategory = cms.string("GEMCoPadDigiValidation"),
   folder = cms.string("MuonGEMDigisV/GEMDigisTask/CoPad"),
+  logCategory = cms.string("GEMCoPadDigiValidation"),
   detailPlot = cms.bool(True), 
+  # input tag
   copadLabel = cms.InputTag('simCscTriggerPrimitiveDigis') ,
   simhitLabel = cms.InputTag('g4SimHits',"MuonGEMHits"),
-  # Additional
-  minBXGEM = cms.int32(-1),
-  maxBXGEM = cms.int32(1),
-  # FIXME BXRange = cms.vint32(-1, 1),
+  # additional
+  GEMBXRange = cms.untracked.vint32(-1, 1),
 )
 
 

@@ -10,7 +10,7 @@ gemSimHitValidation = DQMEDAnalyzer('GEMHitsValidation',
     detailPlot = cms.bool(True), 
     # InputTag
     simhitLabel = cms.InputTag('g4SimHits', "MuonGEMHits"),
-    # Untracked parameters
+    # additional
     TOFRange = cms.untracked.vdouble(18, 22, # GEM11
                                      26, 30), # GE21
 )

@@ -11,6 +11,7 @@ gemRecHitsValidation = DQMEDAnalyzer('GEMRecHitsValidation',
     detailPlot = cms.bool(True),
     # Input tags
     muonLabel=cms.InputTag("muons"),
+    # additional
     muonpTCut=cms.double(10.0)
 )
 
