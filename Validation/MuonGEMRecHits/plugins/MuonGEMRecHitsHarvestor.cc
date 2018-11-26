@@ -39,19 +39,19 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
               "rechit_occ_eta" + name_suffix_re,
               "muon_occ_eta" + name_suffix_re,
               "eff_eta" + name_suffix_re,
-              "Eta Efficiency" + title_suffix_re);
+              "Eta Efficiency :" + title_suffix_re);
 
     bookEff1D(ibooker, igetter, folder_,
               "tight_rechit_occ_eta" + name_suffix_re,
               "tight_muon_occ_eta" + name_suffix_re,
               "eff_eta_tight" + name_suffix_re,
-              "Eta Efficiency (CutBasedIdTight)" + title_suffix_re);
+              "Eta Efficiency (CutBasedIdTight) :" + title_suffix_re);
 
     bookEff1D(ibooker, igetter, folder_,
               "loose_rechit_occ_eta" + name_suffix_re,
               "loose_muon_occ_eta" + name_suffix_re,
               "eff_eta_loose" + name_suffix_re,
-              "Eta Efficiency (CutBasedIdLoose)" + title_suffix_re);
+              "Eta Efficiency (CutBasedIdLoose) :" + title_suffix_re);
 
     for (const auto & station_id : station_ids_) {
       TString name_suffix_re_st = GEMUtils::getSuffixName(region_id, station_id);
@@ -62,38 +62,38 @@ void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
                 "rechit_occ_phi" + name_suffix_re_st,
                 "muon_occ_phi" + name_suffix_re_st,
                 "eff_phi" + name_suffix_re_st,
-                "Phi Efficiency" + title_suffix_re_st);
+                "Phi Efficiency :" + title_suffix_re_st);
 
       bookEff1D(ibooker, igetter, folder_,
                 "tight_rechit_occ_phi" + name_suffix_re_st,
                 "tight_muon_occ_phi" + name_suffix_re_st,
                 "eff_phi_tight" + name_suffix_re_st,
-                "Phi Efficiency (CutBasedIdTight)" + title_suffix_re_st);
+                "Phi Efficiency (CutBasedIdTight) :" + title_suffix_re_st);
 
       bookEff1D(ibooker, igetter, folder_,
                 "loose_rechit_occ_phi" + name_suffix_re_st,
                 "loose_muon_occ_phi" + name_suffix_re_st,
                 "eff_phi_loose" + name_suffix_re_st,
-                "Phi Efficiency (CutBasedIdLoose)" + title_suffix_re_st);
+                "Phi Efficiency (CutBasedIdLoose) :" + title_suffix_re_st);
 
       // NOTE Detector Component 
       bookEff2D(ibooker, igetter, folder_, 
                 "rechit_occ_det" + name_suffix_re_st,
                 "muon_occ_det" + name_suffix_re_st,
                 "eff_det" + name_suffix_re_st,
-                "Detector Component Efficiency" + title_suffix_re_st);
+                "Detector Component Efficiency :" + title_suffix_re_st);
 
       bookEff2D(ibooker, igetter, folder_, 
                 "tight_rechit_occ_det" + name_suffix_re_st,
                 "tight_muon_occ_det" + name_suffix_re_st,
                 "eff_det_tight" + name_suffix_re_st,
-                "Detector Component Efficiency (CutBasedIdTight)" + title_suffix_re_st);
+                "Detector Component Efficiency (CutBasedIdTight) :" + title_suffix_re_st);
 
       bookEff2D(ibooker, igetter, folder_, 
                 "loose_rechit_occ_det" + name_suffix_re_st,
                 "loose_muon_occ_det" + name_suffix_re_st,
                 "eff_det_loose" + name_suffix_re_st,
-                "Detector Component Efficiency (CutBasedIdLoose)" + title_suffix_re_st);
+                "Detector Component Efficiency (CutBasedIdLoose) :" + title_suffix_re_st);
 
 
     } // Station Id END

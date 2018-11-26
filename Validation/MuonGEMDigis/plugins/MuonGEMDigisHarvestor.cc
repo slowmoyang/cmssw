@@ -42,7 +42,7 @@ void MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker & ibooker,
               "matched_strip_occ_eta" + name_suffix_re,
               "muon_simhit_occ_eta" + name_suffix_re,
               "eff_eta" + name_suffix_re,
-              "Eta Efficiency (Muon Only)" + title_suffix_re);
+              "Eta Efficiency (Muon Only) :" + title_suffix_re);
               
     for (Int_t station_id : station_ids_) {
       TString name_suffix_re_st = GEMUtils::getSuffixName(region_id, station_id);
@@ -52,13 +52,13 @@ void MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker & ibooker,
                 "matched_strip_occ_phi" + name_suffix_re_st,
                 "muon_simhit_occ_phi" + name_suffix_re_st,
                 "eff_phi" + name_suffix_re_st,
-                "Phi Efficiency (Muon Only)" + title_suffix_re_st);
+                "Phi Efficiency (Muon Only) :" + title_suffix_re_st);
 
       bookEff2D(ibooker, igetter, strip_folder_,
                 "matched_strip_occ_det" + name_suffix_re_st,
                 "muon_simhit_occ_det" + name_suffix_re_st,
                 "eff_det" + name_suffix_re_st,
-                "Detector Component Efficiency (Muon Only)" + title_suffix_re_st);
+                "Detector Component Efficiency (Muon Only) :" + title_suffix_re_st);
 
     } // end loop over station ids
   } // end loop over region ids
