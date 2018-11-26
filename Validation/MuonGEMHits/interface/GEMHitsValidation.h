@@ -41,7 +41,6 @@ class GEMHitsValidation : public GEMBaseValidation {
   // energy loss conversion factor:
   const Float_t kEnergyCF_ = 1.e9;
 
-  // TODO follow the naiming convention
   edm::EDGetToken simhit_token_;
   std::vector<Double_t> tof_range_; 
 };
