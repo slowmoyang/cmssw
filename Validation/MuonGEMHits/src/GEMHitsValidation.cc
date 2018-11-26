@@ -1,7 +1,6 @@
 #include "Validation/MuonGEMHits/interface/GEMHitsValidation.h"
 
 #include "DataFormats/Common/interface/Handle.h"
-
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 
 
@@ -10,6 +9,7 @@ GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& ps)
   auto simhit_label = ps.getParameter<edm::InputTag>("simhitLabel");
   simhit_token_ = consumes<edm::PSimHitContainer>(simhit_label);
 
+  // time of flight
   tof_range_ = ps.getUntrackedParameter<std::vector<Double_t> >("TOFRange");
 }
 
@@ -30,18 +30,23 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
   for(const auto & station : kGEM->regions()[0]->stations()) {
     Int_t station_id = station->station();
 
+    // time of flight
     Double_t tof_min, tof_max;
     std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
     const char* tof_name  = TString::Format("tof_muon_st%d", station_id).Data();
-    const char* tof_title = TString::Format("SimHit TOF (Muon only) : Station %d;Time of flight [ns];entries",
-                                            station_id).Data();
-    me_tof_mu_[station_id] = ibooker.book1D(tof_name, tof_title, 40, tof_min, tof_max);
+    const char* tof_title = TString::Format(
+        "SimHit TOF (Muon only) : Station %d;Time of flight [ns];entries",
+        station_id).Data();
+    me_tof_mu_[station_id] = ibooker.book1D(tof_name, tof_title,
+                                            40, tof_min, tof_max);
 
     const char* eloss_name  = TString::Format("eloss_muon_st%d", station_id).Data();
-    const char* eloss_title = TString::Format("SimHit Energy Loss (Muon only) : Station %d;Energy loss [eV];entries",
-                                              station_id).Data();
-    me_eloss_mu_[station_id] = ibooker.book1D(eloss_name, eloss_title, 60, 0.0, 6000.0);
+    const char* eloss_title = TString::Format(
+        "SimHit Energy Loss (Muon only) : Station %d;Energy loss [eV];entries",
+        station_id).Data();
+    me_eloss_mu_[station_id] = ibooker.book1D(eloss_name, eloss_title,
+                                              60, 0.0, 6000.0);
   } // end loop over stations
 
 
@@ -58,7 +63,6 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker & ibooker,
       std::tie(tof_min, tof_max) = getTOFRange(station_id);
 
       me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "simhit", "SimHit");
-
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -124,10 +128,8 @@ void GEMHitsValidation::analyze(const edm::Event & event,
   }
 
   for (const auto & simhit : *simhit_container.product()) {
-    // FIXME
     const GEMDetId gemid(simhit.detUnitId());
 
-    // FIXME
     if (kGEM->idToDet(gemid) == nullptr) {
       edm::LogInfo(log_category_) << "SimHit did not matched with GEM Geometry." << std::endl;
       continue;
@@ -143,7 +145,6 @@ void GEMHitsValidation::analyze(const edm::Event & event,
     ME3IdsKey key3(region_id, station_id, layer_id);
 
     LocalPoint && simhit_local_pos = simhit.localPosition();
-    // FIXME
     GlobalPoint && simhit_global_pos = kGEM->idToDet(gemid)->surface().toGlobal(simhit_local_pos);
 
     Float_t simhit_g_r = simhit_global_pos.perp();
@@ -181,4 +182,3 @@ void GEMHitsValidation::analyze(const edm::Event & event,
 
   } // end loop over simhits
 }
-
