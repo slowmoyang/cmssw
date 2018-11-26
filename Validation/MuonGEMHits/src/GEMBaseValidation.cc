@@ -43,6 +43,10 @@ const GEMGeometry* GEMBaseValidation::initGeometry(
 }
 
 
+Int_t GEMBaseValidation::getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
+  return 2 * chamber_id + layer_id - 2;
+}
+
 
 
 MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,

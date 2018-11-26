@@ -74,10 +74,7 @@ class GEMBaseValidation : public DQMEDAnalyzer {
                              Int_t nbinsy, Double_t ylow, Double_t yup,
                              const char* x_title="", const char* y_title="");
 
-  // FIXME move to tpp
-  inline Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
-    return 2 * chamber_id + layer_id - 2;
-  }
+  Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id);
 
   // Parameters
   Int_t xy_occ_num_bins_;
@@ -89,7 +86,6 @@ class GEMBaseValidation : public DQMEDAnalyzer {
   std::string log_category_;
   Bool_t detail_plot_;
 
-  // const Int_t kMuonPDGId_ = TDatabasePDG::Instance().GetParticle("mu-")->PdgCode();
   const Int_t kMuonPDGId_ = 13;
 };
 
