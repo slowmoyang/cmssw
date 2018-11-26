@@ -30,8 +30,7 @@ class GEMCoPadDigiValidation : public GEMBaseValidation {
 
   // ParameterSet
   edm::EDGetToken copad_token_;
-  // FIXME
-  Int_t minBXGEM_, maxBXGEM_;
+  Int_t gem_bx_min_, gem_bx_max_;
   Bool_t detail_plot_;
   // Custom Constants
 };
