@@ -11,8 +11,7 @@ GEMCoPadDigiValidation::GEMCoPadDigiValidation(const edm::ParameterSet& ps)
   auto copad_label = ps.getParameter<edm::InputTag>("copadLabel");
   copad_token_ = consumes<GEMCoPadDigiCollection>(copad_label);
 
-  // FIXME
-  auto gem_bx_range = ps.getParameter<std::vector<Int_t> >("GEMBXRange");
+  auto gem_bx_range = ps.getUntrackedParameter<std::vector<Int_t> >("GEMBXRange");
   gem_bx_min_ = gem_bx_range[0];
   gem_bx_max_ = gem_bx_range[1];
 }
