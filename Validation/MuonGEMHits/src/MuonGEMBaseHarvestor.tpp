@@ -7,6 +7,9 @@ T* MuonGEMBaseHarvestor::getElement(DQMStore::IGetter & igetter,
                                     const TString & name) {
   const std::string path = gSystem->ConcatFileName(folder.c_str(), name);
 
+  // FIXME This line can confuse us if there is no required mointor element.
+  // Can I make dqmEndJob select the required monitor element for each geometry
+  // setup??
   if (not igetter.containsAnyMonitorable(path)) {
     edm::LogInfo(log_category_) << "doesn't contain " << path << std::endl;
     return nullptr;
