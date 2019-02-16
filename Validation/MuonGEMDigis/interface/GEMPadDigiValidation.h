@@ -1,33 +1,34 @@
-#ifndef GEMPadDigiValidation_H
-#define GEMPadDigiValidation_H
+#ifndef VALIDATION_MUONGEMDIGIS_INTERFACE_GEMPADDIGIVALIDATION_H_
+#define VALIDATION_MUONGEMDIGIS_INTERFACE_GEMPADDIGIVALIDATION_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
-#include "DataFormats/GEMDigi/interface/GEMPadDigiCollection.h"
 
-//#include "DataFormats/Common/interface/Handle.h"
-class GEMPadDigiValidation : public GEMBaseValidation
-{
-public:
+
+class GEMPadDigiValidation : public GEMBaseValidation {
+ public:
   explicit GEMPadDigiValidation( const edm::ParameterSet& );
   ~GEMPadDigiValidation() override;
-  void analyze(const edm::Event& e, const edm::EventSetup&) override;
-  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  void analyze(const edm::Event& e,
+               const edm::EventSetup&) override;
+  void bookHistograms(DQMStore::IBooker &,
+                      edm::Run const &,
+                      edm::EventSetup const &) override;
+
  private:
-  // Detail plots
-  MonitorElement* theCSCPad_xy[2][3][2];
-  MonitorElement* theCSCPad_phipad[2][3][2];
-  MonitorElement* theCSCPad[2][3][2];
-  MonitorElement* theCSCPad_bx[2][3][2];
-  MonitorElement* theCSCPad_zr[2][3][2];
-	std::unordered_map< UInt_t , MonitorElement* > theCSCPad_xy_ch;
-
   // Simple plots
-  std::unordered_map< UInt_t , MonitorElement* > thePad_dcEta;
-  std::unordered_map< UInt_t , MonitorElement* > thePad_simple_zr;
+  MEMap2Ids me_occ_det_; // key = make_tuple(region_id, station_id);
+  MEMap1Ids me_occ_zr_; // key = region_id
 
-  edm::EDGetToken InputTagToken_;
-  int nBinXY_;
-  bool detailPlot_;
+  // Detail plots
+  // key(region_id, station_id, layer_id);
+  MEMap3Ids me_detail_occ_zr_;
+  MEMap3Ids me_detail_occ_xy_; 
+  MEMap3Ids me_detail_occ_phi_pad_;
+  MEMap3Ids me_detail_occ_pad_; // DIGI Occupancy per Pad number
+  MEMap3Ids me_detail_bx_;
+
+  // ParameterSet
+  edm::EDGetToken pad_token_;
 };
 
-#endif
+#endif // VALIDATION_MUONGEMDIGIS_GEMPADDIGIVALIDATION_H_

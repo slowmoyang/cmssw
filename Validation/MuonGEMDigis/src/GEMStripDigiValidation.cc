@@ -1,187 +1,261 @@
 #include "Validation/MuonGEMDigis/interface/GEMStripDigiValidation.h"
+
+#include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
+#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
+
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 #include <TMath.h>
 #include <iomanip>
-GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg)
-{
-  InputTagToken_ = consumes<GEMDigiCollection>(cfg.getParameter<edm::InputTag>("stripLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
+
+
+GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet & ps)
+    : GEMBaseValidation(ps) {
+  auto strip_label = ps.getParameter<edm::InputTag>("stripLabel");
+  strip_token_ = consumes<GEMDigiCollection>(strip_label);
+
+  auto simhit_label = ps.getParameter<edm::InputTag>("simhitLabel");
+  simhit_token_ = consumes<edm::PSimHitContainer>(simhit_label);
 }
 
-void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const & Run, edm::EventSetup const & iSetup ) {
-    
-  const GEMGeometry* GEMGeometry_  = initGeometry( iSetup) ;
-  if ( GEMGeometry_ == nullptr) return ;
-  LogDebug("GEMStripDigiValidation")<<"Geometry is acquired from MuonGeometryRecord\n";
-  ibooker.setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
-  LogDebug("GEMStripDigiValidation")<<"ibooker set current folder\n";
 
-  LogDebug("GEMStripDigiValidation")<<"nregions set.\n";
-  LogDebug("GEMStripDigiValidation")<<"nstations set.\n";
-  int nstripsGE11 = 384;
-  int nstripsGE21 = 768;
+void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
+                                            edm::Run const & run,
+                                            edm::EventSetup const & event_setup) {
 
-  LogDebug("GEMStripDigiValidation")<<"Successfully binning set.\n";
+  const GEMGeometry* kGEM = initGeometry(event_setup);
+  if (kGEM == nullptr) return ;
 
+  ibooker.setCurrentFolder(folder_);
 
-  int nstrips = 0;
+  for (const auto & region : kGEM->regions()) {
+    Int_t region_id = region->region();
 
+    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "strip", "Strip");
 
-  for( auto& region : GEMGeometry_->regions()  ){
-    int re = region->region();
-    TString title_suffix = getSuffixTitle( re );
-    TString histname_suffix = getSuffixName( re) ;
-    TString simpleZR_title    = TString::Format("ZR Occupancy%s; |Z|(cm) ; R(cm)",title_suffix.Data());
-    TString simpleZR_histname = TString::Format("strip_simple_zr%s",histname_suffix.Data());
+    // NOTE occupancy plots for eta efficiency
+    me_simhit_occ_eta_[region_id] = bookHist1D(
+        ibooker, region_id,
+        "muon_simhit_occ_eta",
+        "Muon SimHit Eta Occupancy",
+        51, eta_range_[0], eta_range_[1], "|#eta|");
 
-    auto* simpleZR = getSimpleZR(ibooker, simpleZR_title, simpleZR_histname);
-    if ( simpleZR != nullptr) {
-      theStrip_simple_zr[simpleZR_histname.Hash() ] = simpleZR;
-    }
+    me_strip_occ_eta_[region_id] = bookHist1D(
+        ibooker, region_id,
+        "matched_strip_occ_eta",
+        "Strip DIGI Eta Occupancy",
+        51, eta_range_[0], eta_range_[1], "|#eta|");
 
-    for( auto& station : region->stations()) {
-      int st = station->station();
-      TString title_suffix2 = getSuffixTitle( re, st ) ;
-      TString histname_suffix2 = getSuffixName( re, st) ;
+    for (const auto & station : region->stations()) {
+      Int_t station_id = station->station();
+      ME2IdsKey key2(region_id, station_id);
 
-      TString dcEta_title    = TString::Format("Occupancy for detector component %s;;#eta-partition",title_suffix2.Data());
-      TString dcEta_histname = TString::Format("strip_dcEta%s",histname_suffix2.Data());
+      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "strip", "Strip DIGI");
 
-      auto* dcEta = getDCEta(ibooker, station, dcEta_title, dcEta_histname);
-      if ( dcEta != nullptr) {
-        theStrip_dcEta[ dcEta_histname.Hash() ] = dcEta; 
-      }
-    }
-  }
+      // NOTE occupancy plots for phi efficiency
+      me_simhit_occ_phi_[key2] = bookHist1D(
+          ibooker, key2,
+          "muon_simhit_occ_phi",
+          "Muon SimHit Phi Occupancy",
+          51, -M_PI, M_PI, "#phi");
 
-  // Booking detail plot.
-  if ( detailPlot_ ) {
-    for( auto& region : GEMGeometry_->regions() ) {
-    for( auto& station : region->stations()) {
-      for( int la = 1 ; la <= 2 ; la++) {
-          int re = region->region();
-          int st = station->station();
-          int region_num = (re+1)/2;
-          int station_num = st-1;
-          int layer_num = la-1;
+      me_strip_occ_phi_[key2] = bookHist1D(
+          ibooker, key2,
+          "matched_strip_occ_phi",
+          "Matched Digi Phi Occupancy",
+          51, -M_PI, M_PI, "#phi");
 
-          if ( st ==1 ) nstrips = nstripsGE11;
-          else nstrips = nstripsGE21;
-          std::string name_prefix = getSuffixName( re, st, la);
-          std::string label_prefix = getSuffixTitle( re, st, la) ;
-          theStrip_phistrip[region_num][station_num][layer_num] = ibooker.book2D( ("strip_dg_phistrip"+name_prefix).c_str(), ("Digi occupancy: "+label_prefix+"; phi [rad];strip number").c_str(), 280, -TMath::Pi(), TMath::Pi(), nstrips/2,0,nstrips);
-          theStrip[region_num][station_num][layer_num] = ibooker.book1D( ("strip_dg"+name_prefix).c_str(), ("Digi occupancy per stip number: "+label_prefix+";strip number; entries").c_str(), nstrips,0.5,nstrips+0.5);
-          theStrip_bx[region_num][station_num][layer_num] = ibooker.book1D( ("strip_dg_bx"+name_prefix).c_str(), ("Bunch crossing: "+label_prefix+"; bunch crossing ; entries").c_str(), 11,-5.5,5.5);
-          theStrip_zr[region_num][station_num][layer_num] = BookHistZR(ibooker,"strip_dg","Strip Digi",region_num,station_num,layer_num);
-          theStrip_xy[region_num][station_num][layer_num] = BookHistXY(ibooker,"strip_dg","Strip Digi",region_num,station_num,layer_num);
-          TString xy_name = TString::Format("strip_dg_xy%s_odd",name_prefix.c_str());
-          TString xy_title = TString::Format("Digi XY occupancy %s at odd chambers",label_prefix.c_str());
-          theStrip_xy_ch[ xy_name.Hash() ] = ibooker.book2D(xy_name, xy_title, 360, -360,360, 360, -360, 360);
-          xy_name = TString::Format("strip_dg_xy%s_even",name_prefix.c_str());
-          xy_title = TString::Format("Digi XY occupancy %s at even chambers",label_prefix.c_str());
-          theStrip_xy_ch[ xy_name.Hash() ] = ibooker.book2D(xy_name, xy_title, 360, -360,360, 360, -360, 360);
+      // NOTE occupancy plots for detector component efficiency
+      me_simhit_occ_det_[key2] = bookDetectorOccupancy(
+          ibooker, key2, station,
+          "muon_simhit", "Muon SimHit");
+      me_strip_occ_det_[key2] = bookDetectorOccupancy(
+          ibooker, key2, station,
+          "matched_strip", "Matched Strip DIGI");
+
+      const GEMSuperChamber* super_chamber = station->superChambers().front();
+      for (const auto & chamber : super_chamber->chambers()) {
+        Int_t layer_id = chamber->id().layer();
+        ME3IdsKey key3(region_id, station_id, layer_id);
+
+        Int_t num_strips = chamber->etaPartitions().front()->nstrips();
+
+        if (detail_plot_) {
+          me_detail_occ_zr_[key3] = bookZROccupancy(ibooker, key3, "strip", "Strip DIGI");
+          me_detail_occ_xy_[key3] = bookXYOccupancy(ibooker, key3, "strip", "Strip DIGI");
+
+          me_detail_occ_phi_strip_[key3] = bookHist2D(
+              ibooker, key3,
+              "strip_occ_phi_strip",
+              "Strip DIGI Occupancy",
+              280, -M_PI, M_PI,
+              num_strips / 2, 0, num_strips,
+              "#phi [rad]", "strip number");
+
+          me_detail_occ_strip_[key3] = bookHist1D(
+              ibooker, key3,
+              "strip_occ_strip",
+              "Strip DIGI Occupancy per strip number",
+              num_strips, 0.5, num_strips + 0.5,
+              "strip number");
+
+          me_detail_bx_[key3] = bookHist1D(
+              ibooker, key3,
+              "strip_bx",
+              "Strip DIGI Bunch Crossing",
+              11, -5.5, 5.5, "bunch crossing");
         }
-      }
-    }
-  }
-  LogDebug("GEMStripDigiValidation")<<"Booking End.\n";
+      } // End loop over layer ids
+    } // End loop over station ids
+  } // End loop over region ids
 }
 
 
 GEMStripDigiValidation::~GEMStripDigiValidation() {
 }
 
-void GEMStripDigiValidation::analyze(const edm::Event& e,
-    const edm::EventSetup& iSetup)
-{
-  const GEMGeometry* GEMGeometry_ ;
-  try {
-    edm::ESHandle<GEMGeometry> hGeom;
-    iSetup.get<MuonGeometryRecord>().get(hGeom);
-    GEMGeometry_ = &*hGeom;
-  }
-  catch( edm::eventsetup::NoProxyException<GEMGeometry>& e) {
-    edm::LogError("GEMStripDigiValidation") << "+++ Error : GEM geometry is unavailable on event loop. +++\n";
-    return;
-  }
 
-  edm::Handle<GEMDigiCollection> gem_digis;
-  e.getByToken( this->InputTagToken_, gem_digis);
-  if (!gem_digis.isValid()) {
-    edm::LogError("GEMStripDigiValidation") << "Cannot get strips by Token stripToken.\n";
+void GEMStripDigiValidation::analyze(const edm::Event & event,
+                                     const edm::EventSetup & event_setup) {
+
+  const GEMGeometry* kGEM = initGeometry(event_setup);
+  if (kGEM == nullptr) return ;
+
+  edm::Handle<edm::PSimHitContainer> simhit_container;
+  event.getByToken(simhit_token_, simhit_container);
+  if (not simhit_container.isValid()) {
+    edm::LogError(log_category_) << "Failed to get PSimHitContainer." << std::endl;
     return ;
   }
-  for (GEMDigiCollection::DigiRangeIterator cItr=gem_digis->begin(); cItr!=gem_digis->end(); cItr++) {
-    GEMDetId id = (*cItr).first;
 
-    const GeomDet* gdet = GEMGeometry_->idToDet(id);
-    if ( gdet == nullptr) { 
-      std::cout<<"Getting DetId failed. Discard this gem strip hit.Maybe it comes from unmatched geometry."<<std::endl;
+  edm::Handle<GEMDigiCollection> digi_collection;
+  event.getByToken(strip_token_, digi_collection);
+  if (not digi_collection.isValid()) {
+    edm::LogError(log_category_) << "Cannot get strips by Token stripToken." << std::endl;
+    return ;
+  }
+
+  // for DQM
+  for (auto range_iter = digi_collection->begin();
+            range_iter != digi_collection->end();
+            range_iter++) {
+
+    GEMDetId id = (*range_iter).first;
+    const GEMDigiCollection::Range& range = (*range_iter).second;
+
+    if (kGEM->idToDet(id) == nullptr) { 
+      edm::LogError(log_category_) << "Getting DetId failed. Discard this gem strip hit. "
+                                   << "Maybe it comes from unmatched geometry."
+                                   << std::endl;
       continue; 
     }
-    const BoundPlane & surface = gdet->surface();
-    const GEMEtaPartition * roll = GEMGeometry_->etaPartition(id);
 
-    int re = id.region();
-    int la = id.layer();
-    int st = id.station();
-    Short_t chamber = (Short_t) id.chamber();
-    Short_t nroll = (Short_t) id.roll();
+    const BoundPlane & surface = kGEM->idToDet(id)->surface();
+    const GEMEtaPartition* roll = kGEM->etaPartition(id);
 
-    GEMDigiCollection::const_iterator digiItr;
-    for (digiItr = (*cItr ).second.first; digiItr != (*cItr ).second.second; ++digiItr)
-    {
-      Short_t strip = (Short_t) digiItr->strip();
-      Short_t bx = (Short_t) digiItr->bx();
+    Int_t region_id  = id.region();
+    Int_t layer_id   = id.layer();
+    Int_t station_id = id.station();
+    Int_t chamber_id = id.chamber();
+    Int_t roll_id    = id.roll();
 
-      LocalPoint lp = roll->centreOfStrip(digiItr->strip());
+    // keys for MonitorElement* map.
+    ME2IdsKey key2(region_id, station_id);
+    ME3IdsKey key3(region_id, station_id, layer_id);
+    Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
 
-      GlobalPoint gp = surface.toGlobal(lp);
-      Float_t g_r = (Float_t) gp.perp();
-      //Float_t g_eta = (Float_t) gp.eta();
-      Float_t g_phi = (Float_t) gp.phi();
-      Float_t g_x = (Float_t) gp.x();
-      Float_t g_y = (Float_t) gp.y();
-      Float_t g_z = (Float_t) gp.z();
+    for (auto digi = range.first; digi != range.second; ++digi) {
+      Int_t strip = digi->strip();
+      Int_t bx = digi->bx();
 
+      LocalPoint strip_local_pos = roll->centreOfStrip(digi->strip());
+      GlobalPoint strip_global_pos = surface.toGlobal(strip_local_pos);
 
-      int region_num = (re+1)/2;
-      int station_num = st-1;
-      int layer_num = la-1;
+      Float_t g_r   = strip_global_pos.perp();
+      Float_t g_phi = strip_global_pos.phi();
+      Float_t g_x   = strip_global_pos.x();
+      Float_t g_y   = strip_global_pos.y();
+      Float_t g_abs_z   = std::abs(strip_global_pos.z());
 
-      int binX = (chamber-1)*2+layer_num;
-      int binY = nroll;
+      // Simple Plots
+      me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
+      me_occ_det_[key2]->Fill(bin_x, roll_id);
 
-      // Fill normal plots.
-      TString histname_suffix = getSuffixName( re) ;
-      TString simple_zr_histname = TString::Format("strip_simple_zr%s",histname_suffix.Data());
-      theStrip_simple_zr[simple_zr_histname.Hash()]->Fill( fabs(g_z), g_r);
+      // Detail Plots
+      if (detail_plot_) {
+        me_detail_occ_zr_[key3]->Fill(g_abs_z, g_r);
+        me_detail_occ_xy_[key3]->Fill(g_x, g_y);     
+        me_detail_occ_phi_strip_[key3]->Fill(g_phi, strip);
+        me_detail_occ_strip_[key3]->Fill(strip);
+        me_detail_bx_[key3]->Fill(bx);
+      } // detailPlot_ if end
 
+    } // digi loop end
+  } // end loop over digi_collection
 
-      histname_suffix = getSuffixName( re, st) ;
-      TString dcEta_histname = TString::Format("strip_dcEta%s",histname_suffix.Data());
-      theStrip_dcEta[dcEta_histname.Hash()]->Fill( binX, binY); 
+  // TODO if (is_mc_)
+  for (const auto & simhit : *simhit_container.product()) {
+    // muon only
+    if (std::abs(simhit.particleType()) != kMuonPDGId_) continue;
 
-      // Fill detail plots.
-      if ( detailPlot_) {
-        if ( theStrip_xy[region_num][station_num][layer_num] != nullptr) {
-          theStrip_xy[region_num][station_num][layer_num]->Fill(g_x,g_y);     
-          theStrip_phistrip[region_num][station_num][layer_num]->Fill(g_phi,strip);
-          theStrip[region_num][station_num][layer_num]->Fill(strip);
-          theStrip_bx[region_num][station_num][layer_num]->Fill(bx);
-          theStrip_zr[region_num][station_num][layer_num]->Fill(g_z,g_r);
+    if (kGEM->idToDet(simhit.detUnitId()) == nullptr) {
+      edm::LogInfo(log_category_) << "SimHit did not match with GEMGeometry." << std::endl;
+      continue;
+    }
 
-          std::string name_prefix = getSuffixName( re, st, la) ;
-          TString hname;
-          if ( chamber %2 == 0 ) { hname = TString::Format("strip_dg_xy%s_even",name_prefix.c_str()); }
-          else { hname = TString::Format("strip_dg_xy%s_odd",name_prefix.c_str()); }
-          theStrip_xy_ch[hname.Hash()]->Fill(g_x,g_y);
+    GEMDetId simhit_gemid(simhit.detUnitId());
+
+    Int_t region_id = simhit_gemid.region();
+    Int_t station_id = simhit_gemid.station();
+    Int_t layer_id = simhit_gemid.layer();
+    Int_t chamber_id = simhit_gemid.chamber();
+    Int_t roll_id = simhit_gemid.roll();
+
+    ME2IdsKey key2(region_id, station_id);
+    ME3IdsKey key3(region_id, station_id, layer_id);
+
+    const GEMEtaPartition* kRoll = kGEM->etaPartition(simhit_gemid);
+
+    LocalPoint && simhit_local_pos = simhit.localPosition();
+    GlobalPoint && simhit_global_pos = kRoll->surface().toGlobal(simhit_local_pos);
+
+    Float_t simhit_g_eta = std::abs(simhit_global_pos.eta());
+    Float_t simhit_g_phi = simhit_global_pos.phi();
+
+    Int_t simhit_strip = kRoll->strip(simhit_local_pos);
+
+    Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
+    me_simhit_occ_eta_[region_id]->Fill(simhit_g_eta);
+    me_simhit_occ_phi_[key2]->Fill(simhit_g_phi);
+    me_simhit_occ_det_[key2]->Fill(bin_x, roll_id); 
+
+    Bool_t found_matched_digi = false;
+
+    // GEMCoPadDigiCollection::DigiRangeIterator
+    for (auto range_iter = digi_collection->begin();
+              range_iter != digi_collection->end();
+              range_iter++) {
+
+      if (simhit_gemid != (*range_iter).first) continue;
+
+      const GEMDigiCollection::Range& range = (*range_iter).second;
+      for (auto digi = range.first; digi != range.second; ++digi) {
+
+        if (simhit_strip == digi->strip()) {
+          found_matched_digi = true;
+
+          // NOTE If we use global position of digi,
+          // 'inconsistent bin contents' exception may occur.
+          me_strip_occ_eta_[region_id]->Fill(simhit_g_eta);
+          me_strip_occ_phi_[key2]->Fill(simhit_g_phi);
+          me_strip_occ_det_[key2]->Fill(bin_x, roll_id); 
+
+          break;
         }
-        else {
-          std::cout<<"Error is occued when histograms is called."<<std::endl;
-        }
-      }
-    }    
-  }
+      } // end loop over range
+
+      if (found_matched_digi) break;
+
+    } // end lopp over digi_collection
+  } // end loop over simhit_container
 }
