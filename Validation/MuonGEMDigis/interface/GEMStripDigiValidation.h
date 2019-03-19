@@ -14,16 +14,16 @@ class GEMStripDigiValidation : public GEMBaseValidation {
                       edm::EventSetup const &) override;
 
  private:
-  // Simple plots
-  MEMap1Ids me_occ_zr_; // key = region_id
-  MEMap2Ids me_occ_det_;
+  // ParameterSet
+  edm::EDGetToken simhit_token_;
+  edm::EDGetToken strip_token_;
 
-  // Detail plots
-  MEMap3Ids me_detail_occ_zr_;
+  // Monitor elements
+  MEMap1Ids me_occ_zr_;
+  MEMap2Ids me_occ_det_;
   MEMap3Ids me_detail_occ_xy_;
   MEMap3Ids me_detail_occ_phi_strip_;
   MEMap3Ids me_detail_occ_strip_;
-  MEMap3Ids me_detail_bx_;
 
   // NOTE muon simhit - strip digi matching
   // occupancy plots for efficiency
@@ -34,9 +34,8 @@ class GEMStripDigiValidation : public GEMBaseValidation {
   MEMap2Ids me_simhit_occ_det_;
   MEMap2Ids me_strip_occ_det_;
 
-  // ParameterSet
-  edm::EDGetToken simhit_token_;
-  edm::EDGetToken strip_token_;
+  // bunch crossing
+  MEMap3Ids me_detail_bx_;
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_

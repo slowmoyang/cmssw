@@ -15,24 +15,18 @@ class GEMCoPadDigiValidation : public GEMBaseValidation {
                       edm::EventSetup const & setup) override;
 
  private:
-  // Simple plots
-  MEMap1Ids me_occ_zr_; // key = region_id
-  MEMap2Ids me_occ_det_; // key(region_id, station_id)
-
-  // DetailPlots
-  // key(region_id, station_id)
-  MEMap2Ids me_detail_occ_xy_;
-  MEMap2Ids me_detail_occ_zr_;
-  // key(region_id, station_id)
-  MEMap2Ids me_detail_occ_phi_pad_;
-  MEMap2Ids me_detail_occ_pad_;
-  MEMap2Ids me_detail_bx_;
-
   // ParameterSet
   edm::EDGetToken copad_token_;
   Int_t gem_bx_min_, gem_bx_max_;
-  Bool_t detail_plot_;
-  // Custom Constants
+
+  MEMap1Ids me_occ_zr_;
+  MEMap2Ids me_occ_det_;
+  MEMap2Ids me_detail_occ_xy_;
+  MEMap2Ids me_detail_occ_phi_pad_;
+  MEMap2Ids me_detail_occ_pad_;
+
+  MEMap2Ids me_detail_bx_;
+
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_

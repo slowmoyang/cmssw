@@ -15,20 +15,17 @@ class GEMPadDigiValidation : public GEMBaseValidation {
                       edm::EventSetup const &) override;
 
  private:
-  // Simple plots
-  MEMap2Ids me_occ_det_; // key = make_tuple(region_id, station_id);
-  MEMap1Ids me_occ_zr_; // key = region_id
+  // parameters
+  edm::EDGetToken pad_token_;
 
-  // Detail plots
-  // key(region_id, station_id, layer_id);
-  MEMap3Ids me_detail_occ_zr_;
+  // monitor elements
+  MEMap2Ids me_occ_det_;
+  MEMap1Ids me_occ_zr_;
   MEMap3Ids me_detail_occ_xy_; 
   MEMap3Ids me_detail_occ_phi_pad_;
   MEMap3Ids me_detail_occ_pad_; // DIGI Occupancy per Pad number
-  MEMap3Ids me_detail_bx_;
 
-  // ParameterSet
-  edm::EDGetToken pad_token_;
+  MEMap3Ids me_detail_bx_;
 };
 
 #endif // VALIDATION_MUONGEMDIGIS_GEMPADDIGIVALIDATION_H_

@@ -17,34 +17,33 @@ GEMCoPadDigiValidation::GEMCoPadDigiValidation(const edm::ParameterSet& ps)
 }
 
 
-void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
+void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                             edm::Run const & run,
                                             edm::EventSetup const & event_setup) {
+  const GEMGeometry* gem = initGeometry(event_setup);
 
-  const GEMGeometry* kGEM = initGeometry(event_setup);
-  if ( kGEM == nullptr) return ;
+  // NOTE Occupancy
+  const char* occ_folder = gSystem->ConcatFileName(folder_.c_str(), "Occupancy");
+  booker.setCurrentFolder(occ_folder);
 
-  ibooker.setCurrentFolder(folder_);
-
-  for(const auto &  region : kGEM->regions()) {
+  for (const auto &  region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "copad", "CoPad");
+    me_occ_zr_[region_id] = bookZROccupancy(booker, region_id, "copad", "CoPad");
 
-    for(const auto & station : region->stations() ) {
+    for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       Int_t num_pads = station->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
-
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "copad", "CoPad");
+      me_occ_det_[key2] = bookDetectorOccupancy(booker, key2, station, "copad", "CoPad");
 
       if (detail_plot_) {
-        me_detail_occ_zr_[key2] = bookZROccupancy(ibooker, key2, "copad_dg", "CoPad Digi");
-        me_detail_occ_xy_[key2] = bookXYOccupancy(ibooker, key2, "copad_dg","CoPad Digi");
+        me_detail_occ_xy_[key2] = bookXYOccupancy(booker, key2, "copad","CoPad Digi");
+
 
         me_detail_occ_phi_pad_[key2] = bookHist2D(
-            ibooker, key2,
+            booker, key2,
             "copad_digi_occ_phi_pad",
             "CoPad Digi Occupancy",
             280, -M_PI, M_PI,
@@ -52,34 +51,49 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
             "#phi [rad]", "Pad number");
 
         me_detail_occ_pad_[key2] = bookHist1D(
-            ibooker, key2,
+            booker, key2,
             "copad_digi_occ_pad",
             "CoPad Digi Ocupancy per pad number",
             num_pads, 0.5, num_pads + 0.5,
             "Pad number");
 
-        me_detail_bx_[key2] = bookHist1D(
-            ibooker, key2,
-            "copad_digi_bx",
-            "CoPad Digi Bunch Crossing",
-            11, -5.5, 5.5,
-            "bunch crossing");
       }
     } // end loop over station ids
   } // end loop over region ids
+
+  // NOTE Bunch Crossing
+  if (detail_plot_) {
+    const char* bx_folder = gSystem->ConcatFileName(folder_.c_str(), "BunchCrossing");
+    booker.setCurrentFolder(bx_folder);
+
+    for (const auto & region : gem->regions()) {
+      Int_t region_id = region->region();
+      for (const auto & station : region->stations()) {
+        Int_t station_id = station->station();
+        ME2IdsKey key2(region_id, station_id);
+
+        me_detail_bx_[key2] = bookHist1D(
+            booker, key2,
+            "copad_digi_bx",
+            "CoPad Digi Bunch Crossing",
+            5, -2.5, 2.5,
+            "Bunch crossing");
+
+
+      } // station loop
+    } // region loop
+  } // detail plot
+
 }
 
 
 GEMCoPadDigiValidation::~GEMCoPadDigiValidation() {
-
-
 }
 
 
 void GEMCoPadDigiValidation::analyze(const edm::Event& event,
                                      const edm::EventSetup& event_setup) {
-  const GEMGeometry* kGEM = initGeometry(event_setup);
-  if (kGEM == nullptr) return ;
+  const GEMGeometry* gem = initGeometry(event_setup);
 
   edm::Handle<GEMCoPadDigiCollection> copad_collection;
   event.getByToken(copad_token_, copad_collection);
@@ -93,14 +107,14 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
             range_iter != copad_collection->end();
             range_iter++) {
 
-    GEMDetId gem_id = (*range_iter).first;
+    GEMDetId gemid = (*range_iter).first;
     const GEMCoPadDigiCollection::Range& range = (*range_iter).second;
 
-    Int_t region_id  = gem_id.region();
-    Int_t station_id = gem_id.station();
-    Int_t ring_id    = gem_id.ring();
-    Int_t layer_id   = gem_id.layer();
-    Int_t chamber_id = gem_id.chamber();
+    Int_t region_id  = gemid.region();
+    Int_t station_id = gemid.station();
+    Int_t ring_id    = gemid.ring();
+    Int_t layer_id   = gemid.layer();
+    Int_t chamber_id = gemid.chamber();
 
     ME2IdsKey key2(region_id, station_id);
 
@@ -112,18 +126,18 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
       GEMDetId super_chamber_id = GEMDetId(region_id, ring_id, station_id, 0, chamber_id, 0);
       Int_t roll_id = (*digi).roll();
 
-      const GeomDet* geom_det = kGEM->idToDet(super_chamber_id);
+      const GeomDet* geom_det = gem->idToDet(super_chamber_id);
       if ( geom_det == nullptr) {
         edm::LogError(log_category_) << super_chamber_id << " : This detId cannot be "
                                      << "loaded from GEMGeometry // Original"
-                                     << gem_id << " station : " << station_id << std::endl
+                                     << gemid << " station : " << station_id << std::endl
                                      << "Getting DetId failed. Discard this gem copad hit."
                                      << std::endl;
         continue; 
       }
 
       const BoundPlane & surface = geom_det->surface();
-      const GEMSuperChamber * superChamber = kGEM->superChamber(super_chamber_id);
+      const GEMSuperChamber * superChamber = gem->superChamber(super_chamber_id);
 
       Int_t pad1 = digi->pad(1);
       Int_t pad2 = digi->pad(2);
@@ -166,8 +180,6 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
         me_detail_occ_pad_[key2]->Fill(pad1);
         me_detail_bx_[key2]->Fill(bx1);
         me_detail_bx_[key2]->Fill(bx2);
-        me_detail_occ_zr_[key2]->Fill(std::fabs(g_z1), g_r1);
-        me_detail_occ_zr_[key2]->Fill(std::fabs(g_z2), g_r2);
       } // detailPlot_ 
     }
   }

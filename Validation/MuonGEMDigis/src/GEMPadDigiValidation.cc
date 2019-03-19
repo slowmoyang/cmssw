@@ -9,24 +9,25 @@ GEMPadDigiValidation::GEMPadDigiValidation(const edm::ParameterSet& ps)
 }
 
 
-void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
+void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                           edm::Run const & Run,
                                           edm::EventSetup const & event_setup) {
-  const GEMGeometry* kGEM = initGeometry(event_setup);
-  if (kGEM == nullptr) return ;
+  const GEMGeometry* gem = initGeometry(event_setup);
 
-  ibooker.setCurrentFolder(folder_);
+  // NOTE Occupancy
+  const char* occ_folder = gSystem->ConcatFileName(folder_.c_str(), "Occupancy");
+  booker.setCurrentFolder(occ_folder);
 
-  for (const auto & region : kGEM->regions()) {
+  for (const auto & region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = bookZROccupancy(ibooker, region_id, "pad", "Pad Digi");
+    me_occ_zr_[region_id] = bookZROccupancy(booker, region_id, "pad", "Pad Digi");
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = bookDetectorOccupancy(ibooker, key2, station, "pad", "Pad Digi");
+      me_occ_det_[key2] = bookDetectorOccupancy(booker, key2, station, "pad", "Pad Digi");
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -36,11 +37,10 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
         Int_t num_pads = chamber->etaPartitions().front()->npads();
 
         if(detail_plot_) {
-          me_detail_occ_zr_[key3] = bookZROccupancy(ibooker, key3, "pad", "Pad Digi");
-          me_detail_occ_xy_[key3] = bookXYOccupancy(ibooker, key3, "pad", "Pad Digi");
+          me_detail_occ_xy_[key3] = bookXYOccupancy(booker, key3, "pad", "Pad Digi");
 
           me_detail_occ_phi_pad_[key3] = bookHist2D(
-              ibooker, key3,
+              booker, key3,
               "occ_phi_pad",
               "Pad Digi Occupancy",
               280, -M_PI, M_PI,
@@ -48,19 +48,42 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & ibooker,
               "#phi [rad]", "Pad number");
 
           me_detail_occ_pad_[key3] = bookHist1D(
-              ibooker, key3,
+              booker, key3,
               "occ_pad",
               "Pad Digi Occupancy",
               num_pads, -0.5, num_pads - 0.5,
               "GEM Pad Id");
 
-          me_detail_bx_[key3] = bookHist1D(ibooker, key3,
-                                           "bx", "Bunch Crossing",
-                                           11, -5.5, 5.5, "Bunch Crossing");
         }
       } // end loop over layer ids
     } // end loop over station ids
   } // end loop over region ids
+
+
+  // NOTE Bunch Crossing
+  if (detail_plot_) {
+    const char* bx_folder = gSystem->ConcatFileName(folder_.c_str(), "BunchCrossing");
+    booker.setCurrentFolder(bx_folder);
+
+    for (const auto & region : gem->regions()) {
+      Int_t region_id = region->region();
+      for (const auto & station : region->stations()) {
+        Int_t station_id = station->station();
+
+        const GEMSuperChamber* super_chamber = station->superChambers().front();
+        for (const auto & chamber : super_chamber->chambers()) {
+          Int_t layer_id = chamber->id().layer();
+          ME3IdsKey key3(region_id, station_id, layer_id);
+
+          me_detail_bx_[key3] = bookHist1D(booker, key3,
+                                           "bx", "Bunch Crossing",
+                                           5, -2.5, 2.5, "Bunch crossing");
+
+        } // chamber loop
+      } // station loop
+    } // region loop
+  } // detail plot
+
 }
 
 
@@ -69,8 +92,7 @@ GEMPadDigiValidation::~GEMPadDigiValidation() { }
 
 void GEMPadDigiValidation::analyze(const edm::Event & event,
                                    const edm::EventSetup & event_setup) {
-  const GEMGeometry* kGEM = initGeometry(event_setup);
-  if (kGEM == nullptr) return ;
+  const GEMGeometry* gem = initGeometry(event_setup);
 
   // typedef MuonDigiCollection<GEMDetId, GEMPadDigi> GEMPadDigiCollection;
   edm::Handle<GEMPadDigiCollection> collection;
@@ -88,13 +110,13 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
     GEMDetId gemid = (*range_iter).first;
     const GEMPadDigiCollection::Range & range = (*range_iter).second;
 
-    if (kGEM->idToDet(gemid) == nullptr) { 
+    if (gem->idToDet(gemid) == nullptr) { 
       edm::LogError(log_category_) << "Getting DetId failed. Discard this gem pad hit. "
                                    << "Maybe it comes from unmatched geometry." << std::endl;
       continue; 
     }
 
-    const GEMEtaPartition * roll = kGEM->etaPartition(gemid);
+    const GEMEtaPartition * roll = gem->etaPartition(gemid);
     const BoundPlane & surface = roll->surface();
 
     Int_t region_id  = gemid.region();
@@ -130,7 +152,6 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
         me_detail_occ_phi_pad_[key3]->Fill(g_phi, pad);
         me_detail_occ_pad_[key3]->Fill(pad);
         me_detail_bx_[key3]->Fill(bx);
-        me_detail_occ_zr_[key3]->Fill(g_abs_z, g_r);
       } // detail_plot_
 
     }
