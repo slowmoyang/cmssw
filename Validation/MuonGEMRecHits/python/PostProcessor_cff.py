@@ -6,6 +6,6 @@ gemRecHitHarvesting = DQMEDHarvester("MuonGEMRecHitsHarvestor",
     stationIds=cms.untracked.vint32(1, 2), 
     layerIds=cms.untracked.vint32(1, 2),
     logCategory=cms.untracked.string("MuonGEMRecHitsHarvestor"),
-    folder=cms.string("MuonGEMRecHitsV/GEMRecHitsTask"),
+    folder=cms.string("MuonGEMRecHitsV/GEMRecHitsTask/"),
 )
 MuonGEMRecHitsPostProcessors = cms.Sequence(gemRecHitHarvesting) 
