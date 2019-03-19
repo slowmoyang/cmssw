@@ -14,9 +14,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include <vector>
-#include <string>
-
+class PSimHit;
 
 class GEMBaseValidation : public DQMEDAnalyzer {
  public:
@@ -75,8 +73,11 @@ class GEMBaseValidation : public DQMEDAnalyzer {
                              const char* x_title="", const char* y_title="");
 
   Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id);
+  Bool_t isMuonSimHit(const PSimHit &);
 
+  //////////////////////////////////////////////////////////////////////////////
   // Parameters
+  //////////////////////////////////////////////////////////////////////////////
   Int_t xy_occ_num_bins_;
   std::vector<Int_t> zr_occ_num_bins_;
   std::vector<Double_t> zr_occ_range_;
@@ -85,6 +86,10 @@ class GEMBaseValidation : public DQMEDAnalyzer {
   std::string folder_;
   std::string log_category_;
   Bool_t detail_plot_;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Constants
+  //////////////////////////////////////////////////////////////////////////////
 
   const Int_t kMuonPDGId_ = 13;
 };

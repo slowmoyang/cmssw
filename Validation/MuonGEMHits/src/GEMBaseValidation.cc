@@ -4,11 +4,11 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
+#include "SimDataFormats/TrackingHit/interface/PSimHit.h"
 
 #include <memory>
 
 #include "TMath.h"
-
 
 
 GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
@@ -27,19 +27,11 @@ GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
 GEMBaseValidation::~GEMBaseValidation() { }
 
 
-const GEMGeometry* GEMBaseValidation::initGeometry(
-    edm::EventSetup const & event_setup) {
-  const GEMGeometry* kGEM = nullptr;
-  try {
-    edm::ESHandle<GEMGeometry> geom_handle;
-    event_setup.get<MuonGeometryRecord>().get(geom_handle);
-    kGEM = &*geom_handle;
-  } catch(edm::eventsetup::NoProxyException<GEMGeometry>& e) {
-    edm::LogError(log_category_) << "GEM geometry is unavailable on event loop." << std::endl;
-    return nullptr;
-  }
-
-  return kGEM;
+const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & event_setup) {
+  edm::ESHandle<GEMGeometry> geom_handle;
+  event_setup.get<MuonGeometryRecord>().get(geom_handle);
+  const GEMGeometry* gem = &*geom_handle;
+  return gem;
 }
 
 
@@ -66,9 +58,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
 
   std::vector<Double_t> xbins_vector;
   for (Double_t i = station1_xmin - 1 ; i < station2_xmax + 1; i += 0.25  ) {
-    if ( i > station1_xmax + 1 and i < station2_xmin - 1 ) {
-      continue; 
-    }
+    if ( i > station1_xmax + 1 and i < station2_xmin - 1 ) continue; 
     xbins_vector.push_back(i);
   }
 
@@ -81,3 +71,10 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
   auto hist = new TH2F(name, title, nbinsx, &xbins_vector[0], nbinsy, ylow, yup);
   return ibooker.book2D(name, hist);
 }
+
+
+Bool_t GEMBaseValidation::isMuonSimHit(const PSimHit & simhit) {
+  return std::abs(simhit.particleType()) == kMuonPDGId_;
+}
+
+

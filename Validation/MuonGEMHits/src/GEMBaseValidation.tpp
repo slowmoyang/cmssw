@@ -9,11 +9,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
   // TODO Logging
-  const unsigned long kKeySize = std::tuple_size<MEMapKey>::value;
-  if(kKeySize < 2) {
-    MonitorElement* me = nullptr;
-    return me;
-  }
+  if (std::tuple_size<MEMapKey>::value < 2) return nullptr;
 
   Int_t station_id = std::get<1>(key);
 
@@ -25,6 +21,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                   title_prefix, title_suffix);
 
   // NOTE currently, only GE11 and GE21 are considered.
+  // Look Validation/MuonGEMHits/python/MuonGEMCommonParameters_cfi.py
   UInt_t nbins_start = 2 * (station_id - 1); 
   Int_t nbinsx = zr_occ_num_bins_[nbins_start];
   Int_t nbinsy = zr_occ_num_bins_[nbins_start + 1]; 
@@ -47,8 +44,8 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
                                                    const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
-  const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
-  const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
+  const char* name_suffix  = GEMUtils::getSuffixName(key);
+  const char* title_suffix = GEMUtils::getSuffixTitle(key);
   TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
   TString title = TString::Format("%s XY Occupancy :%s;X [cm];Y [cm]",
                                   title_prefix, title_suffix);
@@ -65,14 +62,15 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(
     const char* name_prefix,
     const char* title_prefix) {
 
-  const char* name_suffix  = GEMUtils::getSuffixName(key).Data();
-  const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
+  const char* name_suffix  = GEMUtils::getSuffixName(key);
+  const char* title_suffix = GEMUtils::getSuffixTitle(key);
   TString name = TString::Format("%s_occ_polar%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s Polar Occupancy :%s", title_prefix, title_suffix);
+  TString title = TString::Format("%s Polar Occupancy :%s",
+                                  title_prefix, title_suffix);
   // TODO # of bins
   MonitorElement* me = ibooker.book2D(name, title,
                                       101, -M_PI, M_PI,
-                                      101, 0.0, 360.0); 
+                                      101, 0.0f, 360.0f); 
   return me;
 }
 
@@ -89,8 +87,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
   TString name = TString::Format("%s_occ_det%s", name_prefix, name_suffix); 
-  TString title = TString::Format(
-      "%s Occupancy for detector component :%s;;Eta Partition",
+  TString title = TString::Format("%s Occupancy for detector component :%s",
       title_prefix, title_suffix);
 
   std::vector<const GEMSuperChamber*> superchambers = station->superChambers();
@@ -101,14 +98,15 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
   Int_t nbinsx = num_superchambers * num_chambers;
   Int_t nbinsy = superchambers.front()->chambers().front()->nEtaPartitions();
 
-  auto hist = new TH2F(title, name,
+  auto hist = new TH2F(name, title,
                        nbinsx, 1 - 0.5, nbinsx + 0.5,
                        nbinsy, 1 - 0.5, nbinsy + 0.5);
+  hist->GetXaxis()->SetTitle("Chamber-Layer");
+  hist->GetYaxis()->SetTitle("Eta Partition");
 
   TAxis* x_axis = hist->GetXaxis();
   for (Int_t chamber_id = 1; chamber_id <= num_superchambers; chamber_id++) {
     for (Int_t layer_id = 1; layer_id <= num_chambers; layer_id++) {
-
       Int_t bin = getDetOccBinX(chamber_id, layer_id); 
       TString label = TString::Format("C%dL%d", chamber_id, layer_id);
       x_axis->SetBinLabel(bin, label);
@@ -153,8 +151,7 @@ MonitorElement* GEMBaseValidation::bookHist2D(
     const char* name, const char* title,
     Int_t nbinsx, Double_t xlow, Double_t xup,
     Int_t nbinsy, Double_t ylow, Double_t yup,
-    const char* x_title,
-    const char* y_title) {
+    const char* x_title, const char* y_title) {
 
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
