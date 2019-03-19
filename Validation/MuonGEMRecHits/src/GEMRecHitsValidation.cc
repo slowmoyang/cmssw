@@ -64,12 +64,12 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & booker,
 
     me_residual_x_[region_id] = bookHist1D(booker, region_id,
                                            "residual_x", "Residual of X",
-                                           100, -5, 5, "Residuals [mm]");
+                                           20, -5, 5, "Residuals [mm]");
 
     me_residual_y_[region_id] = bookHist1D(booker, region_id,
                                            "residual_y",
                                            "Residual of Y",
-                                           400, -20, 20, "Residuals [mm]");
+                                           80, -20, 20, "Residuals [mm]");
 
     if (detail_plot_) {
       for (const auto & station : region->stations()) {
@@ -83,11 +83,11 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker & booker,
           // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_residual_x_[key3] = bookHist1D(booker, key3, "residual_x",
                                                    "Residual of X",
-                                                   100, -5, 5, "Residuals [mm]");
+                                                   20, -5, 5, "Residuals [mm]");
 
           me_detail_residual_y_[key3] = bookHist1D(booker, key3, "residual_y",
                                                    "Residual of Y",
-                                                   200, -20, 20, "Residuals [mm]");
+                                                   80, -20, 20, "Residuals [mm]");
 
         } // chamber loop
       } // station loop
@@ -318,7 +318,7 @@ void GEMRecHitsValidation::analyze(const edm::Event& event,
           me_detail_occ_polar_[key3]->Fill(rechit_g_phi, rechit_g_r);
 
           if (chamber_id == 1) {
-            me_detail_occ_xy_[key3]->Fill(rechit_g_x, rechit_g_y);
+            me_detail_occ_xy_ch1_[key3]->Fill(rechit_g_x, rechit_g_y);
           } // chamber 1
 
         } // detail_plot
