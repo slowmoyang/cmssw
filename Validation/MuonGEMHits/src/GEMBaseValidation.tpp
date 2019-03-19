@@ -68,9 +68,10 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(
   TString title = TString::Format("%s Polar Occupancy :%s",
                                   title_prefix, title_suffix);
   // TODO # of bins
+  // TODO the x-axis lies in the cnter of Ch1
   MonitorElement* me = ibooker.book2D(name, title,
-                                      101, -M_PI, M_PI,
-                                      101, 0.0f, 360.0f); 
+                                      108, -M_PI, M_PI,
+                                      108, 0.0f, 360.0f); 
   return me;
 }
 
