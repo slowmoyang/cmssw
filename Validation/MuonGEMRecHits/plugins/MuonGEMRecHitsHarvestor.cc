@@ -4,21 +4,14 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TProfile.h"
-#include "TSystem.h"
-#include "TEfficiency.h"
-
 
 MuonGEMRecHitsHarvestor::MuonGEMRecHitsHarvestor(const edm::ParameterSet& ps)
     : MuonGEMBaseHarvestor(ps) {
-
   folder_ = ps.getParameter<std::string>("folder");
 
-  region_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("regionIds");
-  station_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("stationIds");
-  layer_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("layerIds");
+  region_ids_ = ps.getUntrackedParameter<std::vector<Int_t> >("regionIds");
+  station_ids_ = ps.getUntrackedParameter<std::vector<Int_t> >("stationIds");
+  layer_ids_ = ps.getUntrackedParameter<std::vector<Int_t> >("layerIds");
 }
 
 
@@ -26,75 +19,63 @@ MuonGEMRecHitsHarvestor::~MuonGEMRecHitsHarvestor() {
 }
 
 
-void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& ibooker,
-                                        DQMStore::IGetter& igetter) {
-  // igetter.setCurrentFolder(folder_);
-  igetter.cd(folder_);
+void MuonGEMRecHitsHarvestor::dqmEndJob(DQMStore::IBooker& booker,
+                                        DQMStore::IGetter& getter) {
+
+  const char* occ_folder = gSystem->ConcatFileName(folder_.c_str(), "Occupancy");
+  const char* eff_folder = gSystem->ConcatFileName(folder_.c_str(), "Efficiency");
+  booker.setCurrentFolder(eff_folder);
 
   for (const auto & region_id : region_ids_) {
     TString name_suffix_re = GEMUtils::getSuffixName(region_id);
     TString title_suffix_re = GEMUtils::getSuffixTitle(region_id);
 
-    bookEff1D(ibooker, igetter, folder_,
-              "rechit_occ_eta" + name_suffix_re,
-              "muon_occ_eta" + name_suffix_re,
-              "eff_eta" + name_suffix_re,
-              "Eta Efficiency :" + title_suffix_re);
+    TString rechit_eta_path = gSystem->ConcatFileName(
+        occ_folder,
+        "matched_rechit_occ_eta" + name_suffix_re);
 
-    bookEff1D(ibooker, igetter, folder_,
-              "tight_rechit_occ_eta" + name_suffix_re,
-              "tight_muon_occ_eta" + name_suffix_re,
-              "eff_eta_tight" + name_suffix_re,
-              "Eta Efficiency (CutBasedIdTight) :" + title_suffix_re);
+    TString simhit_eta_path = gSystem->ConcatFileName(
+        occ_folder, 
+        "muon_simhit_occ_eta" + name_suffix_re);
 
-    bookEff1D(ibooker, igetter, folder_,
-              "loose_rechit_occ_eta" + name_suffix_re,
-              "loose_muon_occ_eta" + name_suffix_re,
-              "eff_eta_loose" + name_suffix_re,
-              "Eta Efficiency (CutBasedIdLoose) :" + title_suffix_re);
+    TString eff_eta_name = "eff_eta" + name_suffix_re;
+    TString eff_eta_title = "Eta Efficiency :" + title_suffix_re;
+
+    bookEff1D(booker, getter, rechit_eta_path, simhit_eta_path,
+              eff_folder, eff_eta_name, eff_eta_title);
 
     for (const auto & station_id : station_ids_) {
       TString name_suffix_re_st = GEMUtils::getSuffixName(region_id, station_id);
       TString title_suffix_re_st = GEMUtils::getSuffixTitle(region_id, station_id);
 
-      // NOTE Phi 
-      bookEff1D(ibooker, igetter, folder_,
-                "rechit_occ_phi" + name_suffix_re_st,
-                "muon_occ_phi" + name_suffix_re_st,
-                "eff_phi" + name_suffix_re_st,
-                "Phi Efficiency :" + title_suffix_re_st);
+      TString rechit_phi_path = gSystem->ConcatFileName(
+          occ_folder,
+          "matched_rechit_occ_phi" + name_suffix_re_st);
 
-      bookEff1D(ibooker, igetter, folder_,
-                "tight_rechit_occ_phi" + name_suffix_re_st,
-                "tight_muon_occ_phi" + name_suffix_re_st,
-                "eff_phi_tight" + name_suffix_re_st,
-                "Phi Efficiency (CutBasedIdTight) :" + title_suffix_re_st);
+      TString simhit_phi_path = gSystem->ConcatFileName(
+          occ_folder,
+          "muon_simhit_occ_phi" + name_suffix_re_st);
 
-      bookEff1D(ibooker, igetter, folder_,
-                "loose_rechit_occ_phi" + name_suffix_re_st,
-                "loose_muon_occ_phi" + name_suffix_re_st,
-                "eff_phi_loose" + name_suffix_re_st,
-                "Phi Efficiency (CutBasedIdLoose) :" + title_suffix_re_st);
+      TString eff_phi_name = "eff_phi" + name_suffix_re_st;
+      TString eff_phi_title = "Phi Efficiency :" + title_suffix_re_st;
 
-      // NOTE Detector Component 
-      bookEff2D(ibooker, igetter, folder_, 
-                "rechit_occ_det" + name_suffix_re_st,
-                "muon_occ_det" + name_suffix_re_st,
-                "eff_det" + name_suffix_re_st,
-                "Detector Component Efficiency :" + title_suffix_re_st);
+      bookEff1D(booker, getter, rechit_phi_path, simhit_phi_path,
+                eff_folder, eff_phi_name, eff_phi_title);
 
-      bookEff2D(ibooker, igetter, folder_, 
-                "tight_rechit_occ_det" + name_suffix_re_st,
-                "tight_muon_occ_det" + name_suffix_re_st,
-                "eff_det_tight" + name_suffix_re_st,
-                "Detector Component Efficiency (CutBasedIdTight) :" + title_suffix_re_st);
 
-      bookEff2D(ibooker, igetter, folder_, 
-                "loose_rechit_occ_det" + name_suffix_re_st,
-                "loose_muon_occ_det" + name_suffix_re_st,
-                "eff_det_loose" + name_suffix_re_st,
-                "Detector Component Efficiency (CutBasedIdLoose) :" + title_suffix_re_st);
+      // NOTE Detector Component Efficiency
+      TString rechit_det_path = gSystem->ConcatFileName(
+          occ_folder,
+          "matched_rechit_occ_det" + name_suffix_re_st);
 
+      TString simhit_det_path = gSystem->ConcatFileName(
+          occ_folder,
+          "muon_simhit_occ_det" + name_suffix_re_st);
+
+      TString eff_det_name = "eff_det" + name_suffix_re_st;
+      TString eff_det_title = "Detector Component Efficiency :" + title_suffix_re_st;
+      bookEff2D(booker, getter, rechit_det_path, simhit_det_path,
+                eff_folder, eff_det_name, eff_det_title);
 
     } // Station Id END
   } // Region Id END

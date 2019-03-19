@@ -15,8 +15,7 @@ TProfile* MuonGEMBaseHarvestor::computeEfficiency(const TH1F & passed,
 
   const TAxis* total_x = total.GetXaxis();
 
-  TProfile * eff_profile = new TProfile(name,
-                                        title,
+  TProfile * eff_profile = new TProfile(name, title,
                                         total_x->GetNbins(),
                                         total_x->GetXmin(),
                                         total_x->GetXmax());
@@ -86,33 +85,32 @@ TH2F* MuonGEMBaseHarvestor::computeEfficiency(const TH2F & passed,
 }
 
 
-void MuonGEMBaseHarvestor::bookEff1D(DQMStore::IBooker & ibooker,
-                                     DQMStore::IGetter & igetter,
-                                     const std::string & folder,
-                                     const TString & passed_name,
-                                     const TString & total_name,
+void MuonGEMBaseHarvestor::bookEff1D(DQMStore::IBooker & booker,
+                                     DQMStore::IGetter & getter,
+                                     const TString & passed_path,
+                                     const TString & total_path,
+                                     const TString & folder,
                                      const TString & eff_name,
                                      const TString & eff_title) {
-  TH1F* passed = getElement<TH1F>(igetter, folder, passed_name); 
-  TH1F* total = getElement<TH1F>(igetter, folder, total_name);
-  if (passed == nullptr or total == nullptr) return;
+  TH1F* passed = getElement<TH1F>(getter, passed_path); 
+  TH1F* total = getElement<TH1F>(getter, total_path);
   TProfile* eff = computeEfficiency(*passed, *total, eff_name, eff_title);
-  ibooker.bookProfile(eff_name, eff);
+
+  booker.setCurrentFolder(folder.Data());
+  booker.bookProfile(eff_name, eff);
 }
 
-
-void MuonGEMBaseHarvestor::bookEff2D(DQMStore::IBooker & ibooker,
-                                     DQMStore::IGetter & igetter,
-                                     const std::string & folder,
-                                     const TString & passed_name,
-                                     const TString & total_name,
+void MuonGEMBaseHarvestor::bookEff2D(DQMStore::IBooker & booker,
+                                     DQMStore::IGetter & getter,
+                                     const TString & passed_path,
+                                     const TString & total_path,
+                                     const TString & folder,
                                      const TString & eff_name,
                                      const TString & eff_title) {
-  TH2F* passed = getElement<TH2F>(igetter, folder, passed_name); 
-  TH2F* total = getElement<TH2F>(igetter, folder, total_name); 
+  TH2F* passed = getElement<TH2F>(getter, passed_path); 
+  TH2F* total = getElement<TH2F>(getter, total_path); 
   if (passed == nullptr or total == nullptr) return;
   TH2F* eff = computeEfficiency(*passed, *total, eff_name, eff_title);
-  ibooker.book2D(eff_name, eff);
+  booker.setCurrentFolder(folder.Data());
+  booker.book2D(eff_name, eff);
 }
-
-

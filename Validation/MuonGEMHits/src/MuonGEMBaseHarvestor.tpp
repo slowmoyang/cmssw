@@ -2,21 +2,22 @@
 
 
 template <typename T>
-T* MuonGEMBaseHarvestor::getElement(DQMStore::IGetter & igetter,
-                                    const std::string & folder,
-                                    const TString & name) {
-  const std::string path = gSystem->ConcatFileName(folder.c_str(), name);
+T* MuonGEMBaseHarvestor::getElement(DQMStore::IGetter & getter,
+                                    const TString & path) {
+  std::string folder = gSystem->DirName(path);
+  std::string name = gSystem->BaseName(path);
 
-  // FIXME This line can confuse us if there is no required mointor element.
-  // Can I make dqmEndJob select the required monitor element for each geometry
-  // setup??
-  if (not igetter.containsAnyMonitorable(path)) {
+  getter.setCurrentFolder(folder);
+  std::vector<std::string> mes = getter.getMEs();
+
+  Bool_t not_found = std::find(mes.begin(), mes.end(), name) == mes.end();
+  if (not_found) {
     edm::LogInfo(log_category_) << "doesn't contain " << path << std::endl;
     return nullptr;
   }
 
   T* hist = nullptr;
-  if (auto tmp_me = igetter.getElement(path)) {
+  if (auto tmp_me = getter.get(path.Data())) {
     hist = dynamic_cast<T*>(tmp_me->getRootObject()->Clone());
     hist->Sumw2();
   } else {

@@ -10,18 +10,16 @@
 #include "TSystem.h"
 #include "TString.h"
 
-#include <string>
-
 class MuonGEMBaseHarvestor : public DQMEDHarvester {
  public:
   explicit MuonGEMBaseHarvestor(const edm::ParameterSet &);
 
  protected:
   template <typename T>
-  T* getElement(DQMStore::IGetter & igetter,
-                const std::string & folder,
-                const TString & name);
+  T* getElement(DQMStore::IGetter & getter,
+                const TString & path);
 
+  // 0.6893 means 1 standard deviation of the normal distribution.
   TProfile* computeEfficiency(const TH1F & passed,
                               const TH1F & total,
                               const char* name,
@@ -33,19 +31,19 @@ class MuonGEMBaseHarvestor : public DQMEDHarvester {
                           const char* name,
                           const char* title);
 
-  void bookEff1D(DQMStore::IBooker & ibooker,
-                 DQMStore::IGetter & igetter,
-                 const std::string & folder,
-                 const TString & passed_name,
-                 const TString & total_name,
+  void bookEff1D(DQMStore::IBooker & booker,
+                 DQMStore::IGetter & getter,
+                 const TString & passed_path,
+                 const TString & total_path,
+                 const TString & folder,
                  const TString & eff_name,
                  const TString & eff_title="Efficiency");
 
-  void bookEff2D(DQMStore::IBooker & ibooker,
-                 DQMStore::IGetter & igetter,
-                 const std::string & folder,
-                 const TString & passed_name,
-                 const TString & total_name,
+  void bookEff2D(DQMStore::IBooker & booker,
+                 DQMStore::IGetter & getter,
+                 const TString & passed_path,
+                 const TString & total_path,
+                 const TString & folder,
                  const TString & eff_name,
                  const TString & eff_title="Efficiency");
 
