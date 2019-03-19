@@ -20,29 +20,30 @@ class GEMHitsValidation : public GEMBaseValidation {
  private:
   std::tuple<Double_t, Double_t> getTOFRange(Int_t station_id);
 
-  // Simple plots
-  MEMap1Ids me_occ_zr_; // [regions]
-  std::map<Int_t, MonitorElement*> me_tof_mu_; // [stations]
-  MEMap1Ids me_eloss_mu_; // [stations]
-  MEMap2Ids me_occ_det_; // [r][s]
+  // Parameters
+  edm::EDGetToken simhit_token_;
+  std::vector<Double_t> tof_range_; 
 
-  // Detail plots
-  // [regions][stations][layers]
-  MEMap3Ids me_detail_occ_xy_;
-  MEMap3Ids me_detail_occ_zr_;
+  // Monitor elemnts
+  // Time of Flight
+  std::map<Int_t, MonitorElement*> me_tof_mu_;
   MEMap3Ids me_detail_tof_;
   MEMap3Ids me_detail_tof_mu_;
+
+  // Energy loss
+  MEMap1Ids me_eloss_mu_;
   MEMap3Ids me_detail_eloss_;
   MEMap3Ids me_detail_eloss_mu_;
 
-  MonitorElement* me_gem_geom_xyz_;
-  MonitorElement* me_gem_geom_eta_phi_;
+  // Occupancy
+  MEMap1Ids me_occ_zr_;
+  MEMap2Ids me_occ_det_;
+  MEMap3Ids me_occ_xy_;
 
+  // Constants
   // energy loss conversion factor:
-  const Float_t kEnergyCF_ = 1.e9;
+  const Float_t kEnergyCF_ = 1e9f;
 
-  edm::EDGetToken simhit_token_;
-  std::vector<Double_t> tof_range_; 
 };
 
 #endif // VALIDATION_MUONGEMHITS_INTERFACE_GEMHITSVALIDATION_H_
