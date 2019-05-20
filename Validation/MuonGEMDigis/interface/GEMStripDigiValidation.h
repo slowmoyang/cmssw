@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_
-#define VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_
+#ifndef Validation_MuonGEMDigis_GEMStripDigiValidation_h_
+#define Validation_MuonGEMDigis_GEMStripDigiValidation_h_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 
@@ -36,6 +36,15 @@ class GEMStripDigiValidation : public GEMBaseValidation {
 
   // bunch crossing
   MEMap3Ids me_detail_bx_;
+
+  // NOTE for debugging
+  MEMap3Ids me_debug_residual_x_;
+  MEMap3Ids me_debug_residual_y_;
+  MEMap3Ids me_debug_residual_z_;
+
+  MEMap3Ids me_debug_residual_global_x_;
+  MEMap3Ids me_debug_residual_global_y_;
+  MEMap3Ids me_debug_residual_global_z_;
 };
 
-#endif // VALIDATION_MUONGEMDIGIS_GEMSTRIPDIGIVALIDATION_H_
+#endif // Validation_MuonGEMDigis_GEMStripDigiValidation_h_

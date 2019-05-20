@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
-#define VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
+#ifndef Validation_MuonGEMDigis_GEMCoPadDigiValidation_H_
+#define Validation_MuonGEMDigis_GEMCoPadDigiValidation_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 
@@ -29,4 +29,4 @@ class GEMCoPadDigiValidation : public GEMBaseValidation {
 
 };
 
-#endif // VALIDATION_MUONGEMDIGIS_GEMCOPADDIGIVALIDATION_H_
+#endif // Validation_MuonGEMDigis_GEMCoPadDigiValidation_H_

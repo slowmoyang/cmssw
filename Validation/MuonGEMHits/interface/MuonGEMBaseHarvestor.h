@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMHITS_MUONGEMBASESHARVESTOR_H_
-#define VALIDATION_MUONGEMHITS_MUONGEMBASESHARVESTOR_H_
+#ifndef Validation_MuonGEMHits_MuonGEMBaseHarvestor_h_
+#define Validation_MuonGEMHits_MuonGEMBaseHarvestor_h_
 
 #include "DQMServices/Core/interface/DQMEDHarvester.h"
 #include "DQMServices/Core/interface/DQMStore.h"
@@ -53,4 +53,4 @@ class MuonGEMBaseHarvestor : public DQMEDHarvester {
 
 #include "Validation/MuonGEMHits/src/MuonGEMBaseHarvestor.tpp"
 
-#endif // VALIDATION_MUONGEMHITS_PLUGINS_MUONGEMBASESHARVESTOR_H_
+#endif // Validation_MuonGEMHits_MuonGEMBaseHarvestor_h_

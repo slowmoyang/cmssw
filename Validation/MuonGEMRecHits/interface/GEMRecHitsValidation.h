@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMDIGIS_GEMRECHITSVALIDATION_H_
-#define VALIDATION_MUONGEMDIGIS_GEMRECHITSVALIDATION_H_
+#ifndef Validation_MuonGEMRecHits_GEMRecHitsValidation_H_
+#define Validation_MuonGEMRecHits_GEMRecHitsValidation_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 #include "DataFormats/GEMRecHit/interface/GEMRecHitCollection.h"
@@ -52,7 +52,51 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   MEMap2Ids me_simhit_occ_det_;
   MEMap2Ids me_rechit_occ_det_;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // NOTE for debugging
+  //////////////////////////////////////////////////////////////////////////////
+  // NOTE residual
+  MEMap3Ids me_debug_res_x_cls_1_;
+  MEMap3Ids me_debug_res_y_cls_1_;
+  MEMap3Ids me_debug_res_x_cls_2_;
+  MEMap3Ids me_debug_res_y_cls_2_;
+
+  MEMap3Ids me_debug_err_x_cls_1_;
+  MEMap3Ids me_debug_err_y_cls_1_;
+  MEMap3Ids me_debug_err_x_cls_2_;
+  MEMap3Ids me_debug_err_y_cls_2_;
+
+  MEMap3Ids me_debug_res_x_cls_higher_;
+  MEMap3Ids me_debug_res_y_cls_higher_;
+  MEMap3Ids me_debug_err_x_cls_higher_;
+  MEMap3Ids me_debug_err_y_cls_higher_;
+
+  // x_y_condition
+  MEMap3Ids me_debug_res_x_cls_;
+  MEMap3Ids me_debug_res_y_cls_;
+
+  MEMap3Ids me_debug_res_x_err_x_;
+  MEMap3Ids me_debug_res_y_err_y_;
+
+  MEMap3Ids me_debug_res_x_res_y_;
+
+  // NOTE Pull
+  MEMap3Ids me_debug_pull_x_cls_1_;
+  MEMap3Ids me_debug_pull_y_cls_1_;
+  MEMap3Ids me_debug_pull_x_cls_2_;
+  MEMap3Ids me_debug_pull_y_cls_2_;
+  MEMap3Ids me_debug_pull_x_cls_higher_;
+  MEMap3Ids me_debug_pull_y_cls_higher_;
+
+  // x_y_condition
+  MEMap3Ids me_debug_pull_x_cls_;
+  MEMap3Ids me_debug_pull_y_cls_;
+
+  MEMap3Ids me_debug_pull_x_pull_y_;
+
+  MEMap3Ids me_debug_res_x_over_err_xx_;
+  MEMap3Ids me_debug_res_y_over_err_yy_;
 
 };
 
-#endif // VALIDATION_MUONGEMDIGIS_GEMRECHITSVALIDATION_H_
+#endif // Validation_MuonGEMRecHits_GEMRecHitsValidation_H_

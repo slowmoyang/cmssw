@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMDIGIS_INTERFACE_GEMPADDIGIVALIDATION_H_
-#define VALIDATION_MUONGEMDIGIS_INTERFACE_GEMPADDIGIVALIDATION_H_
+#ifndef Validation_MuonGEMDigis_GEMPadDigiValidation_H_
+#define Validation_MuonGEMDigis_GEMPadDigiValidation_H_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 
@@ -28,4 +28,4 @@ class GEMPadDigiValidation : public GEMBaseValidation {
   MEMap3Ids me_detail_bx_;
 };
 
-#endif // VALIDATION_MUONGEMDIGIS_GEMPADDIGIVALIDATION_H_
+#endif // Validation_MuonGEMDigis_GEMPadDigiValidation_H_

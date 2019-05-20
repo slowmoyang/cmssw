@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMHITS_INTERFACE_GEMHITSVALIDATION_H_
-#define VALIDATION_MUONGEMHITS_INTERFACE_GEMHITSVALIDATION_H_
+#ifndef Validation_MuonGEMHits_GEMHitsValidation_h_
+#define Validation_MuonGEMHits_GEMHitsValidation_h_
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 
@@ -46,4 +46,4 @@ class GEMHitsValidation : public GEMBaseValidation {
 
 };
 
-#endif // VALIDATION_MUONGEMHITS_INTERFACE_GEMHITSVALIDATION_H_
+#endif // Validation_MuonGEMHits_GEMHitsValidation_h_

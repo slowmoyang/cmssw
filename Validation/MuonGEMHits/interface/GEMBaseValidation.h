@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
-#define VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
+#ifndef Validation_MuonGEMHits_GEMBaseValidation_h_
+#define Validation_MuonGEMHits_GEMBaseValidation_h_
 
 #include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
 
@@ -96,4 +96,4 @@ class GEMBaseValidation : public DQMEDAnalyzer {
 
 #include "Validation/MuonGEMHits/src/GEMBaseValidation.tpp"
 
-#endif // VALIDATION_MUONGEMHITS_INTERFACE_GEMBASEVALIDATION_H_
+#endif // Validation_MuonGEMHits_GEMBaseValidation_h_

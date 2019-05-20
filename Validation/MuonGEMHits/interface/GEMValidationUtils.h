@@ -1,5 +1,5 @@
-#ifndef VALIDATION_MUONGEMHITS_INTERFACE_GEMVALIDATIONUTILS_H_
-#define VALIDATION_MUONGEMHITS_INTERFACE_GEMVALIDATIONUTILS_H_
+#ifndef Validation_MuonGEMHits_INTERFACE_GEMValidationUtils_h_
+#define Validation_MuonGEMHits_INTERFACE_GEMValidationUtils_h_
 
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -49,4 +49,4 @@ TString getSuffixTitle(const ME4IdsKey & key);
 }
 
 
-#endif // VALIDATION_MUONGEMHITS_GEMVALIDATIONUTILS_H_
+#endif // Validation_MuonGEMHits_GEMValidationUtils_h_
