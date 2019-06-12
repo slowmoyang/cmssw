@@ -33,8 +33,6 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
   for (const auto & region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = bookZROccupancy(booker, region_id, "strip", "Strip");
-
     // NOTE occupancy plots for eta efficiency
     me_simhit_occ_eta_[region_id] = bookHist1D(
         booker, region_id, "muon_simhit_occ_eta", "Muon SimHit Eta Occupancy",
@@ -47,8 +45,6 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
-
-      me_occ_det_[key2] = bookDetectorOccupancy(booker, key2, station, "strip", "Strip Digi");
 
       // NOTE occupancy plots for phi efficiency
       me_simhit_occ_phi_[key2] = bookHist1D(
@@ -65,27 +61,6 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
       me_strip_occ_det_[key2] = bookDetectorOccupancy(
           booker, key2, station, "matched_strip", "Matched Strip Digi");
 
-      const GEMSuperChamber* super_chamber = station->superChambers().front();
-      for (const auto & chamber : super_chamber->chambers()) {
-        Int_t layer_id = chamber->id().layer();
-        ME3IdsKey key3(region_id, station_id, layer_id);
-
-        Int_t num_strips = chamber->etaPartitions().front()->nstrips();
-
-        if (detail_plot_) {
-          me_detail_occ_xy_[key3] = bookXYOccupancy(booker, key3, "strip", "Strip Digi");
-
-          me_detail_occ_phi_strip_[key3] = bookHist2D(
-              booker, key3, "strip_occ_phi_strip", "Strip Digi Occupancy",
-              280, -M_PI, M_PI, num_strips / 2, 0, num_strips,
-              "#phi [rad]", "strip number");
-
-          me_detail_occ_strip_[key3] = bookHist1D(
-              booker, key3, "strip_occ_strip", "Strip Digi Occupancy per strip number",
-              num_strips, 0.5, num_strips + 0.5, "strip number");
-
-        }
-      } // End loop over layer ids
     } // End loop over station ids
   } // End loop over region ids
 
@@ -113,49 +88,6 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
       } // station loop
     } // region loop
   } // detail plot
-
-  const char* debug_folder = gSystem->ConcatFileName(folder_.c_str(), "DEBUG");
-  booker.setCurrentFolder(debug_folder);
-
-  for (const auto & region : gem->regions()) {
-    Int_t region_id = region->region();
-    for (const auto & station : region->stations()) {
-      Int_t station_id = station->station();
-
-      const GEMSuperChamber* super_chamber = station->superChambers().front();
-      for (const auto & chamber : super_chamber->chambers()) {
-        Int_t layer_id = chamber->id().layer();
-        ME3IdsKey key3(region_id, station_id, layer_id);
-
-        me_debug_residual_x_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_x", "Residual in X", 100, -3, 3);
-
-        me_debug_residual_y_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_y", "Residual in Y", 100, -20, 20);
-
-        me_debug_residual_z_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_z", "Residual in Z", 100, -0.3, 0.3);
-
-        me_debug_residual_global_x_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_global_x",
-            "Residual in Global X", 100, -20, 20);
-
-        me_debug_residual_global_y_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_global_y",
-            "Residual in Global Y", 100, -20, 20);
-
-        me_debug_residual_global_z_[key3] = bookHist1D(
-            booker, key3, "DEBUG_residual_global_z",
-            "Residual in Global Z", 100, -0.3, 0.3);
-
-      }
-    }
-  }
-
-
-
-
-
 }
 
 
@@ -182,65 +114,6 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     return ;
   }
 
-  for (auto range_iter = digi_collection->begin();
-            range_iter != digi_collection->end();
-            range_iter++) {
-
-    GEMDetId id = (*range_iter).first;
-    const GEMDigiCollection::Range& range = (*range_iter).second;
-
-    if (gem->idToDet(id) == nullptr) { 
-      edm::LogError(log_category_) << "Getting DetId failed. Discard this gem strip hit. "
-                                   << "Maybe it comes from unmatched geometry."
-                                   << std::endl;
-      continue; 
-    }
-
-    const BoundPlane & surface = gem->idToDet(id)->surface();
-    const GEMEtaPartition* roll = gem->etaPartition(id);
-
-    Int_t region_id  = id.region();
-    Int_t layer_id   = id.layer();
-    Int_t station_id = id.station();
-    Int_t chamber_id = id.chamber();
-    Int_t roll_id    = id.roll();
-
-    // keys for MonitorElement* map.
-    ME2IdsKey key2(region_id, station_id);
-    ME3IdsKey key3(region_id, station_id, layer_id);
-    Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
-
-    for (auto digi = range.first; digi != range.second; ++digi) {
-      Int_t strip = digi->strip();
-      Int_t bx = digi->bx();
-
-      LocalPoint strip_local_pos = roll->centreOfStrip(digi->strip());
-      GlobalPoint strip_global_pos = surface.toGlobal(strip_local_pos);
-
-      Float_t g_r   = strip_global_pos.perp();
-      Float_t g_phi = strip_global_pos.phi();
-      Float_t g_x   = strip_global_pos.x();
-      Float_t g_y   = strip_global_pos.y();
-      Float_t g_abs_z   = std::abs(strip_global_pos.z());
-
-      // Simple Plots
-      me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
-      me_occ_det_[key2]->Fill(bin_x, roll_id);
-
-      // Detail Plots
-      if (detail_plot_) {
-        me_detail_occ_xy_[key3]->Fill(g_x, g_y);     
-        me_detail_occ_phi_strip_[key3]->Fill(g_phi, strip);
-        me_detail_occ_strip_[key3]->Fill(strip);
-        me_detail_bx_[key3]->Fill(bx);
-      } // detailPlot_ if end
-
-    } // digi loop end
-  } // end loop over digi_collection
-
-  //////////////////////////////////////////////////////////////////////////////
-  // TODO if (is_mc_)
-  //////////////////////////////////////////////////////////////////////////////
   for (const auto & simhit : *simhit_container.product()) {
     // muon only
     if (not isMuonSimHit(simhit)) continue;
@@ -266,13 +139,6 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     LocalPoint && simhit_local_pos = simhit.localPosition();
     GlobalPoint && simhit_global_pos = roll->surface().toGlobal(simhit_local_pos);
 
-    Float_t simhit_l_x = simhit_local_pos.x();
-    Float_t simhit_l_y = simhit_local_pos.y();
-    Float_t simhit_l_z = simhit_local_pos.z();
-
-    Float_t simhit_g_x = simhit_global_pos.x();
-    Float_t simhit_g_y = simhit_global_pos.y();
-    Float_t simhit_g_z = simhit_global_pos.z();
 
     Float_t simhit_g_eta = std::abs(simhit_global_pos.eta());
     Float_t simhit_g_phi = simhit_global_pos.phi();
@@ -299,30 +165,11 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
         if (simhit_strip == digi->strip()) {
           found_matched_digi = true;
 
-          LocalPoint && strip_local_pos = roll->centreOfStrip(digi->strip());
-          GlobalPoint && strip_global_pos = roll->surface().toGlobal(strip_local_pos);
-
-          Float_t residual_x = strip_local_pos.x() - simhit_l_x;
-          Float_t residual_y = strip_local_pos.y() - simhit_l_y;
-          Float_t residual_z = strip_local_pos.z() - simhit_l_z;
-
-          Float_t residual_global_x = strip_global_pos.x() - simhit_g_x;
-          Float_t residual_global_y = strip_global_pos.y() - simhit_g_y;
-          Float_t residual_global_z = strip_global_pos.z() - simhit_g_z;
-
           // If we use global position of digi, 'inconsistent bin contents'
           // exception may occur.
           me_strip_occ_eta_[region_id]->Fill(simhit_g_eta);
           me_strip_occ_phi_[key2]->Fill(simhit_g_phi);
           me_strip_occ_det_[key2]->Fill(bin_x, roll_id); 
-
-          me_debug_residual_x_[key3]->Fill(residual_x);
-          me_debug_residual_y_[key3]->Fill(residual_y);
-          me_debug_residual_z_[key3]->Fill(residual_z);
-
-          me_debug_residual_global_x_[key3]->Fill(residual_global_x);
-          me_debug_residual_global_y_[key3]->Fill(residual_global_y);
-          me_debug_residual_global_z_[key3]->Fill(residual_global_z);
 
           break;
         }

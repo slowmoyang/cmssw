@@ -19,12 +19,6 @@ class GEMStripDigiValidation : public GEMBaseValidation {
   edm::EDGetToken strip_token_;
 
   // Monitor elements
-  MEMap1Ids me_occ_zr_;
-  MEMap2Ids me_occ_det_;
-  MEMap3Ids me_detail_occ_xy_;
-  MEMap3Ids me_detail_occ_phi_strip_;
-  MEMap3Ids me_detail_occ_strip_;
-
   // NOTE muon simhit - strip digi matching
   // occupancy plots for efficiency
   MEMap1Ids me_simhit_occ_eta_;
@@ -36,15 +30,6 @@ class GEMStripDigiValidation : public GEMBaseValidation {
 
   // bunch crossing
   MEMap3Ids me_detail_bx_;
-
-  // NOTE for debugging
-  MEMap3Ids me_debug_residual_x_;
-  MEMap3Ids me_debug_residual_y_;
-  MEMap3Ids me_debug_residual_z_;
-
-  MEMap3Ids me_debug_residual_global_x_;
-  MEMap3Ids me_debug_residual_global_y_;
-  MEMap3Ids me_debug_residual_global_z_;
 };
 
 #endif // Validation_MuonGEMDigis_GEMStripDigiValidation_h_

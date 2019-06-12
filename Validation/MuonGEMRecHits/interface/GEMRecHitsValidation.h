@@ -38,12 +38,6 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   MEMap3Ids me_detail_residual_x_;
   MEMap3Ids me_detail_residual_y_;
 
-  // occupancy of GEMRecHits
-  MEMap1Ids me_occ_zr_;
-  MEMap3Ids me_detail_occ_xy_;
-  MEMap3Ids me_detail_occ_xy_ch1_; // to check GEMGeometry
-  MEMap3Ids me_detail_occ_polar_;
-
   // occupancy of PSimHit and GEMRecHIts for efficiency
   MEMap1Ids me_simhit_occ_eta_;
   MEMap1Ids me_rechit_occ_eta_;
@@ -51,52 +45,6 @@ class GEMRecHitsValidation : public GEMBaseValidation {
   MEMap2Ids me_rechit_occ_phi_;
   MEMap2Ids me_simhit_occ_det_;
   MEMap2Ids me_rechit_occ_det_;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // NOTE for debugging
-  //////////////////////////////////////////////////////////////////////////////
-  // NOTE residual
-  MEMap3Ids me_debug_res_x_cls_1_;
-  MEMap3Ids me_debug_res_y_cls_1_;
-  MEMap3Ids me_debug_res_x_cls_2_;
-  MEMap3Ids me_debug_res_y_cls_2_;
-
-  MEMap3Ids me_debug_err_x_cls_1_;
-  MEMap3Ids me_debug_err_y_cls_1_;
-  MEMap3Ids me_debug_err_x_cls_2_;
-  MEMap3Ids me_debug_err_y_cls_2_;
-
-  MEMap3Ids me_debug_res_x_cls_higher_;
-  MEMap3Ids me_debug_res_y_cls_higher_;
-  MEMap3Ids me_debug_err_x_cls_higher_;
-  MEMap3Ids me_debug_err_y_cls_higher_;
-
-  // x_y_condition
-  MEMap3Ids me_debug_res_x_cls_;
-  MEMap3Ids me_debug_res_y_cls_;
-
-  MEMap3Ids me_debug_res_x_err_x_;
-  MEMap3Ids me_debug_res_y_err_y_;
-
-  MEMap3Ids me_debug_res_x_res_y_;
-
-  // NOTE Pull
-  MEMap3Ids me_debug_pull_x_cls_1_;
-  MEMap3Ids me_debug_pull_y_cls_1_;
-  MEMap3Ids me_debug_pull_x_cls_2_;
-  MEMap3Ids me_debug_pull_y_cls_2_;
-  MEMap3Ids me_debug_pull_x_cls_higher_;
-  MEMap3Ids me_debug_pull_y_cls_higher_;
-
-  // x_y_condition
-  MEMap3Ids me_debug_pull_x_cls_;
-  MEMap3Ids me_debug_pull_y_cls_;
-
-  MEMap3Ids me_debug_pull_x_pull_y_;
-
-  MEMap3Ids me_debug_res_x_over_err_xx_;
-  MEMap3Ids me_debug_res_y_over_err_yy_;
-
 };
 
 #endif // Validation_MuonGEMRecHits_GEMRecHitsValidation_H_
