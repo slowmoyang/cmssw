@@ -1,6 +1,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Validation/MuonGEMDigis/plugins/MuonGEMDigisHarvestor.h"
-include <string>
+#include <string>
 #include <vector>
 
 MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps)

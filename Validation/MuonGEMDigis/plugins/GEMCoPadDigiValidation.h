@@ -12,16 +12,13 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
 
 private:
-  MonitorElement* theGEMCoPad_xy[2][3];
-  MonitorElement* theGEMCoPad_phipad[2][3];
-  MonitorElement* theGEMCoPad[2][3];
-  MonitorElement* theGEMCoPad_bx[2][3];
-  MonitorElement* theGEMCoPad_zr[2][3];
-  std::unordered_map<UInt_t, MonitorElement*> theGEMCoPad_xy_ch;
+  MEMap1Ids me_occ_zr_;
+  MEMap2Ids me_occ_det_;
+  MEMap2Ids me_detail_occ_xy_;
+  MEMap2Ids me_detail_occ_phi_pad_;
+  MEMap2Ids me_detail_occ_pad_;
 
-  // Simple plots
-  std::unordered_map<UInt_t, MonitorElement*> theCoPad_dcEta;
-  std::unordered_map<UInt_t, MonitorElement*> theCoPad_simple_zr;
+  MEMap2Ids me_detail_bx_;
 
   edm::EDGetTokenT<GEMCoPadDigiCollection> inputToken_;
   int minBXGEM_, maxBXGEM_;

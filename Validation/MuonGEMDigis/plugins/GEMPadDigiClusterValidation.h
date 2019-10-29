@@ -12,17 +12,13 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
 
 private:
-  // Detail plots
-  MonitorElement* theGEMCluster_xy[2][3][2];
-  MonitorElement* theGEMCluster_phipad[2][3][2];
-  MonitorElement* theGEMCluster[2][3][2];
-  MonitorElement* theGEMCluster_bx[2][3][2];
-  MonitorElement* theGEMCluster_zr[2][3][2];
-  std::unordered_map<UInt_t, MonitorElement*> theGEMCluster_xy_ch;
+  MEMap1Ids me_occ_zr_;
+  MEMap2Ids me_occ_det_;
+  MEMap2Ids me_detail_occ_xy_;
+  MEMap2Ids me_detail_occ_phi_pad_;
+  MEMap2Ids me_detail_occ_pad_;
 
-  // Simple plots
-  std::unordered_map<UInt_t, MonitorElement*> theCluster_dcEta;
-  std::unordered_map<UInt_t, MonitorElement*> theCluster_simple_zr;
+  MEMap2Ids me_detail_bx_;
 
   edm::EDGetTokenT<GEMPadDigiClusterCollection> inputToken_;
 };

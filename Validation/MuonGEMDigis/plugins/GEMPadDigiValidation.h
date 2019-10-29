@@ -12,17 +12,14 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
 
 private:
-  // Detail plots
-  MonitorElement* theGEMPad_xy[2][3][2];
-  MonitorElement* theGEMPad_phipad[2][3][2];
-  MonitorElement* theGEMPad[2][3][2];
-  MonitorElement* theGEMPad_bx[2][3][2];
-  MonitorElement* theGEMPad_zr[2][3][2];
-  std::unordered_map<UInt_t, MonitorElement*> theGEMPad_xy_ch;
+  // monitor elements
+  MEMap2Ids me_occ_det_;
+  MEMap1Ids me_occ_zr_;
+  MEMap3Ids me_detail_occ_xy_;
+  MEMap3Ids me_detail_occ_phi_pad_;
+  MEMap3Ids me_detail_occ_pad_; // DIGI Occupancy per Pad number
 
-  // Simple plots
-  std::unordered_map<UInt_t, MonitorElement*> thePad_dcEta;
-  std::unordered_map<UInt_t, MonitorElement*> thePad_simple_zr;
+  MEMap3Ids me_detail_bx_;
 
   edm::EDGetTokenT<GEMPadDigiCollection> inputToken_;
 };
