@@ -3,6 +3,7 @@
 
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DQMServices/Core/interface/MonitorElement.h"
 
 #include "TString.h"
 #include "TSystem.h"
@@ -47,6 +48,5 @@ TString getSuffixTitle(const ME3IdsKey & key);
 TString getSuffixTitle(const ME4IdsKey & key);
 
 }
-
 
 #endif // Validation_MuonGEMHits_GEMValidationUtils_h_

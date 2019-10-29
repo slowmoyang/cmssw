@@ -17,7 +17,7 @@ GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
   detail_plot_ = ps.getParameter<Bool_t>("detailPlot");
 
   const auto& pset = ps.getParameterSet("gemSimHit");
-  inputTokenSH_ = consumes<edm::PSimHitContainer>(edm::InputTag>("inputTag"));
+  inputTokenSH_ = consumes<edm::PSimHitContainer>(edm::InputTag("inputTag"));
 }
 
 const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & event_setup) {
