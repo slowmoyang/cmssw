@@ -107,79 +107,81 @@ void GEMDigiTrackMatch::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (!sim_tracks.isValid() || !sim_vertices.isValid())
     return;
 
-  MySimTrack track_;
-  for (const auto& t : sim_trks) {
-    if (!isSimTrackGood(t)) {
-      continue;
-    }
-
-    // match hits and digis to this SimTrack
-    gemDigiMatcher_->match(t, sim_vert[t.vertIndex()]);
-
-    track_.pt = t.momentum().pt();
-    track_.phi = t.momentum().phi();
-    track_.eta = t.momentum().eta();
-    std::fill(std::begin(track_.hitOdd), std::end(track_.hitOdd), false);
-    std::fill(std::begin(track_.hitEven), std::end(track_.hitEven), false);
-
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 2; j++) {
-        track_.gem_sh[i][j] = false;
-        track_.gem_dg[i][j] = false;
-        track_.gem_pad[i][j] = false;
-        track_.gem_cluster[i][j] = false;
-      }
-    }
-
-    // ** GEM SimHits ** //
-    const auto& gem_sh_ids_ch = gemDigiMatcher_->muonSimHitMatcher()->chamberIds();
-    for (const auto& d : gem_sh_ids_ch) {
-      const GEMDetId id(d);
-      if (id.chamber() % 2 == 0)
-        track_.hitEven[id.station() - 1] = true;
-      else if (id.chamber() % 2 == 1)
-        track_.hitOdd[id.station() - 1] = true;
-      else {
-        std::cout << "Error to get chamber id" << std::endl;
+  if (detailPlot_) {
+    MySimTrack track_;
+    for (const auto& t : sim_trks) {
+      if (!isSimTrackGood(t)) {
+        continue;
       }
 
-      track_.gem_sh[id.station() - 1][(id.layer() - 1)] = true;
+      // match hits and digis to this SimTrack
+      gemDigiMatcher_->match(t, sim_vert[t.vertIndex()]);
+
+      track_.pt = t.momentum().pt();
+      track_.phi = t.momentum().phi();
+      track_.eta = t.momentum().eta();
+      std::fill(std::begin(track_.hitOdd), std::end(track_.hitOdd), false);
+      std::fill(std::begin(track_.hitEven), std::end(track_.hitEven), false);
+
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 2; j++) {
+          track_.gem_sh[i][j] = false;
+          track_.gem_dg[i][j] = false;
+          track_.gem_pad[i][j] = false;
+          track_.gem_cluster[i][j] = false;
+        }
+      }
+
+      // ** GEM SimHits ** //
+      const auto& gem_sh_ids_ch = gemDigiMatcher_->muonSimHitMatcher()->chamberIds();
+      for (const auto& d : gem_sh_ids_ch) {
+        const GEMDetId id(d);
+        if (id.chamber() % 2 == 0)
+          track_.hitEven[id.station() - 1] = true;
+        else if (id.chamber() % 2 == 1)
+          track_.hitOdd[id.station() - 1] = true;
+        else {
+          std::cout << "Error to get chamber id" << std::endl;
+        }
+
+        track_.gem_sh[id.station() - 1][(id.layer() - 1)] = true;
+      }
+
+      // ** GEM Digis, Pads and CoPads ** //
+      const auto& gem_dg_ids_ch = gemDigiMatcher_->chamberIdsDigi();
+      for (const auto& d : gem_dg_ids_ch) {
+        const GEMDetId id(d);
+        track_.gem_dg[id.station() - 1][(id.layer() - 1)] = true;
+      }
+
+      const auto& gem_pad_ids_ch = gemDigiMatcher_->chamberIdsPad();
+      for (const auto& d : gem_pad_ids_ch) {
+        const GEMDetId id(d);
+        track_.gem_pad[id.station() - 1][(id.layer() - 1)] = true;
+      }
+
+      const auto& gem_cluster_ids_ch = gemDigiMatcher_->chamberIdsCluster();
+      for (const auto& d : gem_cluster_ids_ch) {
+        const GEMDetId id(d);
+        track_.gem_cluster[id.station() - 1][(id.layer() - 1)] = true;
+      }
+
+      FillWithTrigger(track_eta, std::abs(track_.eta));
+      FillWithTrigger(track_phi, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+
+      FillWithTrigger(dg_sh_eta, track_.gem_sh, std::abs(track_.eta));
+      FillWithTrigger(dg_eta, track_.gem_dg, std::abs(track_.eta));
+      FillWithTrigger(pad_eta, track_.gem_pad, std::abs(track_.eta));
+      FillWithTrigger(cluster_eta, track_.gem_cluster, std::abs(track_.eta));
+      FillWithTrigger(copad_eta, track_.gem_pad, std::abs(track_.eta));
+
+      // Separate station.
+
+      FillWithTrigger(dg_sh_phi, track_.gem_sh, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+      FillWithTrigger(dg_phi, track_.gem_dg, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+      FillWithTrigger(pad_phi, track_.gem_pad, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+      FillWithTrigger(cluster_phi, track_.gem_cluster, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
+      FillWithTrigger(copad_phi, track_.gem_pad, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
     }
-
-    // ** GEM Digis, Pads and CoPads ** //
-    const auto& gem_dg_ids_ch = gemDigiMatcher_->chamberIdsDigi();
-    for (const auto& d : gem_dg_ids_ch) {
-      const GEMDetId id(d);
-      track_.gem_dg[id.station() - 1][(id.layer() - 1)] = true;
-    }
-
-    const auto& gem_pad_ids_ch = gemDigiMatcher_->chamberIdsPad();
-    for (const auto& d : gem_pad_ids_ch) {
-      const GEMDetId id(d);
-      track_.gem_pad[id.station() - 1][(id.layer() - 1)] = true;
-    }
-
-    const auto& gem_cluster_ids_ch = gemDigiMatcher_->chamberIdsCluster();
-    for (const auto& d : gem_cluster_ids_ch) {
-      const GEMDetId id(d);
-      track_.gem_cluster[id.station() - 1][(id.layer() - 1)] = true;
-    }
-
-    FillWithTrigger(track_eta, std::abs(track_.eta));
-    FillWithTrigger(track_phi, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
-
-    FillWithTrigger(dg_sh_eta, track_.gem_sh, std::abs(track_.eta));
-    FillWithTrigger(dg_eta, track_.gem_dg, std::abs(track_.eta));
-    FillWithTrigger(pad_eta, track_.gem_pad, std::abs(track_.eta));
-    FillWithTrigger(cluster_eta, track_.gem_cluster, std::abs(track_.eta));
-    FillWithTrigger(copad_eta, track_.gem_pad, std::abs(track_.eta));
-
-    // Separate station.
-
-    FillWithTrigger(dg_sh_phi, track_.gem_sh, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
-    FillWithTrigger(dg_phi, track_.gem_dg, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
-    FillWithTrigger(pad_phi, track_.gem_pad, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
-    FillWithTrigger(cluster_phi, track_.gem_cluster, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
-    FillWithTrigger(copad_phi, track_.gem_pad, std::abs(track_.eta), track_.phi, track_.hitOdd, track_.hitEven);
   }
 }

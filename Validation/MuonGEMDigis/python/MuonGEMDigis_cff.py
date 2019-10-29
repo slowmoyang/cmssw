@@ -51,8 +51,7 @@ gemGeometryChecker = DQMEDAnalyzer('GEMCheckGeometry',
   detailPlot = cms.bool(False),
 )
 
-gemDigiValidation = cms.Sequence( gemStripValidation+
-                                  gemUnpackedStripValidation+
+gemDigiValidation = cms.Sequence( gemUnpackedStripValidation+
                                   gemPadValidation+
                                   gemClusterValidation+
                                   gemCoPadValidation+
