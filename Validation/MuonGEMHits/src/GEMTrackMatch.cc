@@ -3,11 +3,13 @@
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 GEMTrackMatch::GEMTrackMatch(const edm::ParameterSet& ps) {
-  simTracksToken_ = consumes<edm::SimTrackContainer>(ps.getParameter<edm::InputTag>("simTrackCollection"));
-  simVerticesToken_ = consumes<edm::SimVertexContainer>(ps.getParameter<edm::InputTag>("simVertexCollection"));
   detailPlot_ = ps.getParameter<bool>("detailPlot");
 
+  const auto& simVertex = ps.getParameterSet("simVertex");
+  simVerticesToken_ = consumes<edm::SimVertexContainer>(simVertex.getParameter<edm::InputTag>("inputTag"));
+
   const auto& simTrack = ps.getParameterSet("simTrack");
+  simTracksToken_ = consumes<edm::SimTrackContainer>(simTrack.getParameter<edm::InputTag>("inputTag"));
   minPt_ = simTrack.getParameter<double>("minPt");
   minEta_ = simTrack.getParameter<double>("minEta");
   maxEta_ = simTrack.getParameter<double>("maxEta");

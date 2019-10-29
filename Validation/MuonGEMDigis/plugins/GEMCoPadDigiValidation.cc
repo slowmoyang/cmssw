@@ -4,8 +4,8 @@
 GEMCoPadDigiValidation::GEMCoPadDigiValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
   const auto &pset = cfg.getParameterSet("gemCoPadDigi");
   inputToken_ = consumes<GEMCoPadDigiCollection>(pset.getParameter<edm::InputTag>("inputTag"));
-  minBXGEM_ = cfg.getParameter<int>("minBX");
-  maxBXGEM_ = cfg.getParameter<int>("maxBX");
+  minBXGEM_ = pset.getParameter<int>("minBX");
+  maxBXGEM_ = pset.getParameter<int>("maxBX");
 }
 void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
                                             edm::Run const &Run,

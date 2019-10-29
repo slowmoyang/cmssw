@@ -11,37 +11,29 @@ commonPSet = cms.PSet(
   # st1 xmin xmax, st2 xmin xmax, st1 ymin ymax, st2 ymin ymax
   RangeGlobalZR = cms.untracked.vdouble(564,574,792,802,110,290,120,390),
   nBinGlobalXY = cms.untracked.int32(360),
+  outputFile = cms.string(''),
+  detailPlot = cms.bool(False),
 )
 
 gemStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   commonPSet,
   gemStripDigi = muonGEMDigiPSet.gemStripDigi,
-  outputFile = cms.string(''),
-  detailPlot = cms.bool(False),
 )
 gemUnpackedStripValidation = DQMEDAnalyzer('GEMStripDigiValidation',
   commonPSet,
   gemStripDigi = muonGEMDigiPSet.gemUnpackedStripDigi,
-  outputFile = cms.string(''),
-  detailPlot = cms.bool(False),
 )
 gemPadValidation = DQMEDAnalyzer('GEMPadDigiValidation',
   commonPSet,
   gemPadDigi = muonGEMDigiPSet.gemPadDigi,
-  outputFile = cms.string(''),
-  detailPlot = cms.bool(False),
 )
 gemClusterValidation = DQMEDAnalyzer('GEMPadDigiClusterValidation',
   commonPSet,
   gemPadCluster = muonGEMDigiPSet.gemPadCluster,
-  outputFile = cms.string(''),
-  detailPlot = cms.bool(False),
 )
 gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   commonPSet,
   gemCoPadDigi = muonGEMDigiPSet.gemCoPadDigi,
-  outputFile = cms.string(''),
-  detailPlot = cms.bool(False),
 )
 
 gemDigiTrackValidation = DQMEDAnalyzer('GEMDigiTrackMatch',

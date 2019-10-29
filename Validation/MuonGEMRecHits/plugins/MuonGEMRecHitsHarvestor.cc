@@ -11,25 +11,12 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
-///Data Format
 #include "DataFormats/GEMRecHit/interface/GEMRecHitCollection.h"
-#include "DataFormats/MuonDetId/interface/GEMDetId.h"
 #include "DataFormats/Scalers/interface/DcsStatus.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
-
-#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
-
-///Geometry
-#include "Geometry/Records/interface/MuonGeometryRecord.h"
-#include "Geometry/GEMGeometry/interface/GEMGeometry.h"
-#include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
-#include "Geometry/CommonTopologies/interface/StripTopology.h"
-
 #include "DQMServices/Core/interface/DQMStore.h"
-
 #include "Validation/MuonGEMRecHits/plugins/MuonGEMRecHitsHarvestor.h"
 #include "Validation/MuonGEMHits/interface/GEMDetLabel.h"
 

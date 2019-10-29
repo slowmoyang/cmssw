@@ -11,7 +11,7 @@ GEMRecHitValidation::GEMRecHitValidation(const edm::ParameterSet& cfg) : GEMBase
   const auto& pset = cfg.getParameterSet("gemRecHit");
   inputToken_ = consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("inputTag"));
   const auto& psimset = cfg.getParameterSet("gemSimHit");
-  inputTokenSH_ = consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("inputTag"));
+  inputTokenSH_ = consumes<edm::PSimHitContainer>(psimset.getParameter<edm::InputTag>("inputTag"));
 }
 
 GEMRecHitValidation::MonitorElement* GEMRecHitValidation::BookHist1D(DQMStore::IBooker& ibooker,
@@ -129,7 +129,7 @@ void GEMRecHitValidation::analyze(const edm::Event& e, const edm::EventSetup& iS
     return;
   }
 
-  for (edm::PSimHitContainer::const_iterator hits = gemSimHits->begin(); hits != gemSimHits->end(); ++hits) {
+  for (auto hits = gemSimHits->begin(); hits != gemSimHits->end(); ++hits) {
     const GEMDetId id(hits->detUnitId());
 
     Int_t sh_region = id.region();
@@ -154,7 +154,7 @@ void GEMRecHitValidation::analyze(const edm::Event& e, const edm::EventSetup& iS
     Float_t sh_l_x = hitLP.x();
     Float_t sh_l_y = hitLP.y();
 
-    for (GEMRecHitCollection::const_iterator recHit = gemRecHits->begin(); recHit != gemRecHits->end(); ++recHit) {
+    for (auto recHit = gemRecHits->begin(); recHit != gemRecHits->end(); ++recHit) {
       Float_t rh_l_x = recHit->localPosition().x();
       Float_t rh_l_xErr = recHit->localPositionError().xx();
       Float_t rh_l_y = recHit->localPosition().y();

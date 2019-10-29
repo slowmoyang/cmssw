@@ -1,19 +1,9 @@
 #ifndef Validation_MuonGEMDigis_MuonGEMDigisHarvestor_H
 #define Validation_MuonGEMDigis_MuonGEMDigisHarvestor_H
 
-#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-
-#include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/DQMEDHarvester.h"
 #include "SimMuon/MCTruth/interface/PSimHitMap.h"
-#include "Geometry/GEMGeometry/interface/GEMGeometry.h"
-
-#include "Validation/MuonGEMDigis/plugins/GEMStripDigiValidation.h"
-#include "Validation/MuonGEMDigis/plugins/GEMPadDigiValidation.h"
-#include "Validation/MuonGEMDigis/plugins/GEMPadDigiClusterValidation.h"
-#include "Validation/MuonGEMDigis/plugins/GEMCoPadDigiValidation.h"
 #include <TEfficiency.h>
 #include <TGraphAsymmErrors.h>
 #include <TProfile.h>

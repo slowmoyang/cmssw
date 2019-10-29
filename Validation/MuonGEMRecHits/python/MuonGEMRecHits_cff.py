@@ -7,6 +7,7 @@ from Validation.MuonGEMRecHits.muonGEMRecHitPSet import gemRecHit
 gemRecHitsValidation = DQMEDAnalyzer('GEMRecHitValidation',
     simTrack = muonSimHitMatcherPSet.simTrack,
     simVertex = muonSimHitMatcherPSet.simVertex,
+    gemSimHit = muonSimHitMatcherPSet.gemSimHit,
     gemRecHit = gemRecHit,
     # st1, st2 of xbin, st1, st2 of ybin
     nBinGlobalZR = cms.untracked.vdouble(200,200,150,250),
