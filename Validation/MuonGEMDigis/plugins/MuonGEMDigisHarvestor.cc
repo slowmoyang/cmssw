@@ -1,31 +1,9 @@
-// system include files
-#include <memory>
-
-// user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TGraphAsymmErrors.h"
-#include "FWCore/Utilities/interface/InputTag.h"
-
-///Data Format
-#include "DataFormats/GeometrySurface/interface/LocalError.h"
-#include "DataFormats/GeometryVector/interface/LocalPoint.h"
-#include "DataFormats/Scalers/interface/DcsStatus.h"
-#include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Math/interface/deltaPhi.h"
-#include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
-#include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "Validation/MuonGEMDigis/plugins/MuonGEMDigisHarvestor.h"
-#include "Validation/MuonGEMHits/interface/GEMDetLabel.h"
 
-MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps) {
+MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps)
+  : MuonGEMBaseHarvestor(ps)
+{
   dbe_path_ = ps.getParameter<std::string>("dbePath");
   dbe_hist_prefix_ = ps.getParameter<std::string>("dbeHistPrefix");
   compareable_dbe_path_ = ps.getParameter<std::string>("compareDBEPath");

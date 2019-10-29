@@ -1,30 +1,8 @@
-// system include files
-#include <memory>
-
-// user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "DataFormats/GEMRecHit/interface/GEMRecHitCollection.h"
-#include "DataFormats/Scalers/interface/DcsStatus.h"
-#include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Math/interface/deltaPhi.h"
-#include "SimDataFormats/Track/interface/SimTrackContainer.h"
-#include "DQMServices/Core/interface/DQMStore.h"
 #include "Validation/MuonGEMRecHits/plugins/MuonGEMRecHitsHarvestor.h"
-#include "Validation/MuonGEMHits/interface/GEMDetLabel.h"
 
-#include "TTree.h"
-#include "TFile.h"
-#include "TGraphAsymmErrors.h"
-
-MuonGEMRecHitsHarvestor::MuonGEMRecHitsHarvestor(const edm::ParameterSet& ps) {
+MuonGEMRecHitsHarvestor::MuonGEMRecHitsHarvestor(const edm::ParameterSet& ps): MuonGEMBaseHarvestor(ps)
+ {
   dbe_path_ = std::string("MuonGEMRecHitsV/GEMRecHitsTask/");
   outputFile_ = ps.getUntrackedParameter<std::string>("outputFile", "myfile.root");
 }

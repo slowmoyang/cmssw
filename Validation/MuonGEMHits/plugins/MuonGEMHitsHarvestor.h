@@ -1,20 +1,9 @@
 #ifndef Validation_MuonGEMHits_MuonGEMHitsHarvestor_H
 #define Validation_MuonGEMHits_MuonGEMHitsHarvestor_H
 
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "Validation/MuonGEMHits/interface/MuonGEMBaseHarvestor.h"
 
-#include "DQMServices/Core/interface/DQMStore.h"
-#include "DQMServices/Core/interface/DQMEDHarvester.h"
-#include "SimMuon/MCTruth/interface/PSimHitMap.h"
-#include "Geometry/GEMGeometry/interface/GEMGeometry.h"
-
-#include <TEfficiency.h>
-#include <TGraphAsymmErrors.h>
-#include <TProfile.h>
-
-class MuonGEMHitsHarvestor : public DQMEDHarvester {
+class MuonGEMHitsHarvestor : public MuonGEMBaseHarvestor {
 public:
   /// constructor
   explicit MuonGEMHitsHarvestor(const edm::ParameterSet&);
