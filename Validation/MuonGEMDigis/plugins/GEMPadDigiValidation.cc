@@ -94,7 +94,7 @@ void GEMPadDigiValidation::analyze(const edm::Event & event,
 
   // typedef MuonDigiCollection<GEMDetId, GEMPadDigi> GEMPadDigiCollection;
   edm::Handle<GEMPadDigiCollection> collection;
-  event.getByToken(inputtoken_, collection);
+  event.getByToken(inputToken_, collection);
   if (not collection.isValid()) {
     edm::LogError(log_category_) << "Cannot get pads by label GEMPadToken.";
     return;

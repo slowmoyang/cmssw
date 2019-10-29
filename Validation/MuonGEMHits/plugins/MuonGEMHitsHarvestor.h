@@ -11,11 +11,9 @@ public:
   ~MuonGEMHitsHarvestor() override;
 
   void dqmEndJob(DQMStore::IBooker&, DQMStore::IGetter&) override;
-  void ProcessBooking(
-      DQMStore::IBooker&, DQMStore::IGetter&, std::string label_suffix, TH1F* track_hist, TH1F* sh_hist = nullptr);
-  TProfile* ComputeEff(TH1F* num, TH1F* denum);
 
 private:
-  std::string dbe_path_, outputFile_;
+  std::string folder_;
 };
+
 #endif
