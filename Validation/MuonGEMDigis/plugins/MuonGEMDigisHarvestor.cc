@@ -1,146 +1,86 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "Validation/MuonGEMDigis/plugins/MuonGEMDigisHarvestor.h"
+include <string>
+#include <vector>
 
 MuonGEMDigisHarvestor::MuonGEMDigisHarvestor(const edm::ParameterSet& ps)
   : MuonGEMBaseHarvestor(ps)
 {
-  dbe_path_ = ps.getParameter<std::string>("dbePath");
-  dbe_hist_prefix_ = ps.getParameter<std::string>("dbeHistPrefix");
-  compareable_dbe_path_ = ps.getParameter<std::string>("compareDBEPath");
-  compareable_dbe_hist_prefix_ = ps.getParameter<std::string>("compareDBEHistPrefix");
+  strip_folder_ = ps.getUntrackedParameter<std::string>("stripFolder");
+  pad_folder_ = ps.getUntrackedParameter<std::string>("padFolder");
+  copad_folder_ = ps.getUntrackedParameter<std::string>("copadFolder");
 
-  outputFile_ = ps.getUntrackedParameter<std::string>("outputFile", "myfile.root");
+  region_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("regionIds");
+  station_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("stationIds");
+  layer_ids_ = ps.getUntrackedParameter< std::vector<Int_t> >("layerIds");
 }
 
 MuonGEMDigisHarvestor::~MuonGEMDigisHarvestor() {}
-TProfile* MuonGEMDigisHarvestor::ComputeEff(TH1F* num, TH1F* denum) {
-  std::string name = "eff_" + std::string(num->GetName());
-  std::string title = "Eff. " + std::string(num->GetTitle());
-  TProfile* efficHist = new TProfile(name.c_str(),
-                                     title.c_str(),
-                                     denum->GetXaxis()->GetNbins(),
-                                     denum->GetXaxis()->GetXmin(),
-                                     denum->GetXaxis()->GetXmax());
 
-  for (int i = 1; i <= denum->GetNbinsX(); i++) {
-    double nNum = num->GetBinContent(i);
-    double nDenum = denum->GetBinContent(i);
-    if (nDenum == 0 || nNum == 0) {
-      continue;
-    }
-    if (nNum > nDenum) {
-      double temp = nDenum;
-      nDenum = nNum;
-      nNum = temp;
-      LogDebug("MuonGEMDigisHarvestor") << "Alert! specific bin's num is bigger than denum";
-    }
-    const double effVal = nNum / nDenum;
-    efficHist->SetBinContent(i, effVal);
-    efficHist->SetBinEntries(i, 1);
-    efficHist->SetBinError(i, 0);
-    const double errLo = TEfficiency::ClopperPearson((int)nDenum, (int)nNum, 0.683, false);
-    const double errUp = TEfficiency::ClopperPearson((int)nDenum, (int)nNum, 0.683, true);
-    const double errVal = (effVal - errLo > errUp - effVal) ? effVal - errLo : errUp - effVal;
-    efficHist->SetBinError(i, sqrt(effVal * effVal + errVal * errVal));
-  }
-  return efficHist;
-}
+void MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker & booker,
+                                      DQMStore::IGetter & getter) {
 
-void MuonGEMDigisHarvestor::ProcessBooking(DQMStore::IBooker& ibooker,
-                                           DQMStore::IGetter& ig,
-                                           const char* label,
-                                           TString suffix,
-                                           TH1F* track_hist,
-                                           TH1F* sh_hist) {
-  TString dbe_label = TString(dbe_path_) + label + suffix;
-  if (ig.get(dbe_label.Data()) != nullptr && sh_hist != nullptr && track_hist != nullptr) {
-    TH1F* hist = (TH1F*)ig.get(dbe_label.Data())->getTH1F()->Clone();
-    TProfile* profile = ComputeEff(hist, track_hist);
-    TProfile* profile_sh = ComputeEff(hist, sh_hist);
-    profile_sh->SetName((profile->GetName() + std::string("_sh")).c_str());
-    TString x_axis_title = TString(hist->GetXaxis()->GetTitle());
-    TString title = TString::Format(
-        "Eff. for a SimTrack to have an associated GEM digi in %s;%s;Eff.", suffix.Data(), x_axis_title.Data());
-    TString title2 =
-        TString::Format("Eff. for a SimTrack to have an associated GEM digi in %s with a matched SimHit;%s;Eff.",
-                        suffix.Data(),
-                        x_axis_title.Data());
-    profile->SetTitle(title.Data());
-    profile_sh->SetTitle(title2.Data());
-    ibooker.bookProfile(profile->GetName(), profile);
-    ibooker.bookProfile(profile_sh->GetName(), profile_sh);
-  } else {
-    LogDebug("MuonGEMDigisHarvestor") << "Can not found histogram of " << dbe_label;
-    if (track_hist == nullptr)
-      LogDebug("MuonGEMDigisHarvestor") << "track not found";
-    if (sh_hist == nullptr)
-      LogDebug("MuonGEMDigisHarvestor") << "sh_hist not found";
-  }
-  return;
-}
+  std::cout << "MuonGEMDigisHarvestor::dqmEndJob begin" << std::endl;
 
-void MuonGEMDigisHarvestor::dqmEndJob(DQMStore::IBooker& ibooker, DQMStore::IGetter& ig) {
-  ig.setCurrentFolder(dbe_path_);
-  TH1F* gem_trk_eta[3];
-  TH1F* gem_trk_phi[3][2];
+  const char* occ_folder = gSystem->ConcatFileName(strip_folder_.c_str(), "Occupancy");
+  const char* eff_folder = gSystem->ConcatFileName(strip_folder_.c_str(), "Efficiency");
+  booker.setCurrentFolder(eff_folder);
 
-  TH1F* sh_eta[3][4];
-  TH1F* sh_phi[3][4][3];
+  for (Int_t region_id : region_ids_) {
+    TString name_suffix_re = GEMUtils::getSuffixName(region_id);
+    TString title_suffix_re = GEMUtils::getSuffixTitle(region_id);
 
-  using namespace GEMDetLabel;
+    // NOTE eta efficiency
+    TString strip_eta_path = gSystem->ConcatFileName(
+                                                     occ_folder,
+                                                     "matched_strip_occ_eta" + name_suffix_re);
 
-  // detailPlots
-  for (unsigned int i = 0; i < s_suffix.size(); i++) {
-    TString eta_label = TString(dbe_path_) + "track_eta" + s_suffix[i];
-    TString phi_label;
-    if (ig.get(eta_label.Data()) != nullptr) {
-      gem_trk_eta[i] = (TH1F*)ig.get(eta_label.Data())->getTH1F()->Clone();
-      gem_trk_eta[i]->Sumw2();
-    } else {
-      LogDebug("MuonGEMDigisHarvestor") << "Can not found track_eta";
-      std::cout << "MuonGEMDigisHarvestor "
-                << "Can not found track_phi" << std::endl;
-    }
-    for (unsigned int k = 0; k < c_suffix.size(); k++) {
-      phi_label = TString(dbe_path_.c_str()) + "track_phi" + s_suffix[i] + c_suffix[k];
-      if (ig.get(phi_label.Data()) != nullptr) {
-        gem_trk_phi[i][k] = (TH1F*)ig.get(phi_label.Data())->getTH1F()->Clone();
-        gem_trk_phi[i][k]->Sumw2();
-      } else
-        std::cout << "MuonGEMDigisHarvestor "
-                  << "Can not found track_phi" << std::endl;
-    }
+    TString simhit_eta_path = gSystem->ConcatFileName(
+                                                      occ_folder,
+                                                      "muon_simhit_occ_eta" + name_suffix_re);
 
-    if (ig.get(eta_label.Data()) != nullptr && ig.get(phi_label.Data()) != nullptr) {
-      for (unsigned int j = 0; j < l_suffix.size(); j++) {
-        TString suffix = TString(s_suffix[i]) + TString(l_suffix[j]);
-        TString eta_label = TString(dbe_path_) + "dg_sh_eta" + suffix;
-        if (ig.get(eta_label.Data()) != nullptr) {
-          sh_eta[i][j] = (TH1F*)ig.get(eta_label.Data())->getTH1F()->Clone();
-          sh_eta[i][j]->Sumw2();
-        } else
-          LogDebug("MuonGEMDigisHarvestor") << "Can not found eta histogram : " << eta_label;
-        ProcessBooking(ibooker, ig, "dg_eta", suffix, gem_trk_eta[i], sh_eta[i][j]);
-        ProcessBooking(ibooker, ig, "pad_eta", suffix, gem_trk_eta[i], sh_eta[i][j]);
-        ProcessBooking(ibooker, ig, "cluster_eta", suffix, gem_trk_eta[i], sh_eta[i][j]);
-        ProcessBooking(ibooker, ig, "copad_eta", suffix, gem_trk_eta[i], sh_eta[i][j]);
-        for (unsigned int k = 0; k < c_suffix.size(); k++) {
-          suffix = TString(s_suffix[i]) + TString(l_suffix[j]) + TString(c_suffix[k]);
-          TString phi_label = TString(dbe_path_) + "dg_sh_phi" + suffix;
-          if (ig.get(phi_label.Data()) != nullptr) {
-            sh_phi[i][j][k] = (TH1F*)ig.get(phi_label.Data())->getTH1F()->Clone();
-            sh_phi[i][j][k]->Sumw2();
-          } else {
-            LogDebug("MuonGEMDigisHarvestor") << "Can not found phi plots : " << phi_label;
-            continue;
-          }
-          ProcessBooking(ibooker, ig, "dg_phi", suffix, gem_trk_phi[i][k], sh_phi[i][j][k]);
-          ProcessBooking(ibooker, ig, "pad_phi", suffix, gem_trk_phi[i][k], sh_phi[i][j][k]);
-          ProcessBooking(ibooker, ig, "cluster_phi", suffix, gem_trk_phi[i][k], sh_phi[i][j][k]);
-          ProcessBooking(ibooker, ig, "copad_phi", suffix, gem_trk_phi[i][k], sh_phi[i][j][k]);
-        }
-      }
-    } else
-      LogDebug("MuonGEMDigisHarvestor") << "Can not find eta or phi of all track";
-  }
+    TString eff_eta_name = "eff_eta" + name_suffix_re;
+    TString eff_eta_title = "Eta Efficiency (Muon Only) :" + title_suffix_re;
+
+    bookEff1D(booker, getter, strip_eta_path, simhit_eta_path,
+              eff_folder, eff_eta_name, eff_eta_title);
+
+    for (Int_t station_id : station_ids_) {
+      TString name_suffix_re_st = GEMUtils::getSuffixName(region_id, station_id);
+      TString title_suffix_re_st = GEMUtils::getSuffixTitle(region_id, station_id);
+
+      // NOTE phi efficiency
+      TString strip_phi_path = gSystem->ConcatFileName(
+                                                       occ_folder,
+                                                       "matched_strip_occ_phi" + name_suffix_re_st);
+
+      TString simhit_phi_path = gSystem->ConcatFileName(
+                                                        occ_folder,
+                                                        "muon_simhit_occ_phi" + name_suffix_re_st);
+
+      TString eff_phi_name = "eff_phi" + name_suffix_re_st;
+      TString eff_phi_title = "Phi Efficiency (Muon Only) :" + title_suffix_re;
+
+      bookEff1D(booker, getter, strip_phi_path, simhit_phi_path,
+                eff_folder, eff_phi_name, eff_phi_title);
+
+      // NOTE Detector Component efficiency
+      TString strip_det_path = gSystem->ConcatFileName(
+                                                       occ_folder,
+                                                       "matched_strip_occ_det" + name_suffix_re_st);
+
+      TString simhit_det_path = gSystem->ConcatFileName(
+                                                        occ_folder,
+                                                        "muon_simhit_occ_det" + name_suffix_re_st);
+
+      TString eff_det_name = "eff_det" + name_suffix_re_st;
+      TString eff_det_title = "Detector Component Efficiency (Muon Only) :" + title_suffix_re_st;
+
+      bookEff2D(booker, getter, strip_det_path, simhit_det_path,
+                eff_folder, eff_det_name, eff_det_title);
+
+    } // end loop over station ids
+  } // end loop over region ids
+
+  std::cout << "MuonGEMDigisHarvestor::dqmEndJob end" << std::endl;
 }

@@ -12,18 +12,20 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
 
 private:
-  // Detail plots
-  MonitorElement* theStrip_xy[2][3][2];
-  MonitorElement* theStrip_phistrip[2][3][2];
-  MonitorElement* theStrip[2][3][2];
-  MonitorElement* theStrip_bx[2][3][2];
-  MonitorElement* theStrip_zr[2][3][2];
-  std::unordered_map<UInt_t, MonitorElement*> theStrip_xy_ch;
 
-  // Simple plots
-  std::unordered_map<UInt_t, MonitorElement*> theStrip_dcEta;
-  std::unordered_map<UInt_t, MonitorElement*> theStrip_simple_zr;
+  // Monitor elements
+  // NOTE muon simhit - strip digi matching
+  // occupancy plots for efficiency
+  MEMap1Ids me_simhit_occ_eta_;
+  MEMap1Ids me_strip_occ_eta_;
+  MEMap2Ids me_simhit_occ_phi_;
+  MEMap2Ids me_strip_occ_phi_;
+  MEMap2Ids me_simhit_occ_det_;
+  MEMap2Ids me_strip_occ_det_;
 
+  // bunch crossing
+  MEMap3Ids me_detail_bx_;
+o
   edm::EDGetTokenT<GEMDigiCollection> inputToken_;
 };
 

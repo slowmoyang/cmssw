@@ -11,11 +11,14 @@ public:
   ~MuonGEMDigisHarvestor() override;
 
   void dqmEndJob(DQMStore::IBooker&, DQMStore::IGetter&) override;
-  void ProcessBooking(
-      DQMStore::IBooker&, DQMStore::IGetter&, const char* label, TString suffix, TH1F* track_hist, TH1F* sh_hist);
-  TProfile* ComputeEff(TH1F* num, TH1F* denum);
+
+  // TODO
+  // void harvestStripDigi();
+  // void harvestPadDigi();
+  // void harvestCoPadDigi();
 
 private:
-  std::string dbe_path_, dbe_hist_prefix_, compareable_dbe_path_, compareable_dbe_hist_prefix_, outputFile_;
+  std::string strip_folder_, pad_folder_, copad_folder_, cluster_folder;
+  std::vector<Int_t> region_ids_, station_ids_, layer_ids_;
 };
 #endif
