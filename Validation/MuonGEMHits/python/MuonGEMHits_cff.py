@@ -14,11 +14,4 @@ gemSimHitValidation = DQMEDAnalyzer('GEMSimHitValidation',
     detailPlot = cms.bool(False),
 )
 
-gemSimTrackValidation = DQMEDAnalyzer('GEMSimTrackMatch',
-    gemSimHit = muonSimHitMatcherPSet.gemSimHit,
-    simTrack = muonSimHitMatcherPSet.simTrack,
-    simVertex = muonSimHitMatcherPSet.simVertex,
-    detailPlot = cms.bool(False),
-)
-
-gemSimValidation = cms.Sequence( gemSimHitValidation+gemSimTrackValidation)
+gemSimValidation = cms.Sequence(gemSimHitValidation)

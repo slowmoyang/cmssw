@@ -17,17 +17,4 @@ gemRecHitsValidation = DQMEDAnalyzer('GEMRecHitValidation',
     detailPlot = cms.bool(False),
 )
 
-gemRecHitTrackValidation = DQMEDAnalyzer('GEMRecHitTrackMatch',
-  # GEM RecHit matching:
-  simTrack = muonSimHitMatcherPSet.simTrack,
-  simVertex = muonSimHitMatcherPSet.simVertex,
-  gemSimHit = muonSimHitMatcherPSet.gemSimHit,
-  gemStripDigi = muonGEMDigiPSet.gemStripDigi,
-  gemPadDigi = muonGEMDigiPSet.gemPadDigi,
-  gemPadCluster = muonGEMDigiPSet.gemPadCluster,
-  gemCoPadDigi = muonGEMDigiPSet.gemCoPadDigi,
-  gemRecHit = gemRecHit,
-  detailPlot = cms.bool(False),
-)
-
-gemLocalRecoValidation = cms.Sequence(gemRecHitsValidation + gemRecHitTrackValidation)
+gemLocalRecoValidation = cms.Sequence(gemRecHitsValidation)

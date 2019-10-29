@@ -36,17 +36,6 @@ gemCoPadValidation = DQMEDAnalyzer('GEMCoPadDigiValidation',
   gemCoPadDigi = muonGEMDigiPSet.gemCoPadDigi,
 )
 
-gemDigiTrackValidation = DQMEDAnalyzer('GEMDigiTrackMatch',
-  simTrack = muonSimHitMatcherPSet.simTrack,
-  simVertex = muonSimHitMatcherPSet.simVertex,
-  gemSimHit = muonSimHitMatcherPSet.gemSimHit,
-  gemStripDigi = muonGEMDigiPSet.gemStripDigi,
-  gemPadDigi = muonGEMDigiPSet.gemPadDigi,
-  gemPadCluster = muonGEMDigiPSet.gemPadCluster,
-  gemCoPadDigi = muonGEMDigiPSet.gemCoPadDigi,
-  detailPlot = cms.bool(False),
-)
-
 gemGeometryChecker = DQMEDAnalyzer('GEMCheckGeometry',
   detailPlot = cms.bool(False),
 )
@@ -55,7 +44,6 @@ gemDigiValidation = cms.Sequence( gemUnpackedStripValidation+
                                   gemPadValidation+
                                   gemClusterValidation+
                                   gemCoPadValidation+
-                                  gemDigiTrackValidation+
                                   gemGeometryChecker)
 
 from Configuration.Eras.Modifier_run2_GEM_2017_cff import run2_GEM_2017
