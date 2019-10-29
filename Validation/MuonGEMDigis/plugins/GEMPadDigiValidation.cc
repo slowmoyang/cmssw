@@ -1,9 +1,9 @@
-#include "Validation/MuonGEMDigis/interface/GEMPadDigiValidation.h"
+#include "Validation/MuonGEMDigis/plugins/GEMPadDigiValidation.h"
 #include <TMath.h>
 
 GEMPadDigiValidation::GEMPadDigiValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
-  InputTagToken_ = consumes<GEMPadDigiCollection>(cfg.getParameter<edm::InputTag>("PadLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
+  const auto &pset = cfg.getParameterSet("gemPadDigi");
+  inputToken_ = consumes<GEMPadDigiCollection>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
                                           edm::Run const &Run,
@@ -70,7 +70,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
           int layer_num = la - 1;
           std::string name_prefix = getSuffixName(re, st, la);
           std::string label_prefix = getSuffixTitle(re, st, la);
-          theCSCPad_phipad[region_num][station_num][layer_num] =
+          theGEMPad_phipad[region_num][station_num][layer_num] =
               ibooker.book2D(("pad_dg_phipad" + name_prefix).c_str(),
                              ("Digi occupancy: " + label_prefix + "; phi [rad]; Pad number").c_str(),
                              280,
@@ -79,28 +79,28 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
                              nPads / 2,
                              0,
                              nPads);
-          theCSCPad[region_num][station_num][layer_num] =
+          theGEMPad[region_num][station_num][layer_num] =
               ibooker.book1D(("pad_dg" + name_prefix).c_str(),
                              ("Digi occupancy per pad number: " + label_prefix + ";Pad number; entries").c_str(),
                              nPads,
                              0.5,
                              nPads + 0.5);
-          theCSCPad_bx[region_num][station_num][layer_num] =
+          theGEMPad_bx[region_num][station_num][layer_num] =
               ibooker.book1D(("pad_dg_bx" + name_prefix).c_str(),
                              ("Bunch crossing: " + label_prefix + "; bunch crossing ; entries").c_str(),
                              11,
                              -5.5,
                              5.5);
-          theCSCPad_zr[region_num][station_num][layer_num] =
+          theGEMPad_zr[region_num][station_num][layer_num] =
               BookHistZR(ibooker, "pad_dg", "Pad Digi", region_num, station_num, layer_num);
-          theCSCPad_xy[region_num][station_num][layer_num] =
+          theGEMPad_xy[region_num][station_num][layer_num] =
               BookHistXY(ibooker, "pad_dg", "Pad Digi", region_num, station_num, layer_num);
           TString xy_name = TString::Format("pad_dg_xy%s_odd", name_prefix.c_str());
           TString xy_title = TString::Format("Digi XY occupancy %s at odd chambers", label_prefix.c_str());
-          theCSCPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
+          theGEMPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
           xy_name = TString::Format("pad_dg_xy%s_even", name_prefix.c_str());
           xy_title = TString::Format("Digi XY occupancy %s at even chambers", label_prefix.c_str());
-          theCSCPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
+          theGEMPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
         }
       }
     }
@@ -120,7 +120,7 @@ void GEMPadDigiValidation::analyze(const edm::Event &e, const edm::EventSetup &i
     return;
   }
   edm::Handle<GEMPadDigiCollection> gem_digis;
-  e.getByToken(InputTagToken_, gem_digis);
+  e.getByToken(inputToken_, gem_digis);
   if (!gem_digis.isValid()) {
     edm::LogError("GEMPadDigiValidation") << "Cannot get pads by label GEMPadToken.";
   }
@@ -172,18 +172,18 @@ void GEMPadDigiValidation::analyze(const edm::Event &e, const edm::EventSetup &i
       // Fill normal plots.
       TString histname_suffix = getSuffixName(re);
       TString simple_zr_histname = TString::Format("pad_simple_zr%s", histname_suffix.Data());
-      thePad_simple_zr[simple_zr_histname.Hash()]->Fill(fabs(g_z), g_r);
+      thePad_simple_zr[simple_zr_histname.Hash()]->Fill(std::abs(g_z), g_r);
 
       histname_suffix = getSuffixName(re, st);
       TString dcEta_histname = TString::Format("pad_dcEta%s", histname_suffix.Data());
       thePad_dcEta[dcEta_histname.Hash()]->Fill(binX, binY);
 
       if (detailPlot_) {
-        theCSCPad_xy[region_num][station_num][layer_num]->Fill(g_x, g_y);
-        theCSCPad_phipad[region_num][station_num][layer_num]->Fill(g_phi, pad);
-        theCSCPad[region_num][station_num][layer_num]->Fill(pad);
-        theCSCPad_bx[region_num][station_num][layer_num]->Fill(bx);
-        theCSCPad_zr[region_num][station_num][layer_num]->Fill(g_z, g_r);
+        theGEMPad_xy[region_num][station_num][layer_num]->Fill(g_x, g_y);
+        theGEMPad_phipad[region_num][station_num][layer_num]->Fill(g_phi, pad);
+        theGEMPad[region_num][station_num][layer_num]->Fill(pad);
+        theGEMPad_bx[region_num][station_num][layer_num]->Fill(bx);
+        theGEMPad_zr[region_num][station_num][layer_num]->Fill(g_z, g_r);
         std::string name_prefix = getSuffixName(re, st, la);
         TString hname;
         if (chamber % 2 == 0) {
@@ -191,7 +191,7 @@ void GEMPadDigiValidation::analyze(const edm::Event &e, const edm::EventSetup &i
         } else {
           hname = TString::Format("pad_dg_xy%s_odd", name_prefix.c_str());
         }
-        theCSCPad_xy_ch[hname.Hash()]->Fill(g_x, g_y);
+        theGEMPad_xy_ch[hname.Hash()]->Fill(g_x, g_y);
       }
     }
   }

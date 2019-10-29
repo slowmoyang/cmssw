@@ -3,9 +3,14 @@
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 GEMTrackMatch::GEMTrackMatch(const edm::ParameterSet& ps) {
-  minPt_ = ps.getUntrackedParameter<double>("gemMinPt", 5.0);
-  minEta_ = ps.getUntrackedParameter<double>("gemMinEta", 1.55);
-  maxEta_ = ps.getUntrackedParameter<double>("gemMaxEta", 2.45);
+  simTracksToken_ = consumes<edm::SimTrackContainer>(ps.getParameter<edm::InputTag>("simTrackCollection"));
+  simVerticesToken_ = consumes<edm::SimVertexContainer>(ps.getParameter<edm::InputTag>("simVertexCollection"));
+  detailPlot_ = ps.getParameter<bool>("detailPlot");
+
+  const auto& simTrack = ps.getParameterSet("simTrack");
+  minPt_ = simTrack.getParameter<double>("minPt");
+  minEta_ = simTrack.getParameter<double>("minEta");
+  maxEta_ = simTrack.getParameter<double>("maxEta");
 }
 
 GEMTrackMatch::~GEMTrackMatch() {}
@@ -102,25 +107,21 @@ void GEMTrackMatch::FillWithTrigger(
 
 std::pair<double, double> GEMTrackMatch::getEtaRange(int station, int chamber) {
   if (gem_geom_ != nullptr) {
-    auto& ch = gem_geom_->chambers().front();
-    auto& roll1 = ch->etaPartitions().front();  //.begin();
-    auto& roll2 = ch->etaPartitions()[ch->nEtaPartitions() - 1];
+    const auto& ch = gem_geom_->chambers().front();
+    const auto& roll1 = ch->etaPartitions().front();
+    const auto& roll2 = ch->etaPartitions()[ch->nEtaPartitions() - 1];
     const BoundPlane& bSurface1(roll1->surface());
     const BoundPlane& bSurface2(roll2->surface());
-    auto& parameters1(roll1->specs()->parameters());
+    const auto& parameters1(roll1->specs()->parameters());
     float height1(parameters1[2]);
-    auto& parameters2(roll2->specs()->parameters());
+    const auto& parameters2(roll2->specs()->parameters());
     float height2(parameters2[2]);
     LocalPoint lTop1(0., height1, 0.);
     GlobalPoint gTop1(bSurface1.toGlobal(lTop1));
-    //LocalPoint lBottom1( 0., -height1, 0.);
-    //GlobalPoint gBottom1(bSurface1.toGlobal(lBottom1));
-    //LocalPoint lTop2( 0., height2, 0.);
-    //GlobalPoint gTop2(bSurface2.toGlobal(lTop2));
     LocalPoint lBottom2(0., -height2, 0.);
     GlobalPoint gBottom2(bSurface2.toGlobal(lBottom2));
-    double eta1 = fabs(gTop1.eta()) - 0.01;
-    double eta2 = fabs(gBottom2.eta()) + 0.01;
+    double eta1 = std::abs(gTop1.eta()) - 0.01;
+    double eta2 = std::abs(gBottom2.eta()) + 0.01;
     return std::make_pair(eta1, eta2);
   } else {
     std::cout << "Failed to get geometry information" << std::endl;

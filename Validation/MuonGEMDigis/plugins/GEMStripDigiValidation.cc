@@ -1,11 +1,11 @@
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
-#include "Validation/MuonGEMDigis/interface/GEMStripDigiValidation.h"
+#include "Validation/MuonGEMDigis/plugins/GEMStripDigiValidation.h"
 
 #include <TMath.h>
 #include <iomanip>
 GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
-  InputTagToken_ = consumes<GEMDigiCollection>(cfg.getParameter<edm::InputTag>("stripLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
+  const auto &pset = cfg.getParameterSet("gemStripDigi");
+  inputToken_ = consumes<GEMDigiCollection>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
 void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
@@ -124,7 +124,7 @@ void GEMStripDigiValidation::analyze(const edm::Event &e, const edm::EventSetup 
   }
 
   edm::Handle<GEMDigiCollection> gem_digis;
-  e.getByToken(this->InputTagToken_, gem_digis);
+  e.getByToken(inputToken_, gem_digis);
   if (!gem_digis.isValid()) {
     edm::LogError("GEMStripDigiValidation") << "Cannot get strips by Token stripToken.\n";
     return;
@@ -157,7 +157,6 @@ void GEMStripDigiValidation::analyze(const edm::Event &e, const edm::EventSetup 
 
       GlobalPoint gp = surface.toGlobal(lp);
       Float_t g_r = (Float_t)gp.perp();
-      // Float_t g_eta = (Float_t) gp.eta();
       Float_t g_phi = (Float_t)gp.phi();
       Float_t g_x = (Float_t)gp.x();
       Float_t g_y = (Float_t)gp.y();
@@ -173,7 +172,7 @@ void GEMStripDigiValidation::analyze(const edm::Event &e, const edm::EventSetup 
       // Fill normal plots.
       TString histname_suffix = getSuffixName(re);
       TString simple_zr_histname = TString::Format("strip_simple_zr%s", histname_suffix.Data());
-      theStrip_simple_zr[simple_zr_histname.Hash()]->Fill(fabs(g_z), g_r);
+      theStrip_simple_zr[simple_zr_histname.Hash()]->Fill(std::abs(g_z), g_r);
 
       histname_suffix = getSuffixName(re, st);
       TString dcEta_histname = TString::Format("strip_dcEta%s", histname_suffix.Data());

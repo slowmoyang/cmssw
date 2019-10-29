@@ -1,13 +1,13 @@
-#ifndef GEMHitsValidation_H
-#define GEMHitsValidation_H
+#ifndef Validation_MuonGEMHits_GEMSimHitValidation_H
+#define Validation_MuonGEMHits_GEMSimHitValidation_H
 
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-class GEMHitsValidation : public GEMBaseValidation {
+class GEMSimHitValidation : public GEMBaseValidation {
 public:
-  explicit GEMHitsValidation(const edm::ParameterSet&);
-  ~GEMHitsValidation() override;
+  explicit GEMSimHitValidation(const edm::ParameterSet&);
+  ~GEMSimHitValidation() override;
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override;
 
@@ -28,9 +28,7 @@ private:
   std::unordered_map<UInt_t, MonitorElement*> gem_sh_simple_tofMu;
   std::unordered_map<UInt_t, MonitorElement*> gem_sh_simple_elossMu;
 
-  edm::EDGetToken InputTagToken_;
-  int nBinXY_;
-  bool detailPlot_;
+  edm::EDGetTokenT<edm::PSimHitContainer> inputToken_;
 };
 
 #endif

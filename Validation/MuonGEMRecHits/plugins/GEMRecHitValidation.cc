@@ -1,20 +1,22 @@
+#include "Validation/MuonGEMRecHits/plugins/GEMRecHitValidation.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
-#include "Validation/MuonGEMRecHits/interface/GEMRecHitsValidation.h"
+
 #include <iomanip>
 
 using namespace std;
 
-GEMRecHitsValidation::GEMRecHitsValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
-  InputTagToken_ = consumes<edm::PSimHitContainer>(cfg.getParameter<edm::InputTag>("simInputLabel"));
-  InputTagToken_RH = consumes<GEMRecHitCollection>(cfg.getParameter<edm::InputTag>("recHitsInputLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
+GEMRecHitValidation::GEMRecHitValidation(const edm::ParameterSet& cfg) : GEMBaseValidation(cfg) {
+  const auto& pset = cfg.getParameterSet("gemRecHit");
+  inputToken_ = consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("inputTag"));
+  const auto& psimset = cfg.getParameterSet("gemSimHit");
+  inputTokenSH_ = consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
-GEMRecHitsValidation::MonitorElement *GEMRecHitsValidation::BookHist1D(DQMStore::IBooker &ibooker,
-                                                                       const char *name,
-                                                                       const char *label,
+GEMRecHitValidation::MonitorElement* GEMRecHitValidation::BookHist1D(DQMStore::IBooker& ibooker,
+                                                                       const char* name,
+                                                                       const char* label,
                                                                        unsigned int region_num,
                                                                        unsigned int station_num,
                                                                        unsigned int layer_num,
@@ -26,9 +28,9 @@ GEMRecHitsValidation::MonitorElement *GEMRecHitsValidation::BookHist1D(DQMStore:
   return ibooker.book1D(hist_name, hist_label, Nbin, xMin, xMax);
 }
 
-GEMRecHitsValidation::MonitorElement *GEMRecHitsValidation::BookHist1D(DQMStore::IBooker &ibooker,
-                                                                       const char *name,
-                                                                       const char *label,
+GEMRecHitValidation::MonitorElement* GEMRecHitValidation::BookHist1D(DQMStore::IBooker& ibooker,
+                                                                       const char* name,
+                                                                       const char* label,
                                                                        unsigned int region_num,
                                                                        const unsigned int Nbin,
                                                                        const Float_t xMin,
@@ -38,30 +40,30 @@ GEMRecHitsValidation::MonitorElement *GEMRecHitsValidation::BookHist1D(DQMStore:
   return ibooker.book1D(hist_name, hist_label, Nbin, xMin, xMax);
 }
 
-void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker &ibooker,
-                                          edm::Run const &Run,
-                                          edm::EventSetup const &iSetup) {
-  const GEMGeometry *GEMGeometry_ = initGeometry(iSetup);
+void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& ibooker,
+                                          edm::Run const& Run,
+                                          edm::EventSetup const& iSetup) {
+  const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
   if (GEMGeometry_ == nullptr)
     return;
 
-  LogDebug("GEMRecHitsValidation") << "Geometry is acquired from MuonGeometryRecord\n";
+  LogDebug("GEMRecHitValidation") << "Geometry is acquired from MuonGeometryRecord\n";
   ibooker.setCurrentFolder("MuonGEMRecHitsV/GEMRecHitsTask");
-  LogDebug("GEMRecHitsValidation") << "ibooker set current folder\n";
+  LogDebug("GEMRecHitValidation") << "ibooker set current folder\n";
 
   gem_cls_tot = ibooker.book1D("gem_cls_tot", "ClusterSize Distribution", 11, -0.5, 10.5);
-  for (auto &region : GEMGeometry_->regions()) {
+  for (auto& region : GEMGeometry_->regions()) {
     int re = region->region();
     TString title_suffix = getSuffixTitle(re);
     TString histname_suffix = getSuffixName(re);
     TString simpleZR_title = TString::Format("ZR Occupancy%s; |Z|(cm) ; R(cm)", title_suffix.Data());
     TString simpleZR_histname = TString::Format("rh_simple_zr%s", histname_suffix.Data());
-    auto *simpleZR = getSimpleZR(ibooker, simpleZR_title, simpleZR_histname);
+    auto* simpleZR = getSimpleZR(ibooker, simpleZR_title, simpleZR_histname);
     if (simpleZR != nullptr) {
       recHits_simple_zr[simpleZR_histname.Hash()] = simpleZR;
     }
 
-    for (auto &station : region->stations()) {
+    for (auto& station : region->stations()) {
       int station_num = station->station();
       TString title_suffix2 = title_suffix + TString::Format("  Station%d", station_num);
       TString histname_suffix2 = histname_suffix + TString::Format("_st%d", station_num);
@@ -69,7 +71,7 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker &ibooker,
       TString dcEta_title =
           TString::Format("Occupancy for detector component %s;;#eta-partition", title_suffix2.Data());
       TString dcEta_histname = TString::Format("rh_dcEta%s", histname_suffix2.Data());
-      auto *dcEta = getDCEta(ibooker, station, dcEta_title, dcEta_histname);
+      auto* dcEta = getDCEta(ibooker, station, dcEta_title, dcEta_histname);
       if (dcEta != nullptr) {
         recHits_dcEta[dcEta_histname.Hash()] = dcEta;
       }
@@ -107,22 +109,23 @@ void GEMRecHitsValidation::bookHistograms(DQMStore::IBooker &ibooker,
       }
     }
   }
-  LogDebug("GEMRecHitsValidation") << "Booking End.\n";
+  LogDebug("GEMRecHitValidation") << "Booking End.\n";
 }
 
-GEMRecHitsValidation::~GEMRecHitsValidation() {}
+GEMRecHitValidation::~GEMRecHitValidation() {}
 
-void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &iSetup) {
-  const GEMGeometry *GEMGeometry_ = initGeometry(iSetup);
+void GEMRecHitValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup) {
+  const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
   if (GEMGeometry_ == nullptr)
     return;
 
   edm::Handle<GEMRecHitCollection> gemRecHits;
   edm::Handle<edm::PSimHitContainer> gemSimHits;
-  e.getByToken(this->InputTagToken_, gemSimHits);
-  e.getByToken(this->InputTagToken_RH, gemRecHits);
+  e.getByToken(inputToken_, gemRecHits);
+  e.getByToken(inputTokenSH_, gemSimHits);
+
   if (!gemRecHits.isValid()) {
-    edm::LogError("GEMRecHitsValidation") << "Cannot get strips by Token RecHits Token.\n";
+    edm::LogError("GEMRecHitValidation") << "Cannot get strips by Token RecHits Token.\n";
     return;
   }
 
@@ -130,7 +133,6 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
     const GEMDetId id(hits->detUnitId());
 
     Int_t sh_region = id.region();
-    // Int_t sh_ring = id.ring();
     Int_t sh_roll = id.roll();
     Int_t sh_station = id.station();
     Int_t sh_layer = id.layer();
@@ -144,35 +146,25 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
     if (!(abs(hits->particleType()) == 13))
       continue;
 
-    // const LocalPoint p0(0., 0., 0.);
-    // const GlobalPoint
-    // Gp0(GEMGeometry_->idToDet(hits->detUnitId())->surface().toGlobal(p0));
     const LocalPoint hitLP(hits->localPosition());
 
     const LocalPoint hitEP(hits->entryPoint());
     Int_t sh_strip = GEMGeometry_->etaPartition(hits->detUnitId())->strip(hitEP);
 
-    // const GlobalPoint
-    // hitGP(GEMGeometry_->idToDet(hits->detUnitId())->surface().toGlobal(hitLP));
-    // Float_t sh_l_r = hitLP.perp();
     Float_t sh_l_x = hitLP.x();
     Float_t sh_l_y = hitLP.y();
-    // Float_t sh_l_z = hitLP.z();
 
     for (GEMRecHitCollection::const_iterator recHit = gemRecHits->begin(); recHit != gemRecHits->end(); ++recHit) {
       Float_t rh_l_x = recHit->localPosition().x();
       Float_t rh_l_xErr = recHit->localPositionError().xx();
       Float_t rh_l_y = recHit->localPosition().y();
       Float_t rh_l_yErr = recHit->localPositionError().yy();
-      // Int_t  detId = (Short_t) (*recHit).gemId();
-      // Int_t  bx = recHit->BunchX();
       Int_t clusterSize = recHit->clusterSize();
       Int_t firstClusterStrip = recHit->firstClusterStrip();
 
       GEMDetId id((*recHit).gemId());
 
       Short_t rh_region = (Short_t)id.region();
-      // Int_t rh_ring = (Short_t) id.ring();
       Short_t rh_station = (Short_t)id.station();
       Short_t rh_layer = (Short_t)id.layer();
       Short_t rh_chamber = (Short_t)id.chamber();
@@ -186,8 +178,6 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
       GlobalPoint recHitGP = GEMGeometry_->idToDet((*recHit).gemId())->surface().toGlobal(recHitLP);
 
       Float_t rh_g_R = recHitGP.perp();
-      // Float_t rh_g_Eta = recHitGP.eta();
-      // Float_t rh_g_Phi = recHitGP.phi();
       Float_t rh_g_X = recHitGP.x();
       Float_t rh_g_Y = recHitGP.y();
       Float_t rh_g_Z = recHitGP.z();
@@ -204,7 +194,7 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
       const bool cond3(std::find(stripsFired.begin(), stripsFired.end(), (sh_strip + 1)) != stripsFired.end());
 
       if (cond1 and cond2 and cond3) {
-        LogDebug("GEMRecHitsValidation") << " Region : " << rh_region << "\t Station : " << rh_station
+        LogDebug("GEMRecHitValidation") << " Region : " << rh_region << "\t Station : " << rh_station
                                          << "\t Layer : " << rh_layer << "\n Radius: " << rh_g_R << "\t X : " << rh_g_X
                                          << "\t Y : " << rh_g_Y << "\t Z : " << rh_g_Z << std::endl;
 
@@ -221,18 +211,18 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
         // Fill normal plots.
         TString histname_suffix = TString::Format("_r%d", rh_region);
         TString simple_zr_histname = TString::Format("rh_simple_zr%s", histname_suffix.Data());
-        LogDebug("GEMRecHitsValidation") << " simpleZR!\n";
-        recHits_simple_zr[simple_zr_histname.Hash()]->Fill(fabs(rh_g_Z), rh_g_R);
+        LogDebug("GEMRecHitValidation") << " simpleZR!\n";
+        recHits_simple_zr[simple_zr_histname.Hash()]->Fill(std::abs(rh_g_Z), rh_g_R);
 
         histname_suffix = TString::Format("_r%d_st%d", rh_region, rh_station);
         TString dcEta_histname = TString::Format("rh_dcEta%s", histname_suffix.Data());
-        LogDebug("GEMRecHitsValidation") << " dcEta\n";
+        LogDebug("GEMRecHitValidation") << " dcEta\n";
         recHits_dcEta[dcEta_histname.Hash()]->Fill(binX, binY);
 
         gem_cls_tot->Fill(clusterSize);
         gem_region_pullX[region_num]->Fill(rh_pullX);
         gem_region_pullY[region_num]->Fill(rh_pullY);
-        LogDebug("GEMRecHitsValidation") << " Begin detailPlot!\n";
+        LogDebug("GEMRecHitValidation") << " Begin detailPlot!\n";
 
         if (detailPlot_) {
           gem_cls[region_num][station_num][layer_num]->Fill(clusterSize);
@@ -242,6 +232,6 @@ void GEMRecHitsValidation::analyze(const edm::Event &e, const edm::EventSetup &i
           gem_rh_xy[region_num][station_num][layer_num]->Fill(rh_g_X, rh_g_Y);
         }
       }
-    }  // End loop on RecHits
-  }    // End loop on SimHits
+    }  //End loop on RecHits
+  }    //End loop on SimHits
 }

@@ -1,15 +1,15 @@
-#include "Validation/MuonGEMHits/interface/GEMHitsValidation.h"
+#include "Validation/MuonGEMHits/plugins/GEMSimHitValidation.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
-#include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include <exception>
+
 using namespace std;
-GEMHitsValidation::GEMHitsValidation(const edm::ParameterSet& cfg) : GEMBaseValidation(cfg) {
-  InputTagToken_ = consumes<edm::PSimHitContainer>(cfg.getParameter<edm::InputTag>("simInputLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
+GEMSimHitValidation::GEMSimHitValidation(const edm::ParameterSet& cfg) : GEMBaseValidation(cfg) {
+  const auto& pset = cfg.getParameterSet("gemSimHit");
+  inputToken_ = consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
-void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& Run, edm::EventSetup const& iSetup) {
+void GEMSimHitValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& Run, edm::EventSetup const& iSetup) {
   const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
   if (GEMGeometry_ == nullptr) {
     std::cout << "geometry is wrong! Terminated." << std::endl;
@@ -17,13 +17,13 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
   }
 
   ibooker.setCurrentFolder("MuonGEMHitsV/GEMHitsTask");
-  edm::LogInfo("MuonGEMHitsValidation") << "+++ Info : # of region : " << nRegion() << std::endl;
-  edm::LogInfo("MuonGEMHitsValidation") << "+++ Info : # of stations : " << nStation() << std::endl;
-  edm::LogInfo("MuonGEMHitsValidation") << "+++ Info : # of eta partition : " << nPart() << std::endl;
+  edm::LogInfo("MuonGEMSimHitValidation") << "+++ Info : # of region : " << nRegion() << std::endl;
+  edm::LogInfo("MuonGEMSimHitValidation") << "+++ Info : # of stations : " << nStation() << std::endl;
+  edm::LogInfo("MuonGEMSimHitValidation") << "+++ Info : # of eta partition : " << nPart() << std::endl;
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Info : finish to get geometry information from ES.\n";
+  LogDebug("MuonGEMSimHitValidation") << "+++ Info : finish to get geometry information from ES.\n";
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Region independant part.\n";
+  LogDebug("MuonGEMSimHitValidation") << "+++ Region independant part.\n";
   // Region independant.
   for (auto& station : GEMGeometry_->regions()[0]->stations()) {
     int st = station->station();
@@ -50,13 +50,13 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
         ibooker.book1D(hist_name_for_elossMu.Data(), hist_label_for_elossMu.Data(), 60, 0., 6000.);
   }
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Region+Station part.\n";
+  LogDebug("MuonGEMSimHitValidation") << "+++ Region+Station part.\n";
   // Regions, Region+station
   for (auto& region : GEMGeometry_->regions()) {
     int re = region->region();
     TString title_suffix = getSuffixTitle(re);
     TString histname_suffix = getSuffixName(re);
-    LogDebug("MuonGEMHitsValidation") << "+++ SimpleZR Occupancy\n";
+    LogDebug("MuonGEMSimHitValidation") << "+++ SimpleZR Occupancy\n";
     TString simpleZR_title = TString::Format("ZR Occupancy%s; |Z|(cm); R(cm)", title_suffix.Data());
     TString simpleZR_histname = TString::Format("hit_simple_zr%s", histname_suffix.Data());
 
@@ -69,7 +69,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
       int st = station->station();
       TString title_suffix2 = getSuffixTitle(re, st);
       TString histname_suffix2 = getSuffixName(re, st);
-      LogDebug("MuonGEMHitsValidation") << "+++ dcEta Occupancy\n";
+      LogDebug("MuonGEMSimHitValidation") << "+++ dcEta Occupancy\n";
       TString dcEta_title =
           TString::Format("Occupancy for detector component %s;;#eta-partition", title_suffix2.Data());
       TString dcEta_histname = TString::Format("hit_dcEta%s", histname_suffix2.Data());
@@ -80,7 +80,7 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
     }
   }
 
-  LogDebug("MuonGEMHitsValidation") << "+++ Begining Detail Plots\n";
+  LogDebug("MuonGEMSimHitValidation") << "+++ Begining Detail Plots\n";
   if (detailPlot_) {
     for (auto& region : GEMGeometry_->regions()) {
       for (auto& station : region->stations()) {
@@ -95,9 +95,9 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
           MonitorElement* temp = ibooker.book2D(
               (hist_name + "_even").Data(), (hist_title + " even").Data(), nBinXY_, -360, 360, nBinXY_, -360, 360);
           if (temp != nullptr) {
-            LogDebug("MuonGEMHitsValidation") << "ME can be acquired!";
+            LogDebug("MuonGEMSimHitValidation") << "ME can be acquired!";
           } else {
-            LogDebug("MuonGEMHitsValidation") << "ME can not be acquired!";
+            LogDebug("MuonGEMSimHitValidation") << "ME can not be acquired!";
             return;
           }
           gem_sh_xy_st_ch[(hist_name + "_even").Hash()] = temp;
@@ -105,9 +105,9 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
           MonitorElement* temp2 = ibooker.book2D(
               (hist_name + "_odd").Data(), (hist_title + " odd").Data(), nBinXY_, -360, 360, nBinXY_, -360, 360);
           if (temp2 != nullptr) {
-            LogDebug("MuonGEMHitsValidation") << "ME can be acquired!";
+            LogDebug("MuonGEMSimHitValidation") << "ME can be acquired!";
           } else {
-            LogDebug("MuonGEMHitsValidation") << "ME can not be acquired!";
+            LogDebug("MuonGEMSimHitValidation") << "ME can not be acquired!";
             return;
           }
           gem_sh_xy_st_ch[(hist_name + "_odd").Hash()] = temp2;
@@ -159,15 +159,15 @@ void GEMHitsValidation::bookHistograms(DQMStore::IBooker& ibooker, edm::Run cons
   }
 }
 
-GEMHitsValidation::~GEMHitsValidation() {}
+GEMSimHitValidation::~GEMSimHitValidation() {}
 
-void GEMHitsValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup) {
+void GEMSimHitValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup) {
   const GEMGeometry* GEMGeometry_ = initGeometry(iSetup);
 
   edm::Handle<edm::PSimHitContainer> GEMHits;
-  e.getByToken(InputTagToken_, GEMHits);
+  e.getByToken(inputToken_, GEMHits);
   if (!GEMHits.isValid()) {
-    edm::LogError("GEMHitsValidation") << "Cannot get GEMHits by Token simInputTagToken";
+    edm::LogError("GEMSimHitValidation") << "Cannot get GEMHits by Token simInputTagToken";
     return;
   }
 
@@ -204,29 +204,29 @@ void GEMHitsValidation::analyze(const edm::Event& e, const edm::EventSetup& iSet
 
     TString histname_suffix = getSuffixName(region);
     TString simple_zr_histname = TString::Format("hit_simple_zr%s", histname_suffix.Data());
-    LogDebug("GEMHitsValidation") << simple_zr_histname << std::endl;
-    Hit_simple_zr[simple_zr_histname.Hash()]->Fill(fabs(g_z), g_r);
+    LogDebug("GEMSimHitValidation") << simple_zr_histname << std::endl;
+    Hit_simple_zr[simple_zr_histname.Hash()]->Fill(std::abs(g_z), g_r);
 
     histname_suffix = getSuffixName(region, station);
     TString dcEta_histname = TString::Format("hit_dcEta%s", histname_suffix.Data());
-    LogDebug("GEMHitsValidation") << dcEta_histname << std::endl;
+    LogDebug("GEMSimHitValidation") << dcEta_histname << std::endl;
     Hit_dcEta[dcEta_histname.Hash()]->Fill(binX, binY);
 
     TString tofMu = TString::Format("gem_sh_simple_tofMuon_st%s", getStationLabel(station).c_str());
     TString elossMu = TString::Format("gem_sh_simple_energylossMuon_st%s", getStationLabel(station).c_str());
 
     if (abs(hits->particleType()) == 13) {
-      LogDebug("GEMHitsValidation") << tofMu << std::endl;
+      LogDebug("GEMSimHitValidation") << tofMu << std::endl;
       gem_sh_simple_tofMu[tofMu.Hash()]->Fill(timeOfFlight);
-      LogDebug("GEMHitsValidation") << elossMu << std::endl;
+      LogDebug("GEMSimHitValidation") << elossMu << std::endl;
       gem_sh_simple_elossMu[elossMu.Hash()]->Fill(energyLoss * 1.e9);
     }
 
     if (detailPlot_) {
       // First, fill variable has no condition.
-      LogDebug("GEMHitsValidation") << "gzgr" << std::endl;
+      LogDebug("GEMSimHitValidation") << "gzgr" << std::endl;
       gem_sh_zr[(int)(region / 2. + 0.5)][station - 1][layer_num]->Fill(g_z, g_r);
-      LogDebug("GEMHitsValidation") << "gxgy" << std::endl;
+      LogDebug("GEMSimHitValidation") << "gxgy" << std::endl;
       gem_sh_xy[(int)(region / 2. + 0.5)][station - 1][layer_num]->Fill(g_x, g_y);
       gem_sh_tof[(int)(region / 2. + 0.5)][station - 1][layer_num]->Fill(timeOfFlight);
       gem_sh_eloss[(int)(region / 2. + 0.5)][station - 1][layer_num]->Fill(energyLoss * 1.e9);
@@ -241,7 +241,7 @@ void GEMHitsValidation::analyze(const edm::Event& e, const edm::EventSetup& iSet
         chamber = "even";
       TString hist_name = TString::Format("gem_sh_xy%s", (getSuffixName(id.region(), station) + "_" + chamber).c_str());
 
-      LogDebug("GEMHitsValidation") << hist_name << std::endl;
+      LogDebug("GEMSimHitValidation") << hist_name << std::endl;
       gem_sh_xy_st_ch[hist_name.Hash()]->Fill(g_x, g_y);
     }
   }

@@ -5,7 +5,6 @@
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
@@ -16,22 +15,24 @@
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
-#include "Geometry/CommonDetUnit/interface/GeomDet.h"
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
-#include "Geometry/GEMGeometry/interface/GEMEtaPartition.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
+#include "Geometry/CommonTopologies/interface/StripTopology.h"
 
 struct MySimTrack {
   Float_t pt, eta, phi;
   Char_t gem_sh_layer1, gem_sh_layer2;
   Char_t gem_dg_layer1, gem_dg_layer2;
   Char_t gem_pad_layer1, gem_pad_layer2;
+  Char_t gem_cluster_layer1, gem_cluster_layer2;
   Char_t has_gem_dg_l1, has_gem_dg_l2;
   Char_t has_gem_pad_l1, has_gem_pad_l2;
+  Char_t has_gem_cluster_l1, has_gem_cluster_l2;
   Char_t has_gem_sh_l1, has_gem_sh_l2;
   bool gem_sh[3][2];
   bool gem_dg[3][2];
   bool gem_pad[3][2];
+  bool gem_cluster[3][2];
   bool gem_rh[3][2];
   bool hitOdd[3];
   bool hitEven[3];
@@ -57,8 +58,6 @@ public:
       MonitorElement* me[4][3][3], bool array[3][2], Float_t eta, Float_t phi, bool odd[3], bool even[3]);
 
 protected:
-  edm::ParameterSet cfg_;
-  edm::EDGetToken simHitsToken_;
   edm::EDGetToken simTracksToken_;
   edm::EDGetToken simVerticesToken_;
 
@@ -72,9 +71,11 @@ protected:
   float maxEta_;
   float radiusCenter_, chamberHeight_;
   int useRoll_;
-  const GEMGeometry* gem_geom_;
   unsigned int nstation;
   bool detailPlot_;
+
+  const GEMGeometry* gem_geom_;
+  edm::ESHandle<GEMGeometry> hGeom;
 };
 
 #endif
