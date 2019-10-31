@@ -18,7 +18,7 @@ public:
 
   explicit GEMBaseValidation(const edm::ParameterSet& ps);
   ~GEMBaseValidation() override = 0;
-  void analyze(const edm::Event& e, const edm::EventSetup&) = 0;
+  void analyze(const edm::Event& e, const edm::EventSetup&) override = 0;
 
  protected:
   const GEMGeometry* initGeometry(const edm::EventSetup &);
