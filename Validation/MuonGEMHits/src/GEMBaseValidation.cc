@@ -20,6 +20,8 @@ GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
   inputTokenSH_ = consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
+GEMBaseValidation::~GEMBaseValidation() { }
+
 const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & event_setup) {
   edm::ESHandle<GEMGeometry> geom_handle;
   event_setup.get<MuonGeometryRecord>().get(geom_handle);

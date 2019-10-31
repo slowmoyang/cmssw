@@ -19,13 +19,13 @@ void GEMPadDigiClusterValidation::bookHistograms(DQMStore::IBooker & booker,
   for (const auto & region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_.emplace(region_id, (GEMBaseValidation::MonitorElement*) bookZROccupancy(booker, region_id, "pad", "Pad Digi"));
+    me_occ_zr_.emplace(region_id, bookZROccupancy(booker, region_id, "pad", "Pad Digi"));
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = (GEMBaseValidation::MonitorElement*) bookDetectorOccupancy<ME2IdsKey>(booker, key2, station, "pad", "Pad Digi");
+      me_occ_det_[key2] = bookDetectorOccupancy<ME2IdsKey>(booker, key2, station, "pad", "Pad Digi");
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -35,10 +35,9 @@ void GEMPadDigiClusterValidation::bookHistograms(DQMStore::IBooker & booker,
         Int_t num_pads = chamber->etaPartitions().front()->npads();
 
         if(detail_plot_) {
-          /*
-            me_detail_occ_xy_.emplace(key3, (GEMBaseValidation::MonitorElement*) bookXYOccupancy<ME3IdsKey>(booker, key3, "pad", "Pad Digi") );
+            me_detail_occ_xy_.emplace(key3, bookXYOccupancy<ME3IdsKey>(booker, key3, "pad", "Pad Digi") );
 
-          me_detail_occ_phi_pad_.emplace(key3, (GEMBaseValidation::MonitorElement*) bookHist2D<ME3IdsKey>(
+          me_detail_occ_phi_pad_.emplace(key3, bookHist2D<ME3IdsKey>(
                                                                                                           booker, key3,
                                                                                                           "occ_phi_pad",
                                                                                                           "Pad Digi Occupancy",
@@ -46,13 +45,12 @@ void GEMPadDigiClusterValidation::bookHistograms(DQMStore::IBooker & booker,
                                                                                                           num_pads / 2, 0, num_pads,
                                                                                                           "#phi [rad]", "Pad number"));
 
-          me_detail_occ_pad_.emplace(key3, (GEMBaseValidation::MonitorElement*) bookHist1D<ME3IdsKey>(
+          me_detail_occ_pad_.emplace(key3, bookHist1D<ME3IdsKey>(
                                                                                                       booker, key3,
                                                                                                       "occ_pad",
                                                                                                       "Pad Digi Occupancy",
                                                                                                       num_pads, -0.5, num_pads - 0.5,
                                                                                                       "GEM Pad Id"));
-          */
         }
       } // end loop over layer ids
     } // end loop over station ids
@@ -73,11 +71,9 @@ void GEMPadDigiClusterValidation::bookHistograms(DQMStore::IBooker & booker,
         for (const auto & chamber : super_chamber->chambers()) {
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
-          /*
-          me_detail_bx_.emplace(key3, (GEMBaseValidation::MonitorElement*) bookHist1D<ME3IdsKey>(booker, key3,
+          me_detail_bx_.emplace(key3, bookHist1D<ME3IdsKey>(booker, key3,
                                                                                                  "bx", "Bunch Crossing",
                                                                                                  5, -2.5, 2.5, "Bunch crossing"));
-          */
         } // chamber loop
       } // station loop
     } // region loop
@@ -146,14 +142,12 @@ void GEMPadDigiClusterValidation::analyze(const edm::Event & event,
       Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
       me_occ_det_[key2]->Fill(bin_x, roll_id);
 
-      /*
       if (detail_plot_) {
         me_detail_occ_xy_[key3]->Fill(g_x, g_y);
-        ((GEMBaseValidation::MonitorElement*) me_detail_occ_phi_pad_[key3])->Fill(g_phi, pad);
-        ((GEMBaseValidation::MonitorElement*) me_detail_occ_pad_[key3])->Fill(pad);
-        ((GEMBaseValidation::MonitorElement*) me_detail_bx_[key3])->Fill(bx);
+        me_detail_occ_phi_pad_[key3]->Fill(g_phi, pad);
+        me_detail_occ_pad_[key3]->Fill(pad);
+        me_detail_bx_[key3]->Fill(bx);
       } // detail_plot_
-      */
     }
   } // end loop over range iters
 }
