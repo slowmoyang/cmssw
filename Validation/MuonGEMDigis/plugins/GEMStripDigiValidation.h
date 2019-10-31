@@ -12,7 +12,6 @@ public:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
 
 private:
-
   // ParameterSet
   edm::EDGetTokenT<GEMDigiCollection> inputToken_;
   edm::EDGetTokenT<edm::PSimHitContainer> inputTokenSH_;

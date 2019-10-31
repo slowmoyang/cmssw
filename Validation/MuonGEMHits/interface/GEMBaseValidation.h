@@ -15,63 +15,71 @@
 
 class GEMBaseValidation : public DQMEDAnalyzer {
 public:
-
   explicit GEMBaseValidation(const edm::ParameterSet& ps);
   ~GEMBaseValidation() override = 0;
   void analyze(const edm::Event& e, const edm::EventSetup&) override = 0;
 
- protected:
-  const GEMGeometry* initGeometry(const edm::EventSetup &);
+protected:
+  const GEMGeometry* initGeometry(const edm::EventSetup&);
 
   // MonitorElement
-  MonitorElement* bookZROccupancy(DQMStore::IBooker & ibooker,
+  MonitorElement* bookZROccupancy(DQMStore::IBooker& ibooker,
                                   Int_t region_id,
                                   const char* name_prfix,
                                   const char* title_prefix);
 
   template <typename MEMapKey>
-  MonitorElement* bookZROccupancy(DQMStore::IBooker & ibooker,
-                                  const MEMapKey & key,
+  MonitorElement* bookZROccupancy(DQMStore::IBooker& ibooker,
+                                  const MEMapKey& key,
                                   const char* name_prfix,
                                   const char* title_prefix);
 
   template <typename MEMapKey>
-  MonitorElement* bookXYOccupancy(DQMStore::IBooker & ibooker,
-                                  const MEMapKey & key,
+  MonitorElement* bookXYOccupancy(DQMStore::IBooker& ibooker,
+                                  const MEMapKey& key,
                                   const char* name_prefix,
                                   const char* title_prefix);
 
   template <typename MEMapKey>
-  MonitorElement* bookPolarOccupancy(DQMStore::IBooker & ibooker,
-                                     const MEMapKey & key,
+  MonitorElement* bookPolarOccupancy(DQMStore::IBooker& ibooker,
+                                     const MEMapKey& key,
                                      const char* name_prefix,
                                      const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookDetectorOccupancy(DQMStore::IBooker& ibooker,
-                                        const MEMapKey & key,
+                                        const MEMapKey& key,
                                         const GEMStation* station,
                                         const char* name_prfix,
                                         const char* title_prefix);
 
   template <typename MEMapKey>
   MonitorElement* bookHist1D(DQMStore::IBooker& ibooker,
-                             const MEMapKey & key,
-                             const char* name, const char* title,
-                             Int_t nbinsx, Double_t xlow, Double_t xup,
-                             const char* x_title="",
-                             const char* y_title="Entries");
+                             const MEMapKey& key,
+                             const char* name,
+                             const char* title,
+                             Int_t nbinsx,
+                             Double_t xlow,
+                             Double_t xup,
+                             const char* x_title = "",
+                             const char* y_title = "Entries");
 
   template <typename MEMapKey>
   MonitorElement* bookHist2D(DQMStore::IBooker& ibooker,
-                             const MEMapKey & key,
-                             const char* name, const char* title,
-                             Int_t nbinsx, Double_t xlow, Double_t xup,
-                             Int_t nbinsy, Double_t ylow, Double_t yup,
-                             const char* x_title="", const char* y_title="");
+                             const MEMapKey& key,
+                             const char* name,
+                             const char* title,
+                             Int_t nbinsx,
+                             Double_t xlow,
+                             Double_t xup,
+                             Int_t nbinsy,
+                             Double_t ylow,
+                             Double_t yup,
+                             const char* x_title = "",
+                             const char* y_title = "");
 
   Int_t getDetOccBinX(Int_t chamber_id, Int_t layer_id);
-  Bool_t isMuonSimHit(const PSimHit &);
+  Bool_t isMuonSimHit(const PSimHit&);
 
   //////////////////////////////////////////////////////////////////////////////
   // Parameters
@@ -95,11 +103,12 @@ public:
 
 template <typename MEMapKey>
 GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
-                                                   const MEMapKey & key,
-                                                   const char* name_prefix,
-                                                   const char* title_prefix) {
+                                                                      const MEMapKey& key,
+                                                                      const char* name_prefix,
+                                                                      const char* title_prefix) {
   // TODO Logging
-  if (std::tuple_size<MEMapKey>::value < 2) return nullptr;
+  if (std::tuple_size<MEMapKey>::value < 2)
+    return nullptr;
 
   Int_t station_id = std::get<1>(key);
 
@@ -107,8 +116,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
   TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s ZR Occupancy :%s;|Z| #[cm];R [cm]",
-                                  title_prefix, title_suffix);
+  TString title = TString::Format("%s ZR Occupancy :%s;|Z| #[cm];R [cm]", title_prefix, title_suffix);
 
   // NOTE currently, only GE11 and GE21 are considered.
   // Look Validation/MuonGEMHits/python/MuonGEMCommonParameters_cfi.py
@@ -128,58 +136,44 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::
   return ibooker.book2D(name, title, nbinsx, xlow, xup, nbinsy, ylow, yup);
 }
 
-
 template <typename MEMapKey>
 GEMBaseValidation::MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
-                                                   const MEMapKey & key,
-                                                   const char* name_prefix,
-                                                   const char* title_prefix) {
-  const char* name_suffix  = GEMUtils::getSuffixName(key);
+                                                                      const MEMapKey& key,
+                                                                      const char* name_prefix,
+                                                                      const char* title_prefix) {
+  const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
   TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s XY Occupancy :%s;X [cm];Y [cm]",
-                                  title_prefix, title_suffix);
-  return ibooker.book2D(name, title,
-                        xy_occ_num_bins_, -360, 360,
-                        xy_occ_num_bins_, -360, 360);
+  TString title = TString::Format("%s XY Occupancy :%s;X [cm];Y [cm]", title_prefix, title_suffix);
+  return ibooker.book2D(name, title, xy_occ_num_bins_, -360, 360, xy_occ_num_bins_, -360, 360);
 }
 
-
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookPolarOccupancy(
-    DQMStore::IBooker& ibooker,
-    const MEMapKey & key,
-    const char* name_prefix,
-    const char* title_prefix) {
-
-  const char* name_suffix  = GEMUtils::getSuffixName(key);
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker,
+                                                                         const MEMapKey& key,
+                                                                         const char* name_prefix,
+                                                                         const char* title_prefix) {
+  const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
   TString name = TString::Format("%s_occ_polar%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s Polar Occupancy :%s",
-                                  title_prefix, title_suffix);
+  TString title = TString::Format("%s Polar Occupancy :%s", title_prefix, title_suffix);
   // TODO # of bins
   // TODO the x-axis lies in the cnter of Ch1
-  MonitorElement* me = ibooker.book2D(name, title,
-                                      108, -M_PI, M_PI,
-                                      108, 0.0f, 360.0f);
+  MonitorElement* me = ibooker.book2D(name, title, 108, -M_PI, M_PI, 108, 0.0f, 360.0f);
   return me;
 }
 
-
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
-    DQMStore::IBooker& ibooker,
-    const MEMapKey & key,
-    const GEMStation* station,
-    const char* name_prefix,
-    const char* title_prefix) {
-
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& ibooker,
+                                                                            const MEMapKey& key,
+                                                                            const GEMStation* station,
+                                                                            const char* name_prefix,
+                                                                            const char* title_prefix) {
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
   TString name = TString::Format("%s_occ_det%s", name_prefix, name_suffix);
-  TString title = TString::Format("%s Occupancy for detector component :%s",
-      title_prefix, title_suffix);
+  TString title = TString::Format("%s Occupancy for detector component :%s", title_prefix, title_suffix);
 
   std::vector<const GEMSuperChamber*> superchambers = station->superChambers();
 
@@ -189,9 +183,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
   Int_t nbinsx = num_superchambers * num_chambers;
   Int_t nbinsy = superchambers.front()->chambers().front()->nEtaPartitions();
 
-  auto hist = new TH2F(name, title,
-                       nbinsx, 1 - 0.5, nbinsx + 0.5,
-                       nbinsy, 1 - 0.5, nbinsy + 0.5);
+  auto hist = new TH2F(name, title, nbinsx, 1 - 0.5, nbinsx + 0.5, nbinsy, 1 - 0.5, nbinsy + 0.5);
   hist->GetXaxis()->SetTitle("Chamber-Layer");
   hist->GetYaxis()->SetTitle("Eta Partition");
 
@@ -212,48 +204,45 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
   return ibooker.book2D(name, hist);
 }
 
-
-
 template <typename MEMapKey>
 GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
-                                              const MEMapKey & key,
-                                              const char* name,
-                                              const char* title,
-                                              Int_t nbinsx,
-                                              Double_t xlow,
-                                              Double_t xup,
-                                              const char* x_title,
-                                              const char* y_title) {
+                                                                 const MEMapKey& key,
+                                                                 const char* name,
+                                                                 const char* title,
+                                                                 Int_t nbinsx,
+                                                                 Double_t xlow,
+                                                                 Double_t xup,
+                                                                 const char* x_title,
+                                                                 const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
 
-  TString hist_name  = TString::Format("%s%s", name, name_suffix);
-  TString hist_title = TString::Format("%s :%s;%s;%s",
-                                       title, title_suffix, x_title, y_title);
+  TString hist_name = TString::Format("%s%s", name, name_suffix);
+  TString hist_title = TString::Format("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
 
   return ibooker.book1D(hist_name, hist_title, nbinsx, xlow, xup);
 }
 
-
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist2D(
-    DQMStore::IBooker& ibooker,
-    const MEMapKey & key,
-    const char* name, const char* title,
-    Int_t nbinsx, Double_t xlow, Double_t xup,
-    Int_t nbinsy, Double_t ylow, Double_t yup,
-    const char* x_title, const char* y_title) {
-
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& ibooker,
+                                                                 const MEMapKey& key,
+                                                                 const char* name,
+                                                                 const char* title,
+                                                                 Int_t nbinsx,
+                                                                 Double_t xlow,
+                                                                 Double_t xup,
+                                                                 Int_t nbinsy,
+                                                                 Double_t ylow,
+                                                                 Double_t yup,
+                                                                 const char* x_title,
+                                                                 const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
 
-  TString hist_name  = TString::Format("%s%s", name, name_suffix);
-  TString hist_title = TString::Format("%s :%s;%s;%s",
-                                       title, title_suffix, x_title, y_title);
+  TString hist_name = TString::Format("%s%s", name, name_suffix);
+  TString hist_title = TString::Format("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
 
-  return ibooker.book2D(hist_name, hist_title,
-                        nbinsx, xlow, xup,
-                        nbinsy, ylow, yup);
+  return ibooker.book2D(hist_name, hist_title, nbinsx, xlow, xup, nbinsy, ylow, yup);
 }
 
 #endif

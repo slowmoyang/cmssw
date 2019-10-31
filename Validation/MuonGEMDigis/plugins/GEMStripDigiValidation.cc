@@ -3,23 +3,21 @@
 
 #include <TMath.h>
 #include <iomanip>
-GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
-  const auto &pset = cfg.getParameterSet("gemStripDigi");
+GEMStripDigiValidation::GEMStripDigiValidation(const edm::ParameterSet& cfg) : GEMBaseValidation(cfg) {
+  const auto& pset = cfg.getParameterSet("gemStripDigi");
   inputToken_ = consumes<GEMDigiCollection>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
-
-void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
-                                            edm::Run const & run,
-                                            edm::EventSetup const & event_setup) {
-
+void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker& booker,
+                                            edm::Run const& run,
+                                            edm::EventSetup const& event_setup) {
   const GEMGeometry* gem = initGeometry(event_setup);
 
   // NOTE Occupancy
   const char* occ_folder = gSystem->ConcatFileName(folder_.c_str(), "Occupancy");
   booker.setCurrentFolder(occ_folder);
 
-  for (const auto & region : gem->regions()) {
+  for (const auto& region : gem->regions()) {
     Int_t region_id = region->region();
 
     // NOTE occupancy plots for eta efficiency
@@ -33,7 +31,7 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                               50, eta_range_[0], eta_range_[1], "|#eta|");
     */
 
-    for (const auto & station : region->stations()) {
+    for (const auto& station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
@@ -54,22 +52,21 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                                       booker, key2, station, "matched_strip", "Matched Strip Digi");
       */
 
-    } // End loop over station ids
-  } // End loop over region ids
-
+    }  // End loop over station ids
+  }    // End loop over region ids
 
   // NOTE Bunch Crossing
   if (detail_plot_) {
     const char* bx_folder = gSystem->ConcatFileName(folder_.c_str(), "BunchCrossing");
     booker.setCurrentFolder(bx_folder);
 
-    for (const auto & region : gem->regions()) {
+    for (const auto& region : gem->regions()) {
       Int_t region_id = region->region();
-      for (const auto & station : region->stations()) {
+      for (const auto& station : region->stations()) {
         Int_t station_id = station->station();
 
         const GEMSuperChamber* super_chamber = station->superChambers().front();
-        for (const auto & chamber : super_chamber->chambers()) {
+        for (const auto& chamber : super_chamber->chambers()) {
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
 
@@ -78,39 +75,35 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                            booker, key3, "strip_bx", "Strip Digi Bunch Crossing",
                                            5, -2.5, 2.5, "Bunch crossing");
           */
-        } // chamber loop
-      } // station loop
-    } // region loop
-  } // detail plot
+        }  // chamber loop
+      }    // station loop
+    }      // region loop
+  }        // detail plot
 }
 
+GEMStripDigiValidation::~GEMStripDigiValidation() {}
 
-GEMStripDigiValidation::~GEMStripDigiValidation() {
-}
-
-
-void GEMStripDigiValidation::analyze(const edm::Event & event,
-                                     const edm::EventSetup & event_setup) {
-
+void GEMStripDigiValidation::analyze(const edm::Event& event, const edm::EventSetup& event_setup) {
   const GEMGeometry* gem = initGeometry(event_setup);
 
   edm::Handle<edm::PSimHitContainer> simhit_container;
   event.getByToken(inputTokenSH_, simhit_container);
   if (not simhit_container.isValid()) {
     edm::LogError(log_category_) << "Failed to get PSimHitContainer." << std::endl;
-    return ;
+    return;
   }
 
   edm::Handle<GEMDigiCollection> digi_collection;
   event.getByToken(inputToken_, digi_collection);
   if (not digi_collection.isValid()) {
     edm::LogError(log_category_) << "Cannot get strips by Token stripToken." << std::endl;
-    return ;
+    return;
   }
 
-  for (const auto & simhit : *simhit_container.product()) {
+  for (const auto& simhit : *simhit_container.product()) {
     // muon only
-    if (not isMuonSimHit(simhit)) continue;
+    if (not isMuonSimHit(simhit))
+      continue;
 
     if (gem->idToDet(simhit.detUnitId()) == nullptr) {
       edm::LogError(log_category_) << "SimHit did not match with GEMGeometry." << std::endl;
@@ -130,9 +123,8 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
 
     const GEMEtaPartition* roll = gem->etaPartition(simhit_gemid);
 
-    LocalPoint && simhit_local_pos = simhit.localPosition();
-    GlobalPoint && simhit_global_pos = roll->surface().toGlobal(simhit_local_pos);
-
+    LocalPoint&& simhit_local_pos = simhit.localPosition();
+    GlobalPoint&& simhit_global_pos = roll->surface().toGlobal(simhit_local_pos);
 
     Float_t simhit_g_eta = std::abs(simhit_global_pos.eta());
     Float_t simhit_g_phi = simhit_global_pos.phi();
@@ -148,15 +140,12 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     Bool_t found_matched_digi = false;
 
     // GEMCoPadDigiCollection::DigiRangeIterator
-    for (auto range_iter = digi_collection->begin();
-         range_iter != digi_collection->end();
-         range_iter++) {
-
-      if (simhit_gemid != (*range_iter).first) continue;
+    for (auto range_iter = digi_collection->begin(); range_iter != digi_collection->end(); range_iter++) {
+      if (simhit_gemid != (*range_iter).first)
+        continue;
 
       const GEMDigiCollection::Range& range = (*range_iter).second;
       for (auto digi = range.first; digi != range.second; ++digi) {
-
         if (simhit_strip == digi->strip()) {
           found_matched_digi = true;
 
@@ -169,10 +158,11 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
           */
           break;
         }
-      } // end loop over range
+      }  // end loop over range
 
-      if (found_matched_digi) break;
+      if (found_matched_digi)
+        break;
 
-    } // end lopp over digi_collection
-  } // end loop over simhit_container
+    }  // end lopp over digi_collection
+  }    // end loop over simhit_container
 }
