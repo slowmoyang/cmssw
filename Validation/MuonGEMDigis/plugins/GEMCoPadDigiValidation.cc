@@ -21,16 +21,17 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
   for (const auto &  region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = (GEMBaseValidation::MonitorElement*) bookZROccupancy(booker, region_id, "copad", "CoPad");
+    // me_occ_zr_[region_id] = (GEMBaseValidation::MonitorElement*) bookZROccupancy(booker, region_id, "copad", "CoPad");
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       Int_t num_pads = station->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = (GEMBaseValidation::MonitorElement*) bookDetectorOccupancy(booker, key2, station, "copad", "CoPad");
+      // me_occ_det_[key2] = (GEMBaseValidation::MonitorElement*) bookDetectorOccupancy(booker, key2, station, "copad", "CoPad");
 
       if (detail_plot_) {
+        /*
         me_detail_occ_xy_[key2] = (GEMBaseValidation::MonitorElement*) bookXYOccupancy(booker, key2, "copad","CoPad Digi");
 
 
@@ -48,7 +49,7 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                               "CoPad Digi Ocupancy per pad number",
                                               num_pads, 0.5, num_pads + 0.5,
                                               "Pad number");
-
+        */
       }
     } // end loop over station ids
   } // end loop over region ids
@@ -63,14 +64,14 @@ void GEMCoPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
       for (const auto & station : region->stations()) {
         Int_t station_id = station->station();
         ME2IdsKey key2(region_id, station_id);
-
+        /*
         me_detail_bx_[key2] = (GEMBaseValidation::MonitorElement*) bookHist1D(
                                          booker, key2,
                                          "copad_digi_bx",
                                          "CoPad Digi Bunch Crossing",
                                          5, -2.5, 2.5,
                                          "Bunch crossing");
-
+        */
 
       } // station loop
     } // region loop
@@ -157,6 +158,7 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
       Float_t g_x =  gp1.x();
       Float_t g_y =  gp1.y();
 
+      /*
       // Fill normal plots.
       me_occ_zr_[region_id]->Fill(std::fabs(g_z1), g_r1);
       me_occ_zr_[region_id]->Fill(std::fabs(g_z2), g_r2);
@@ -173,6 +175,7 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
         me_detail_bx_[key2]->Fill(bx1);
         me_detail_bx_[key2]->Fill(bx2);
       } // detailPlot_
+      */
     }
   }
 }

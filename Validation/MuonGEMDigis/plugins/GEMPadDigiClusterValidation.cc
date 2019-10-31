@@ -19,13 +19,13 @@ void GEMPadDigiClusterValidation::bookHistograms(DQMStore::IBooker & booker,
   for (const auto & region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_.emplace(region_id, bookZROccupancy(booker, region_id, "pad", "Pad Digi"));
+    // me_occ_zr_.emplace(region_id, bookZROccupancy(booker, region_id, "pad", "Pad Digi"));
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = bookDetectorOccupancy<ME2IdsKey>(booker, key2, station, "pad", "Pad Digi");
+      // me_occ_det_[key2] = bookDetectorOccupancy<ME2IdsKey>(booker, key2, station, "pad", "Pad Digi");
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -137,10 +137,10 @@ void GEMPadDigiClusterValidation::analyze(const edm::Event & event,
       Float_t g_y     = global_pos.y();
       Float_t g_abs_z = std::fabs(global_pos.z());
 
-      me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
+      // me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
 
       Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
-      me_occ_det_[key2]->Fill(bin_x, roll_id);
+      // me_occ_det_[key2]->Fill(bin_x, roll_id);
 
       if (detail_plot_) {
         // me_detail_occ_xy_[key3]->Fill(g_x, g_y);

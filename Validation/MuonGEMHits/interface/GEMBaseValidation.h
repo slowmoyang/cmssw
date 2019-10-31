@@ -16,11 +16,6 @@
 class GEMBaseValidation : public DQMEDAnalyzer {
 public:
 
-  typedef std::map<Int_t, MonitorElement*> MEMap1Ids;
-  typedef std::map<ME2IdsKey, MonitorElement*> MEMap2Ids;
-  typedef std::map<ME3IdsKey, MonitorElement*> MEMap3Ids;
-  typedef std::map<ME4IdsKey, MonitorElement*> MEMap4Ids;
-
   explicit GEMBaseValidation(const edm::ParameterSet& ps);
   ~GEMBaseValidation() override = 0;
   void analyze(const edm::Event& e, const edm::EventSetup&) = 0;

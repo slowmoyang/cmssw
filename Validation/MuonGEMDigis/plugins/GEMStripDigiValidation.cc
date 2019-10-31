@@ -23,6 +23,7 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
     Int_t region_id = region->region();
 
     // NOTE occupancy plots for eta efficiency
+    /*
     me_simhit_occ_eta_[region_id] = bookHist1D(
                                                booker, region_id, "muon_simhit_occ_eta", "Muon SimHit Eta Occupancy",
                                                50, eta_range_[0], eta_range_[1], "|#eta|");
@@ -30,12 +31,14 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
     me_strip_occ_eta_[region_id] = bookHist1D(
                                               booker, region_id, "matched_strip_occ_eta", "Strip Digi Eta Occupancy",
                                               50, eta_range_[0], eta_range_[1], "|#eta|");
+    */
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
       // NOTE occupancy plots for phi efficiency
+      /*
       me_simhit_occ_phi_[key2] = bookHist1D(
                                             booker, key2, "muon_simhit_occ_phi", "Muon SimHit Phi Occupancy",
                                             51, -M_PI, M_PI, "#phi");
@@ -49,6 +52,7 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                                        booker, key2, station, "muon_simhit", "Muon SimHit");
       me_strip_occ_det_[key2] = bookDetectorOccupancy(
                                                       booker, key2, station, "matched_strip", "Matched Strip Digi");
+      */
 
     } // End loop over station ids
   } // End loop over region ids
@@ -69,10 +73,11 @@ void GEMStripDigiValidation::bookHistograms(DQMStore::IBooker & booker,
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
 
+          /*
           me_detail_bx_[key3] = bookHist1D(
                                            booker, key3, "strip_bx", "Strip Digi Bunch Crossing",
                                            5, -2.5, 2.5, "Bunch crossing");
-
+          */
         } // chamber loop
       } // station loop
     } // region loop
@@ -135,10 +140,11 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
     Int_t simhit_strip = roll->strip(simhit_local_pos);
 
     Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
+    /*
     me_simhit_occ_eta_[region_id]->Fill(simhit_g_eta);
     me_simhit_occ_phi_[key2]->Fill(simhit_g_phi);
     me_simhit_occ_det_[key2]->Fill(bin_x, roll_id);
-
+    */
     Bool_t found_matched_digi = false;
 
     // GEMCoPadDigiCollection::DigiRangeIterator
@@ -156,10 +162,11 @@ void GEMStripDigiValidation::analyze(const edm::Event & event,
 
           // If we use global position of digi, 'inconsistent bin contents'
           // exception may occur.
+          /*
           me_strip_occ_eta_[region_id]->Fill(simhit_g_eta);
           me_strip_occ_phi_[key2]->Fill(simhit_g_phi);
           me_strip_occ_det_[key2]->Fill(bin_x, roll_id);
-
+          */
           break;
         }
       } // end loop over range
