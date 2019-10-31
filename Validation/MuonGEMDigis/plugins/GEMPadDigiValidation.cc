@@ -19,13 +19,13 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
   for (const auto & region : gem->regions()) {
     Int_t region_id = region->region();
 
-    me_occ_zr_[region_id] = bookZROccupancy(booker, region_id, "pad", "Pad Digi");
+    me_occ_zr_[region_id] = (GEMBaseValidation::MonitorElement*) bookZROccupancy(booker, region_id, "pad", "Pad Digi");
 
     for (const auto & station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
 
-      me_occ_det_[key2] = bookDetectorOccupancy(booker, key2, station, "pad", "Pad Digi");
+      me_occ_det_[key2] = (GEMBaseValidation::MonitorElement*) bookDetectorOccupancy(booker, key2, station, "pad", "Pad Digi");
 
       const GEMSuperChamber* super_chamber = station->superChambers().front();
       for (const auto & chamber : super_chamber->chambers()) {
@@ -35,9 +35,9 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
         Int_t num_pads = chamber->etaPartitions().front()->npads();
 
         if(detail_plot_) {
-          me_detail_occ_xy_[key3] = bookXYOccupancy(booker, key3, "pad", "Pad Digi");
+          me_detail_occ_xy_[key3] = (GEMBaseValidation::MonitorElement*) bookXYOccupancy(booker, key3, "pad", "Pad Digi");
 
-          me_detail_occ_phi_pad_[key3] = bookHist2D(
+          me_detail_occ_phi_pad_[key3] = (GEMBaseValidation::MonitorElement*) bookHist2D(
                                                     booker, key3,
                                                     "occ_phi_pad",
                                                     "Pad Digi Occupancy",
@@ -45,7 +45,7 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
                                                     num_pads / 2, 0, num_pads,
                                                     "#phi [rad]", "Pad number");
 
-          me_detail_occ_pad_[key3] = bookHist1D(
+          me_detail_occ_pad_[key3] = (GEMBaseValidation::MonitorElement*) bookHist1D(
                                                 booker, key3,
                                                 "occ_pad",
                                                 "Pad Digi Occupancy",
@@ -73,9 +73,9 @@ void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
 
-          me_detail_bx_[key3] = bookHist1D(booker, key3,
-                                           "bx", "Bunch Crossing",
-                                           5, -2.5, 2.5, "Bunch crossing");
+          me_detail_bx_[key3] = (GEMBaseValidation::MonitorElement*)  bookHist1D(booker, key3,
+                                                                                 "bx", "Bunch Crossing",
+                                                                                 5, -2.5, 2.5, "Bunch crossing");
 
         } // chamber loop
       } // station loop

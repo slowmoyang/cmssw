@@ -13,6 +13,10 @@ public:
 
 private:
 
+  // ParameterSet
+  edm::EDGetTokenT<GEMDigiCollection> inputToken_;
+  edm::EDGetTokenT<edm::PSimHitContainer> inputTokenSH_;
+
   // Monitor elements
   // NOTE muon simhit - strip digi matching
   // occupancy plots for efficiency
@@ -25,8 +29,6 @@ private:
 
   // bunch crossing
   MEMap3Ids me_detail_bx_;
-o
-  edm::EDGetTokenT<GEMDigiCollection> inputToken_;
 };
 
 #endif

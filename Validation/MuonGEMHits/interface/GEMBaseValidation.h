@@ -15,6 +15,12 @@
 
 class GEMBaseValidation : public DQMEDAnalyzer {
 public:
+
+typedef std::map<Int_t, MonitorElement*> MEMap1Ids;
+typedef std::map<ME2IdsKey, MonitorElement*> MEMap2Ids;
+typedef std::map<ME3IdsKey, MonitorElement*> MEMap3Ids;
+typedef std::map<ME4IdsKey, MonitorElement*> MEMap4Ids;
+
   explicit GEMBaseValidation(const edm::ParameterSet& ps);
   ~GEMBaseValidation() override;
   void analyze(const edm::Event& e, const edm::EventSetup&) override = 0;
@@ -93,7 +99,7 @@ public:
 };
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                    const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
@@ -129,7 +135,7 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
 
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
                                                    const MEMapKey & key,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {
@@ -145,7 +151,7 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
 
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookPolarOccupancy(
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookPolarOccupancy(
     DQMStore::IBooker& ibooker,
     const MEMapKey & key,
     const char* name_prefix,
@@ -166,7 +172,7 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(
 
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
     DQMStore::IBooker& ibooker,
     const MEMapKey & key,
     const GEMStation* station,
@@ -214,7 +220,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(
 
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
                                               const MEMapKey & key,
                                               const char* name,
                                               const char* title,
@@ -235,7 +241,7 @@ MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
 
 
 template <typename MEMapKey>
-MonitorElement* GEMBaseValidation::bookHist2D(
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist2D(
     DQMStore::IBooker& ibooker,
     const MEMapKey & key,
     const char* name, const char* title,

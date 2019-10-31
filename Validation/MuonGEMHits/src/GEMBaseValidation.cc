@@ -17,7 +17,7 @@ GEMBaseValidation::GEMBaseValidation(const edm::ParameterSet& ps) {
   detail_plot_ = ps.getParameter<Bool_t>("detailPlot");
 
   const auto& pset = ps.getParameterSet("gemSimHit");
-  inputTokenSH_ = consumes<edm::PSimHitContainer>(edm::InputTag("inputTag"));
+  inputTokenSH_ = consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("inputTag"));
 }
 
 const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const & event_setup) {
@@ -32,7 +32,7 @@ Int_t GEMBaseValidation::getDetOccBinX(Int_t chamber_id, Int_t layer_id) {
 }
 
 
-MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
+GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                    Int_t region_id,
                                                    const char* name_prefix,
                                                    const char* title_prefix) {

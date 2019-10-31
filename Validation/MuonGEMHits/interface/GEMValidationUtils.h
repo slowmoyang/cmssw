@@ -16,14 +16,10 @@ class TH1F;
 class TH2F;
 class TProfile;
 
-using ME2IdsKey = std::tuple<Int_t, Int_t>;
-using ME3IdsKey = std::tuple<Int_t, Int_t, Int_t>;
-using ME4IdsKey = std::tuple<Int_t, Int_t, Int_t, Int_t>;
+typedef std::tuple<Int_t, Int_t> ME2IdsKey;
+typedef std::tuple<Int_t, Int_t, Int_t> ME3IdsKey;
+typedef std::tuple<Int_t, Int_t, Int_t, Int_t> ME4IdsKey;
 
-using MEMap1Ids = std::map<Int_t, MonitorElement*>;
-using MEMap2Ids = std::map<ME2IdsKey, MonitorElement*>;
-using MEMap3Ids = std::map<ME3IdsKey, MonitorElement*>;
-using MEMap4Ids = std::map<ME4IdsKey, MonitorElement*>;
 
 namespace GEMUtils {
 

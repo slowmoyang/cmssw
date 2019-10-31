@@ -21,7 +21,7 @@ private:
   MEMap2Ids me_detail_bx_;
 
   edm::EDGetTokenT<GEMCoPadDigiCollection> inputToken_;
-  int minBXGEM_, maxBXGEM_;
+  int gem_bx_min_, gem_bx_max_;
 };
 
 #endif
