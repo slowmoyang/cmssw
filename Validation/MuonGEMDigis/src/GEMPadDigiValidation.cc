@@ -1,198 +1,159 @@
 #include "Validation/MuonGEMDigis/interface/GEMPadDigiValidation.h"
-#include <TMath.h>
+#include "DataFormats/GEMDigi/interface/GEMPadDigiCollection.h"
 
-GEMPadDigiValidation::GEMPadDigiValidation(const edm::ParameterSet &cfg) : GEMBaseValidation(cfg) {
-  InputTagToken_ = consumes<GEMPadDigiCollection>(cfg.getParameter<edm::InputTag>("PadLabel"));
-  detailPlot_ = cfg.getParameter<bool>("detailPlot");
-}
-void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker &ibooker,
-                                          edm::Run const &Run,
-                                          edm::EventSetup const &iSetup) {
-  const GEMGeometry *GEMGeometry_ = initGeometry(iSetup);
-  if (GEMGeometry_ == nullptr)
-    return;
-  LogDebug("GEMPadDigiValidation") << "Geometry is acquired from MuonGeometryRecord\n";
-  ibooker.setCurrentFolder("MuonGEMDigisV/GEMDigisTask");
-  LogDebug("GEMPadDigiValidation") << "ibooker set current folder\n";
 
-  if (GEMGeometry_ == nullptr)
-    return;
-  int npadsGE11 =
-      GEMGeometry_->regions()[0]->stations()[0]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
-  int npadsGE21 = 0;
-  int nPads = 0;
-
-  if (GEMGeometry_->regions()[0]->stations().size() > 1 &&
-      !GEMGeometry_->regions()[0]->stations()[1]->superChambers().empty()) {
-    npadsGE21 =
-        GEMGeometry_->regions()[0]->stations()[1]->superChambers()[0]->chambers()[0]->etaPartitions()[0]->npads();
-  }
-
-  for (auto &region : GEMGeometry_->regions()) {
-    int re = region->region();
-    TString title_suffix = getSuffixTitle(re);
-    TString histname_suffix = getSuffixName(re);
-    TString simpleZR_title = TString::Format("ZR Occupancy%s; |Z|(cm) ; R(cm)", title_suffix.Data());
-    TString simpleZR_histname = TString::Format("pad_simple_zr%s", histname_suffix.Data());
-
-    auto *simpleZR = getSimpleZR(ibooker, simpleZR_title, simpleZR_histname);
-    if (simpleZR != nullptr) {
-      thePad_simple_zr[simpleZR_histname.Hash()] = simpleZR;
-    }
-    for (auto &station : region->stations()) {
-      int st = station->station();
-      TString title_suffix2 = getSuffixTitle(re, st);
-      TString histname_suffix2 = getSuffixName(re, st);
-
-      TString dcEta_title =
-          TString::Format("Occupancy for detector component %s;;#eta-partition", title_suffix2.Data());
-      TString dcEta_histname = TString::Format("pad_dcEta%s", histname_suffix2.Data());
-
-      auto *dcEta = getDCEta(ibooker, station, dcEta_title, dcEta_histname);
-      if (dcEta != nullptr) {
-        thePad_dcEta[dcEta_histname.Hash()] = dcEta;
-      }
-    }
-  }
-
-  if (detailPlot_) {
-    for (auto &region : GEMGeometry_->regions()) {
-      int re = region->region();
-      int region_num = (re + 1) / 2;
-      for (auto &station : region->stations()) {
-        int st = station->station();
-        int station_num = st - 1;
-        if (station_num == 0)
-          nPads = npadsGE11;
-        else
-          nPads = npadsGE21;
-        for (int la = 1; la <= 2; la++) {
-          int layer_num = la - 1;
-          std::string name_prefix = getSuffixName(re, st, la);
-          std::string label_prefix = getSuffixTitle(re, st, la);
-          theCSCPad_phipad[region_num][station_num][layer_num] =
-              ibooker.book2D(("pad_dg_phipad" + name_prefix).c_str(),
-                             ("Digi occupancy: " + label_prefix + "; phi [rad]; Pad number").c_str(),
-                             280,
-                             -TMath::Pi(),
-                             TMath::Pi(),
-                             nPads / 2,
-                             0,
-                             nPads);
-          theCSCPad[region_num][station_num][layer_num] =
-              ibooker.book1D(("pad_dg" + name_prefix).c_str(),
-                             ("Digi occupancy per pad number: " + label_prefix + ";Pad number; entries").c_str(),
-                             nPads,
-                             0.5,
-                             nPads + 0.5);
-          theCSCPad_bx[region_num][station_num][layer_num] =
-              ibooker.book1D(("pad_dg_bx" + name_prefix).c_str(),
-                             ("Bunch crossing: " + label_prefix + "; bunch crossing ; entries").c_str(),
-                             11,
-                             -5.5,
-                             5.5);
-          theCSCPad_zr[region_num][station_num][layer_num] =
-              BookHistZR(ibooker, "pad_dg", "Pad Digi", region_num, station_num, layer_num);
-          theCSCPad_xy[region_num][station_num][layer_num] =
-              BookHistXY(ibooker, "pad_dg", "Pad Digi", region_num, station_num, layer_num);
-          TString xy_name = TString::Format("pad_dg_xy%s_odd", name_prefix.c_str());
-          TString xy_title = TString::Format("Digi XY occupancy %s at odd chambers", label_prefix.c_str());
-          theCSCPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
-          xy_name = TString::Format("pad_dg_xy%s_even", name_prefix.c_str());
-          xy_title = TString::Format("Digi XY occupancy %s at even chambers", label_prefix.c_str());
-          theCSCPad_xy_ch[xy_name.Hash()] = ibooker.book2D(xy_name, xy_title, 360, -360, 360, 360, -360, 360);
-        }
-      }
-    }
-  }
+GEMPadDigiValidation::GEMPadDigiValidation(const edm::ParameterSet& ps)
+    : GEMBaseValidation(ps) {
+  auto label = ps.getParameter<edm::InputTag>("padLabel");
+  pad_token_ = consumes<GEMPadDigiCollection>(label);
 }
 
-GEMPadDigiValidation::~GEMPadDigiValidation() {}
 
-void GEMPadDigiValidation::analyze(const edm::Event &e, const edm::EventSetup &iSetup) {
-  const GEMGeometry *GEMGeometry_;
-  try {
-    edm::ESHandle<GEMGeometry> hGeom;
-    iSetup.get<MuonGeometryRecord>().get(hGeom);
-    GEMGeometry_ = &*hGeom;
-  } catch (edm::eventsetup::NoProxyException<GEMGeometry> &e) {
-    edm::LogError("GEMPadDigiValidation") << "+++ Error : GEM geometry is unavailable on event loop. +++\n";
+void GEMPadDigiValidation::bookHistograms(DQMStore::IBooker & booker,
+                                          edm::Run const & Run,
+                                          edm::EventSetup const & event_setup) {
+  const GEMGeometry* gem = initGeometry(event_setup);
+
+  // NOTE Occupancy
+  const char* occ_folder = gSystem->ConcatFileName(folder_.c_str(), "Occupancy");
+  booker.setCurrentFolder(occ_folder);
+
+  for (const auto & region : gem->regions()) {
+    Int_t region_id = region->region();
+
+    me_occ_zr_[region_id] = bookZROccupancy(booker, region_id, "pad", "Pad Digi");
+
+    for (const auto & station : region->stations()) {
+      Int_t station_id = station->station();
+      ME2IdsKey key2(region_id, station_id);
+
+      me_occ_det_[key2] = bookDetectorOccupancy(booker, key2, station, "pad", "Pad Digi");
+
+      const GEMSuperChamber* super_chamber = station->superChambers().front();
+      for (const auto & chamber : super_chamber->chambers()) {
+        Int_t layer_id = chamber->id().layer();
+        ME3IdsKey key3(region_id, station_id, layer_id);
+
+        Int_t num_pads = chamber->etaPartitions().front()->npads();
+
+        if(detail_plot_) {
+          me_detail_occ_xy_[key3] = bookXYOccupancy(booker, key3, "pad", "Pad Digi");
+
+          me_detail_occ_phi_pad_[key3] = bookHist2D(
+              booker, key3,
+              "occ_phi_pad",
+              "Pad Digi Occupancy",
+              280, -M_PI, M_PI,
+              num_pads / 2, 0, num_pads,
+              "#phi [rad]", "Pad number");
+
+          me_detail_occ_pad_[key3] = bookHist1D(
+              booker, key3,
+              "occ_pad",
+              "Pad Digi Occupancy",
+              num_pads, -0.5, num_pads - 0.5,
+              "GEM Pad Id");
+
+        }
+      } // end loop over layer ids
+    } // end loop over station ids
+  } // end loop over region ids
+
+
+  // NOTE Bunch Crossing
+  if (detail_plot_) {
+    const char* bx_folder = gSystem->ConcatFileName(folder_.c_str(), "BunchCrossing");
+    booker.setCurrentFolder(bx_folder);
+
+    for (const auto & region : gem->regions()) {
+      Int_t region_id = region->region();
+      for (const auto & station : region->stations()) {
+        Int_t station_id = station->station();
+
+        const GEMSuperChamber* super_chamber = station->superChambers().front();
+        for (const auto & chamber : super_chamber->chambers()) {
+          Int_t layer_id = chamber->id().layer();
+          ME3IdsKey key3(region_id, station_id, layer_id);
+
+          me_detail_bx_[key3] = bookHist1D(booker, key3,
+                                           "bx", "Bunch Crossing",
+                                           5, -2.5, 2.5, "Bunch crossing");
+
+        } // chamber loop
+      } // station loop
+    } // region loop
+  } // detail plot
+
+}
+
+
+GEMPadDigiValidation::~GEMPadDigiValidation() { }
+
+
+void GEMPadDigiValidation::analyze(const edm::Event & event,
+                                   const edm::EventSetup & event_setup) {
+  const GEMGeometry* gem = initGeometry(event_setup);
+
+  // typedef MuonDigiCollection<GEMDetId, GEMPadDigi> GEMPadDigiCollection;
+  edm::Handle<GEMPadDigiCollection> collection;
+  event.getByToken(pad_token_, collection);
+  if (not collection.isValid()) {
+    edm::LogError(log_category_) << "Cannot get pads by label GEMPadToken.";
     return;
   }
-  edm::Handle<GEMPadDigiCollection> gem_digis;
-  e.getByToken(InputTagToken_, gem_digis);
-  if (!gem_digis.isValid()) {
-    edm::LogError("GEMPadDigiValidation") << "Cannot get pads by label GEMPadToken.";
-  }
 
-  for (GEMPadDigiCollection::DigiRangeIterator cItr = gem_digis->begin(); cItr != gem_digis->end(); cItr++) {
-    GEMDetId id = (*cItr).first;
+  // GEMPadDigiCollection::DigiRangeIterator;
+  for (auto range_iter = collection->begin();
+            range_iter != collection->end();
+            range_iter++) {
 
-    const GeomDet *gdet = GEMGeometry_->idToDet(id);
-    if (gdet == nullptr) {
-      std::cout << "Getting DetId failed. Discard this gem pad hit.Maybe it "
-                   "comes from unmatched geometry."
-                << std::endl;
-      continue;
+    GEMDetId gemid = (*range_iter).first;
+    const GEMPadDigiCollection::Range & range = (*range_iter).second;
+
+    if (gem->idToDet(gemid) == nullptr) { 
+      edm::LogError(log_category_) << "Getting DetId failed. Discard this gem pad hit. "
+                                   << "Maybe it comes from unmatched geometry." << std::endl;
+      continue; 
     }
-    const BoundPlane &surface = gdet->surface();
-    const GEMEtaPartition *roll = GEMGeometry_->etaPartition(id);
 
-    int re = id.region();
-    int la = id.layer();
-    int st = id.station();
-    Short_t chamber = (Short_t)id.chamber();
-    Short_t nroll = (Short_t)id.roll();
-    GEMPadDigiCollection::const_iterator digiItr;
+    const GEMEtaPartition * roll = gem->etaPartition(gemid);
+    const BoundPlane & surface = roll->surface();
 
-    // loop over digis of given roll
-    //
-    for (digiItr = (*cItr).second.first; digiItr != (*cItr).second.second; ++digiItr) {
-      Short_t pad = (Short_t)digiItr->pad();
-      Short_t bx = (Short_t)digiItr->bx();
+    Int_t region_id  = gemid.region();
+    Int_t station_id = gemid.station();
+    Int_t layer_id   = gemid.layer();
+    Int_t chamber_id = gemid.chamber();
+    Int_t roll_id    = gemid.roll();
 
-      LocalPoint lp = roll->centreOfPad(digiItr->pad());
+    ME2IdsKey key2(region_id, station_id);
+    ME3IdsKey key3(region_id, station_id, layer_id);
 
-      GlobalPoint gp = surface.toGlobal(lp);
-      Float_t g_r = (Float_t)gp.perp();
-      Float_t g_phi = (Float_t)gp.phi();
-      Float_t g_x = (Float_t)gp.x();
-      Float_t g_y = (Float_t)gp.y();
-      Float_t g_z = (Float_t)gp.z();
-      edm::LogInfo("GEMPadDIGIValidation") << "Global x " << g_x << "Global y " << g_y << "\n";
-      edm::LogInfo("GEMPadDIGIValidation") << "Global pad " << pad << "Global phi " << g_phi << std::endl;
-      edm::LogInfo("GEMPadDIGIValidation") << "Global bx " << bx << std::endl;
+    for (auto digi = range.first; digi != range.second; ++digi) {
+      Int_t pad = digi->pad();
+      // bunch crossing
+      Int_t bx  = digi->bx();
 
-      int region_num = (re + 1) / 2;
-      int station_num = st - 1;
-      int layer_num = la - 1;
-      int binX = (chamber - 1) * 2 + layer_num;
-      int binY = nroll;
+      LocalPoint && local_pos = roll->centreOfPad(pad);
+      GlobalPoint && global_pos = surface.toGlobal(local_pos);
 
-      // Fill normal plots.
-      TString histname_suffix = getSuffixName(re);
-      TString simple_zr_histname = TString::Format("pad_simple_zr%s", histname_suffix.Data());
-      thePad_simple_zr[simple_zr_histname.Hash()]->Fill(fabs(g_z), g_r);
+      Float_t g_r     = global_pos.perp();
+      Float_t g_phi   = global_pos.phi();
+      Float_t g_x     = global_pos.x();
+      Float_t g_y     = global_pos.y();
+      Float_t g_abs_z = std::fabs(global_pos.z());
 
-      histname_suffix = getSuffixName(re, st);
-      TString dcEta_histname = TString::Format("pad_dcEta%s", histname_suffix.Data());
-      thePad_dcEta[dcEta_histname.Hash()]->Fill(binX, binY);
+      me_occ_zr_[region_id]->Fill(g_abs_z, g_r);
 
-      if (detailPlot_) {
-        theCSCPad_xy[region_num][station_num][layer_num]->Fill(g_x, g_y);
-        theCSCPad_phipad[region_num][station_num][layer_num]->Fill(g_phi, pad);
-        theCSCPad[region_num][station_num][layer_num]->Fill(pad);
-        theCSCPad_bx[region_num][station_num][layer_num]->Fill(bx);
-        theCSCPad_zr[region_num][station_num][layer_num]->Fill(g_z, g_r);
-        std::string name_prefix = getSuffixName(re, st, la);
-        TString hname;
-        if (chamber % 2 == 0) {
-          hname = TString::Format("pad_dg_xy%s_even", name_prefix.c_str());
-        } else {
-          hname = TString::Format("pad_dg_xy%s_odd", name_prefix.c_str());
-        }
-        theCSCPad_xy_ch[hname.Hash()]->Fill(g_x, g_y);
-      }
+      Int_t bin_x = getDetOccBinX(chamber_id, layer_id);
+      me_occ_det_[key2]->Fill(bin_x, roll_id); 
+
+      if (detail_plot_) {
+        me_detail_occ_xy_[key3]->Fill(g_x, g_y);
+        me_detail_occ_phi_pad_[key3]->Fill(g_phi, pad);
+        me_detail_occ_pad_[key3]->Fill(pad);
+        me_detail_bx_[key3]->Fill(bx);
+      } // detail_plot_
+
     }
-  }
+  } // end loop over range iters
 }

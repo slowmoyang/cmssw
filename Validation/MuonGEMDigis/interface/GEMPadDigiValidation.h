@@ -1,33 +1,31 @@
-#ifndef GEMPadDigiValidation_H
-#define GEMPadDigiValidation_H
+#ifndef Validation_MuonGEMDigis_GEMPadDigiValidation_H_
+#define Validation_MuonGEMDigis_GEMPadDigiValidation_H_
 
-#include "DataFormats/GEMDigi/interface/GEMPadDigiCollection.h"
 #include "Validation/MuonGEMHits/interface/GEMBaseValidation.h"
 
-//#include "DataFormats/Common/interface/Handle.h"
+
 class GEMPadDigiValidation : public GEMBaseValidation {
-public:
-  explicit GEMPadDigiValidation(const edm::ParameterSet &);
+ public:
+  explicit GEMPadDigiValidation( const edm::ParameterSet& );
   ~GEMPadDigiValidation() override;
-  void analyze(const edm::Event &e, const edm::EventSetup &) override;
-  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  void analyze(const edm::Event& e,
+               const edm::EventSetup&) override;
+  void bookHistograms(DQMStore::IBooker &,
+                      edm::Run const &,
+                      edm::EventSetup const &) override;
 
-private:
-  // Detail plots
-  MonitorElement *theCSCPad_xy[2][3][2];
-  MonitorElement *theCSCPad_phipad[2][3][2];
-  MonitorElement *theCSCPad[2][3][2];
-  MonitorElement *theCSCPad_bx[2][3][2];
-  MonitorElement *theCSCPad_zr[2][3][2];
-  std::unordered_map<UInt_t, MonitorElement *> theCSCPad_xy_ch;
+ private:
+  // parameters
+  edm::EDGetToken pad_token_;
 
-  // Simple plots
-  std::unordered_map<UInt_t, MonitorElement *> thePad_dcEta;
-  std::unordered_map<UInt_t, MonitorElement *> thePad_simple_zr;
+  // monitor elements
+  MEMap2Ids me_occ_det_;
+  MEMap1Ids me_occ_zr_;
+  MEMap3Ids me_detail_occ_xy_; 
+  MEMap3Ids me_detail_occ_phi_pad_;
+  MEMap3Ids me_detail_occ_pad_; // DIGI Occupancy per Pad number
 
-  edm::EDGetToken InputTagToken_;
-  int nBinXY_;
-  bool detailPlot_;
+  MEMap3Ids me_detail_bx_;
 };
 
-#endif
+#endif // Validation_MuonGEMDigis_GEMPadDigiValidation_H_
