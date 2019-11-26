@@ -11,7 +11,8 @@
 #include <map>
 #include <tuple>
 
-class MonitorElement;
+using namespace dqm::impl;
+
 class TH1F;
 class TH2F;
 class TProfile;

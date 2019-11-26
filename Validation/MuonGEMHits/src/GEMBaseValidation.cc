@@ -30,10 +30,10 @@ const GEMGeometry* GEMBaseValidation::initGeometry(edm::EventSetup const& event_
 
 Int_t GEMBaseValidation::getDetOccBinX(Int_t chamber_id, Int_t layer_id) { return 2 * chamber_id + layer_id - 2; }
 
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
-                                                                      Int_t region_id,
-                                                                      const char* name_prefix,
-                                                                      const char* title_prefix) {
+MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
+                                                   Int_t region_id,
+                                                   const char* name_prefix,
+                                                   const char* title_prefix) {
   const char* name_suffix = GEMUtils::getSuffixName(region_id).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(region_id).Data();
 

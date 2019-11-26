@@ -3,6 +3,7 @@
 
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/DQMStore.h"
+#include "DQMServices/Core/interface/MonitorElement.h"
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
@@ -102,7 +103,7 @@ protected:
 };
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& ibooker,
                                                                       const MEMapKey& key,
                                                                       const char* name_prefix,
                                                                       const char* title_prefix) {
@@ -137,7 +138,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::
 }
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& ibooker,
                                                                       const MEMapKey& key,
                                                                       const char* name_prefix,
                                                                       const char* title_prefix) {
@@ -149,7 +150,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::
 }
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& ibooker,
                                                                          const MEMapKey& key,
                                                                          const char* name_prefix,
                                                                          const char* title_prefix) {
@@ -164,7 +165,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStor
 }
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& ibooker,
                                                                             const MEMapKey& key,
                                                                             const GEMStation* station,
                                                                             const char* name_prefix,
@@ -205,7 +206,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMS
 }
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& ibooker,
                                                                  const MEMapKey& key,
                                                                  const char* name,
                                                                  const char* title,
@@ -224,7 +225,7 @@ GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBook
 }
 
 template <typename MEMapKey>
-GEMBaseValidation::MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& ibooker,
+MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& ibooker,
                                                                  const MEMapKey& key,
                                                                  const char* name,
                                                                  const char* title,
