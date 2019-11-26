@@ -27,11 +27,9 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
 
   TString cls_title = "Cluster Size Distribution";
   TString cls_x_title = "The number of adjacent strips";
-  /*
   me_cls_ = booker.book1D(
                           "cls", cls_title + ";" + cls_x_title + ";" + "Entries",
                           11, -0.5, 10.5);
-  */
   if (detail_plot_) {
     for (const auto& region : gem->regions()) {
       Int_t region_id = region->region();
@@ -43,10 +41,8 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
         for (const auto& chamber : super_chamber->chambers()) {
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
-          /*
           me_detail_cls_[key3] = bookHist1D(booker, key3, "cls", cls_title,
                                             11, -0.5, 10.5, cls_x_title);
-          */
         }  // chamber loop
       }    // station loop
     }      // region loop
@@ -58,7 +54,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
 
   for (const auto& region : gem->regions()) {
     Int_t region_id = region->region();
-    /*
     me_residual_x_[region_id] = bookHist1D(
                                            booker, region_id, "residual_x", "Residual in X",
                                            120, -3, 3, "Residual in X [cm]");
@@ -66,7 +61,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
     me_residual_y_[region_id] = bookHist1D(
                                            booker, region_id, "residual_y", "Residual in Y",
                                            600, -15, 15, "Residual in Y [cm]");
-    */
     if (detail_plot_) {
       for (const auto& station : region->stations()) {
         Int_t station_id = station->station();
@@ -76,7 +70,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
 
-          /*
           // Occupancy histograms of SimHits and RecHits for Efficiency
           me_detail_residual_x_[key3] = bookHist1D(
                                                    booker, key3, "residual_x", "Residual in X",
@@ -85,7 +78,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
           me_detail_residual_y_[key3] = bookHist1D(
                                                    booker, key3, "residual_y", "Residual in Y",
                                                    600, -15, 15, "Residual in Y [cm]");
-          */
 
         }  // chamber loop
       }    // station loop
@@ -100,12 +92,10 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
 
   for (const auto& region : gem->regions()) {
     Int_t region_id = region->region();
-    /*
     me_pull_x_[region_id] = bookHist1D(booker, region_id, "pull_x", "Pull in X",
                                        100, -3, 3);
     me_pull_y_[region_id] = bookHist1D(booker, region_id, "pull_y", "Pull in Y",
                                        100, -3, 3);
-    */
     if (detail_plot_) {
       for (const auto& station : region->stations()) {
         Int_t station_id = station->station();
@@ -114,12 +104,10 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
         for (const auto& chamber : super_chamber->chambers()) {
           Int_t layer_id = chamber->id().layer();
           ME3IdsKey key3(region_id, station_id, layer_id);
-          /*
           me_detail_pull_x_[key3] = bookHist1D(booker, key3, "pull_x",
                                                "Pull in X", 100, -3, 3);
           me_detail_pull_y_[key3] = bookHist1D(booker, key3, "pull_y",
                                                "Pull in Y", 100, -3, 3);
-          */
         }  // chamber loop
       }    // station loop
     }      // detail plot
@@ -131,7 +119,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
 
   for (const auto& region : gem->regions()) {
     Int_t region_id = region->region();
-    /*
     me_simhit_occ_eta_[region_id] = bookHist1D(
                                                booker, region_id, "muon_simhit_occ_eta", "Muon SimHit Eta Occupancy",
                                                50, eta_range_[0], eta_range_[1], "|#eta|");
@@ -139,11 +126,9 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
     me_rechit_occ_eta_[region_id] = bookHist1D(
                                                booker, region_id, "matched_rechit_occ_eta", "Matched RecHit Eta Occupancy",
                                                50, eta_range_[0], eta_range_[1], "|#eta|");
-    */
     for (const auto& station : region->stations()) {
       Int_t station_id = station->station();
       ME2IdsKey key2(region_id, station_id);
-      /*
       me_simhit_occ_phi_[key2] = bookHist1D(
                                             booker, key2, "muon_simhit_occ_phi", "Muon SimHit Phi Occupancy",
                                             51, -M_PI, M_PI, "#phi");
@@ -157,8 +142,6 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
 
       me_rechit_occ_det_[key2] = bookDetectorOccupancy(
                                                        booker, key2, station, "matched_rechit", "Matched RecHit");
-      */
-
     }  // station loop
   }    // region_loop
 }
@@ -228,11 +211,9 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
     Int_t simhit_strip = gem->etaPartition(simhit_gemid)->strip(simhit_local_pos);
     Int_t det_occ_bin_x = getDetOccBinX(chamber_id, layer_id);
 
-    /*
     me_simhit_occ_eta_[region_id]->Fill(simhit_g_abs_eta);
     me_simhit_occ_phi_[key2]->Fill(simhit_g_phi);
     me_simhit_occ_det_[key2]->Fill(det_occ_bin_x, roll_id);
-    */
     GEMRecHitCollection::range range = rechit_collection->get(simhit_gemid);
     // GEMRecHitCollection::const_iterator;
     for (auto rechit = range.first; rechit != range.second; ++rechit) {
@@ -257,7 +238,6 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
         Float_t pull_x = residual_x / resolution_x;
         Float_t pull_y = residual_y / resolution_y;
 
-        /*
         me_cls_->Fill(cls);
         me_residual_x_[region_id]->Fill(residual_x);
         me_residual_y_[region_id]->Fill(residual_y);
@@ -279,7 +259,6 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
           me_detail_pull_x_[key3]->Fill(pull_x);
           me_detail_pull_y_[key3]->Fill(pull_y);
         } // detail_plot
-        */
         // If we find GEMRecHit that matches PSimHit, then exit
         // GEMRecHitCollection loop.
         break;
