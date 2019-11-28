@@ -202,8 +202,8 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
     ME2IdsKey key2(region_id, station_id);
     ME3IdsKey key3(region_id, station_id, layer_id);
 
-    LocalPoint&& simhit_local_pos = simhit.localPosition();
-    GlobalPoint&& simhit_global_pos = surface.toGlobal(simhit_local_pos);
+    const LocalPoint& simhit_local_pos = simhit.localPosition();
+    const GlobalPoint& simhit_global_pos = surface.toGlobal(simhit_local_pos);
 
     Float_t simhit_g_abs_eta = std::fabs(simhit_global_pos.eta());
     Float_t simhit_g_phi = simhit_global_pos.phi();
@@ -214,8 +214,8 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
     me_simhit_occ_eta_[region_id]->Fill(simhit_g_abs_eta);
     me_simhit_occ_phi_[key2]->Fill(simhit_g_phi);
     me_simhit_occ_det_[key2]->Fill(det_occ_bin_x, roll_id);
+
     GEMRecHitCollection::range range = rechit_collection->get(simhit_gemid);
-    // GEMRecHitCollection::const_iterator;
     for (auto rechit = range.first; rechit != range.second; ++rechit) {
       if (gem->idToDet(rechit->gemId()) == nullptr) {
         edm::LogError(log_category_) << "GEMRecHit didn't matched with GEMGeometry." << std::endl;
@@ -227,7 +227,7 @@ void GEMRecHitValidation::analyze(const edm::Event& event, const edm::EventSetup
       Bool_t matched = matchRecHitAgainstSimHit(rechit, simhit_strip);
       if (matched) {
         // the local and global positions of GEMRecHit
-        LocalPoint rechit_local_pos = rechit->localPosition();
+        const LocalPoint& rechit_local_pos = rechit->localPosition();
 
         Float_t resolution_x = std::sqrt(rechit->localPositionError().xx());
         Float_t resolution_y = std::sqrt(rechit->localPositionError().yy());

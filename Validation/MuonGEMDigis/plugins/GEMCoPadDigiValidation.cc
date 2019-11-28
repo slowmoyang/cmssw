@@ -125,12 +125,11 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event, const edm::EventSe
       if (bx2 < gem_bx_min_ or bx2 > gem_bx_max_)
         continue;
 
-      //  const GEMChamber* chamber(nnt layer) const;
-      LocalPoint lp1 = superChamber->chamber(1)->etaPartition(roll_id)->centreOfPad(pad1);
-      LocalPoint lp2 = superChamber->chamber(2)->etaPartition(roll_id)->centreOfPad(pad2);
+      const LocalPoint& lp1 = superChamber->chamber(1)->etaPartition(roll_id)->centreOfPad(pad1);
+      const LocalPoint& lp2 = superChamber->chamber(2)->etaPartition(roll_id)->centreOfPad(pad2);
 
-      GlobalPoint gp1 = surface.toGlobal(lp1);
-      GlobalPoint gp2 = surface.toGlobal(lp2);
+      const GlobalPoint& gp1 = surface.toGlobal(lp1);
+      const GlobalPoint& gp2 = surface.toGlobal(lp2);
 
       Float_t g_r1 = gp1.perp();
       Float_t g_r2 = gp2.perp();

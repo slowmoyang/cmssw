@@ -117,8 +117,8 @@ void GEMPadDigiClusterValidation::analyze(const edm::Event& event, const edm::Ev
       // bunch crossing
       Int_t bx = digi->bx();
 
-      LocalPoint&& local_pos = roll->centreOfPad(pad);
-      GlobalPoint&& global_pos = surface.toGlobal(local_pos);
+      const LocalPoint& local_pos = roll->centreOfPad(pad);
+      const GlobalPoint& global_pos = surface.toGlobal(local_pos);
 
       Float_t g_r = global_pos.perp();
       Float_t g_phi = global_pos.phi();

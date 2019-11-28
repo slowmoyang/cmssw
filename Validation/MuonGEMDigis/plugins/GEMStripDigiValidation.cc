@@ -117,8 +117,8 @@ void GEMStripDigiValidation::analyze(const edm::Event& event, const edm::EventSe
 
     const GEMEtaPartition* roll = gem->etaPartition(simhit_gemid);
 
-    LocalPoint&& simhit_local_pos = simhit.localPosition();
-    GlobalPoint&& simhit_global_pos = roll->surface().toGlobal(simhit_local_pos);
+    const LocalPoint& simhit_local_pos = simhit.localPosition();
+    const GlobalPoint& simhit_global_pos = roll->surface().toGlobal(simhit_local_pos);
 
     Float_t simhit_g_eta = std::abs(simhit_global_pos.eta());
     Float_t simhit_g_phi = simhit_global_pos.phi();
