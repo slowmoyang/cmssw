@@ -218,7 +218,6 @@ MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& booker,
                                               const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  std::cout << "1D: " << name_suffix <<  " / " << title_suffix << std::endl;
   TString hist_name = Form("%s%s", name, name_suffix);
   TString hist_title = Form("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
   return booker.book1D(hist_name, hist_title, nbinsx, xlow, xup);
@@ -240,7 +239,6 @@ MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& booker,
                                               const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  std::cout << "2D: " << name_suffix <<  " / " << title_suffix << std::endl;
   TString hist_name = Form("%s%s", name, name_suffix);
   TString hist_title = Form("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
   return booker.book2D(hist_name, hist_title, nbinsx, xlow, xup, nbinsy, ylow, yup);
