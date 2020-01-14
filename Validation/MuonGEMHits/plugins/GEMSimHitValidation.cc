@@ -27,8 +27,8 @@ void GEMSimHitValidation::bookHistograms(DQMStore::IBooker& booker,
   for (const auto& station : gem->regions()[0]->stations()) {
     Int_t station_id = station->station();
     const auto [tof_min, tof_max] = getTOFRange(station_id);
-    const char* tof_name = Form("tof_muon_st%d", station_id);
-    const char* tof_title = Form("SimHit Time Of Flight (Muon only) : Station %d;Time of flight [ns];Entries", station_id);
+    const char* tof_name = TString::Format("tof_muon_st%d", station_id);
+    const char* tof_title = TString::Format("SimHit Time Of Flight (Muon only) : Station %d;Time of flight [ns];Entries", station_id);
 
     me_tof_mu_[station_id] = booker.book1D(tof_name, tof_title, 40, tof_min, tof_max);
   }
@@ -66,8 +66,8 @@ void GEMSimHitValidation::bookHistograms(DQMStore::IBooker& booker,
   for (const auto& station : gem->regions()[0]->stations()) {
     Int_t station_id = station->station();
 
-    const char* eloss_name = Form("eloss_muon_st%d", station_id);
-    const char* eloss_title = Form("SimHit Energy Loss (Muon only) : Station %d;Energy loss [eV];Entries", station_id);
+    const char* eloss_name = TString::Format("eloss_muon_st%d", station_id);
+    const char* eloss_title = TString::Format("SimHit Energy Loss (Muon only) : Station %d;Energy loss [eV];Entries", station_id);
     me_eloss_mu_[station_id] = booker.book1D(eloss_name, eloss_title, 60, 0.0, 6000.0);
   }  // station loop
 

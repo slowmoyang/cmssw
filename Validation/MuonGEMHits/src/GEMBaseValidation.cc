@@ -48,8 +48,8 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& booker,
   const char* name_suffix = GEMUtils::getSuffixName(region_id).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(region_id).Data();
 
-  TString name = Form("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = Form("%s ZR Occupancy :%s;|Z| [cm];R [cm]", title_prefix, title_suffix);
+  TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
+  TString title = TString::Format("%s ZR Occupancy :%s;|Z| [cm];R [cm]", title_prefix, title_suffix);
 
   Double_t station1_xmin = zr_occ_range_[0];
   Double_t station1_xmax = zr_occ_range_[1];

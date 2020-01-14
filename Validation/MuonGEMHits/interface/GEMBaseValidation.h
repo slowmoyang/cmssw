@@ -113,8 +113,8 @@ MonitorElement* GEMBaseValidation::bookZROccupancy(DQMStore::IBooker& booker,
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
-  TString name = Form("%s_occ_zr%s", name_prefix, name_suffix);
-  TString title = Form("%s ZR Occupancy :%s;|Z| #[cm];R [cm]", title_prefix, title_suffix);
+  TString name = TString::Format("%s_occ_zr%s", name_prefix, name_suffix);
+  TString title = TString::Format("%s ZR Occupancy :%s;|Z| #[cm];R [cm]", title_prefix, title_suffix);
 
   // NOTE currently, only GE11 and GE21 are considered.
   // Look Validation/MuonGEMHits/python/MuonGEMCommonParameters_cfi.py
@@ -142,8 +142,8 @@ MonitorElement* GEMBaseValidation::bookXYOccupancy(DQMStore::IBooker& booker,
                                                    const char* title_prefix) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  TString name = Form("%s_occ_xy%s", name_prefix, name_suffix);
-  TString title = Form("%s XY Occupancy :%s;X [cm];Y [cm]", title_prefix, title_suffix);
+  TString name = TString::Format("%s_occ_xy%s", name_prefix, name_suffix);
+  TString title = TString::Format("%s XY Occupancy :%s;X [cm];Y [cm]", title_prefix, title_suffix);
   return booker.book2D(name, title, xy_occ_num_bins_, -360.0, 360.0, xy_occ_num_bins_, -360.0f, 360.0);
 }
 
@@ -155,8 +155,8 @@ MonitorElement* GEMBaseValidation::bookPolarOccupancy(DQMStore::IBooker& booker,
                                                       const char* title_prefix) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  TString name = Form("%s_occ_polar%s", name_prefix, name_suffix);
-  TString title = Form("%s Polar Occupancy :%s", title_prefix, title_suffix);
+  TString name = TString::Format("%s_occ_polar%s", name_prefix, name_suffix);
+  TString title = TString::Format("%s Polar Occupancy :%s", title_prefix, title_suffix);
   // TODO # of bins
   // TODO the x-axis lies in the cnter of Ch1
   MonitorElement* me = booker.book2D(name, title, 108, -M_PI, M_PI, 108, 0.0, 360.0);
@@ -173,8 +173,8 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& book
   const char* name_suffix = GEMUtils::getSuffixName(key).Data();
   const char* title_suffix = GEMUtils::getSuffixTitle(key).Data();
 
-  TString name = Form("%s_occ_det%s", name_prefix, name_suffix);
-  TString title = Form("%s Occupancy for detector component :%s", title_prefix, title_suffix);
+  TString name = TString::Format("%s_occ_det%s", name_prefix, name_suffix);
+  TString title = TString::Format("%s Occupancy for detector component :%s", title_prefix, title_suffix);
 
   std::vector<const GEMSuperChamber*> superchambers = station->superChambers();
 
@@ -192,7 +192,7 @@ MonitorElement* GEMBaseValidation::bookDetectorOccupancy(DQMStore::IBooker& book
   for (Int_t chamber_id = 1; chamber_id <= num_superchambers; chamber_id++) {
     for (Int_t layer_id = 1; layer_id <= num_chambers; layer_id++) {
       Int_t bin = getDetOccBinX(chamber_id, layer_id);
-      TString label = Form("C%dL%d", chamber_id, layer_id);
+      TString label = TString::Format("C%dL%d", chamber_id, layer_id);
       x_axis->SetBinLabel(bin, label);
     }
   }
@@ -218,8 +218,8 @@ MonitorElement* GEMBaseValidation::bookHist1D(DQMStore::IBooker& booker,
                                               const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  TString hist_name = Form("%s%s", name, name_suffix);
-  TString hist_title = Form("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
+  TString hist_name = TString::Format("%s%s", name, name_suffix);
+  TString hist_title = TString::Format("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
   return booker.book1D(hist_name, hist_title, nbinsx, xlow, xup);
 }
 
@@ -239,8 +239,8 @@ MonitorElement* GEMBaseValidation::bookHist2D(DQMStore::IBooker& booker,
                                               const char* y_title) {
   const char* name_suffix = GEMUtils::getSuffixName(key);
   const char* title_suffix = GEMUtils::getSuffixTitle(key);
-  TString hist_name = Form("%s%s", name, name_suffix);
-  TString hist_title = Form("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
+  TString hist_name = TString::Format("%s%s", name, name_suffix);
+  TString hist_title = TString::Format("%s :%s;%s;%s", title, title_suffix, x_title, y_title);
   return booker.book2D(hist_name, hist_title, nbinsx, xlow, xup, nbinsy, ylow, yup);
 }
 
