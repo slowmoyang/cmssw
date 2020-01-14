@@ -31,8 +31,9 @@ void GEMRecHitValidation::bookHistograms(DQMStore::IBooker& booker,
   TString cls_title = "Cluster Size Distribution";
   TString cls_x_title = "The number of adjacent strips";
 
-  TString overall_title = cls_title + ";" + cls_x_title + ";" + "Entries";
-  me_cls_ = booker.book1D("cls", overall_title, 11, -0.5, 10.5);
+  me_cls_ = booker.book1D("cls",
+                          cls_title + ";" + cls_x_title + ";" + "Entries",
+                          11, -0.5, 10.5);
 
   if (detail_plot_) {
     for (const auto& region : gem->regions()) {

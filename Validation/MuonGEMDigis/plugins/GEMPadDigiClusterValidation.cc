@@ -94,8 +94,9 @@ void GEMPadDigiClusterValidation::analyze(const edm::Event& event, const edm::Ev
     const auto& range = (*range_iter).second;
 
     if (gem->idToDet(gemid) == nullptr) {
-      edm::LogError(kLogCategory_) << "Getting DetId failed. Discard this gem pad hit. "
-                                   << "Maybe it comes from unmatched geometry." << std::endl;
+      edm::LogError(kLogCategory_)
+          << "Getting DetId failed. Discard this gem pad hit. "
+          << "Maybe it comes from unmatched geometry." << std::endl;
       continue;
     }
 

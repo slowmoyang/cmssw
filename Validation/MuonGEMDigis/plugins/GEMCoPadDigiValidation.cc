@@ -77,7 +77,7 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
   edm::Handle<GEMCoPadDigiCollection> copad_collection;
   event.getByToken(copad_token_, copad_collection);
   if (not copad_collection.isValid()) {
-    edm::LogError(kLogCategory_) << "Cannot get pads by token.";
+    edm::LogError(kLogCategory_) << "Cannot get pads by token." << std::endl;
     return;
   }
 
@@ -103,10 +103,11 @@ void GEMCoPadDigiValidation::analyze(const edm::Event& event,
       const GeomDet* geom_det = gem->idToDet(super_chamber_id);
       if (geom_det == nullptr) {
         // FIXME clean up
-        edm::LogError(kLogCategory_) << super_chamber_id << " : This detId cannot be "
-                                     << "loaded from GEMGeometry // Original" << gemid << " station : " << station_id
-                                     << std::endl
-                                     << "Getting DetId failed. Discard this gem copad hit." << std::endl;
+        edm::LogError(kLogCategory_)
+            << super_chamber_id << " : This detId cannot be "
+            << "loaded from GEMGeometry // Original" << gemid
+            << " station : " << station_id << std::endl
+            << "Getting DetId failed. Discard this gem copad hit." << std::endl;
         continue;
       }
 
