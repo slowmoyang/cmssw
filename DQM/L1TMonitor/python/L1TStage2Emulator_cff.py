@@ -52,6 +52,7 @@ from L1Trigger.L1TMuonEndCap.simEmtfDigis_cfi import *
 valEmtfStage2Digis = simEmtfDigis.clone()
 valEmtfStage2Digis.CSCInput = "emtfStage2Digis"
 valEmtfStage2Digis.RPCInput = "muonRPCDigis"
+valEmtfStage2Digis.GEMInput = "muonGEMPadDigiClusters"
 
 # uGMT
 from L1Trigger.L1TMuon.simGmtStage2Digis_cfi import *
