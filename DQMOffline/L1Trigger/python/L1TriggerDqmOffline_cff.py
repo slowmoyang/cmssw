@@ -285,11 +285,13 @@ from L1Trigger.Configuration.SimL1Emulator_cff import *
 from L1Trigger.L1TTwinMux.simTwinMuxDigis_cfi import *
 stage2L1Trigger.toModify(simCscTriggerPrimitiveDigis, CSCComparatorDigiProducer = cms.InputTag("muonCSCDigis","MuonCSCComparatorDigi"))
 stage2L1Trigger.toModify(simCscTriggerPrimitiveDigis, CSCWireDigiProducer = cms.InputTag("muonCSCDigis","MuonCSCWireDigi"))
+stage2L1Trigger.toModify(simCscTriggerPrimitiveDigis, GEMPadDigiClusterProducer = cms.InputTag("muonGEMPadDigiClusters"))
 stage2L1Trigger.toModify(simDtTriggerPrimitiveDigis, digiTag = cms.InputTag("muonDTDigis"))
 simTwinMuxDigis.RPC_Source = cms.InputTag("muonRPCDigis")
 simOmtfDigis.srcRPC = cms.InputTag("muonRPCDigis")
 simEmtfDigis.CSCInput = cms.InputTag("emtfStage2Digis")
 simEmtfDigis.RPCInput = cms.InputTag("muonRPCDigis")
+simEmtfDigis.GEMInput = cms.InputTag("muonGEMPadDigiClusters")
 # use unpacker calo TPs
 simCaloStage2Layer1Digis.ecalToken = cms.InputTag("ecalDigis","EcalTriggerPrimitives")
 simCaloStage2Layer1Digis.hcalToken = cms.InputTag("hcalDigis")
