@@ -4,4 +4,6 @@ from DQMOffline.Muon.gemEfficiencyHarvester_cfi import *
 
 gemClients = cms.Sequence(
     gemEfficiencyHarvesterTightGlb *
-    gemEfficiencyHarvesterSta)
+    gemEfficiencyHarvesterGlb *
+    gemEfficiencyHarvesterSta
+)

@@ -4,5 +4,6 @@ from DQMOffline.Muon.gemEfficiencyAnalyzer_cfi import *
 
 gemSources = cms.Sequence(
     gemEfficiencyAnalyzerTightGlbSeq *
+    gemEfficiencyAnalyzerGlbSeq *
     gemEfficiencyAnalyzerStaSeq
 )

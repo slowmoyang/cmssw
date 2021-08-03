@@ -14,6 +14,15 @@ gemEffTightGlbMuons = cms.EDFilter("MuonSelector",
     ),
 )
 
+gemEffGlbMuons = cms.EDFilter("MuonSelector",
+    src = cms.InputTag("muons"),
+    cut = cms.string(
+        "(pt > 20)"
+        "&& isGlobalMuon"
+        "&& globalTrack.isNonnull"
+    ),
+)
+
 gemEffStaMuons = cms.EDFilter("MuonSelector",
     src = cms.InputTag("muons"),
     cut = cms.string(
@@ -27,33 +36,53 @@ gemEfficiencyAnalyzerTightGlb = _gemEfficiencyAnalyzerDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
     muonTag="gemEffTightGlbMuons",
     muonTrackType="CombinedTrack",
-    muonName="Tight GLB Muon",
-    folder="GEM/Efficiency/type1",
+    muonName="Tight Global Muon",
+    folder="GEM/Efficiency/TightGlobalMuon",
+)
+
+gemEfficiencyAnalyzerGlb = _gemEfficiencyAnalyzerDefault.clone(
+    ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
+    muonTag="gemEffGlbMuons",
+    muonTrackType="CombinedTrack",
+    muonName="Global Muon",
+    folder="GEM/Efficiency/GlobalMuon",
 )
 
 gemEfficiencyAnalyzerSta = _gemEfficiencyAnalyzerDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
     muonTag="gemEffStaMuons",
     muonTrackType="OuterTrack",
-    muonName="STA Muon",
-    folder="GEM/Efficiency/type2",
+    muonName="Standalone Muon",
+    folder="GEM/Efficiency/StandaloneMuon",
 )
 
 from Configuration.Eras.Modifier_phase2_GEM_cff import phase2_GEM
-phase2_GEM.toModify(
-    gemEfficiencyAnalyzerTightGlb,
+phase2_GEM.toModify(gemEfficiencyAnalyzerTightGlb,
     etaNbins=15,
-    etaUp=3.0)
+    etaUp=3.0
+)
 
-phase2_GEM.toModify(
-    gemEfficiencyAnalyzerSta,
+phase2_GEM.toModify(gemEfficiencyAnalyzerGlb,
     etaNbins=15,
-    etaUp=3.0)
+    etaUp=3.0
+)
+
+phase2_GEM.toModify(gemEfficiencyAnalyzerSta,
+    etaNbins=15,
+    etaUp=3.0
+)
 
 gemEfficiencyAnalyzerTightGlbSeq = cms.Sequence(
     cms.ignore(gemEffTightGlbMuons) *
-    gemEfficiencyAnalyzerTightGlb)
+    gemEfficiencyAnalyzerTightGlb
+)
+
+gemEfficiencyAnalyzerGlbSeq = cms.Sequence(
+    cms.ignore(gemEffGlbMuons) *
+    gemEfficiencyAnalyzerGlb
+)
 
 gemEfficiencyAnalyzerStaSeq = cms.Sequence(
     cms.ignore(gemEffStaMuons) *
-    gemEfficiencyAnalyzerSta)
+    gemEfficiencyAnalyzerSta
+)
