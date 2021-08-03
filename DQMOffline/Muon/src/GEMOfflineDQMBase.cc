@@ -89,7 +89,7 @@ void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x
     edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
-    me_map[key]->Fill(x);
+    me_map.at(key)->Fill(x);
   }
 }
 
@@ -99,7 +99,7 @@ void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x
     edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
-    me_map[key]->Fill(x, y);
+    me_map.at(key)->Fill(x, y);
   }
 }
 
@@ -116,7 +116,7 @@ void GEMOfflineDQMBase::fillMEWithinLimits(MEMap& me_map, const GEMDetId& key, c
     edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
-    fillMEWithinLimits(me_map[key], x);
+    fillMEWithinLimits(me_map.at(key), x);
 
   }
 }

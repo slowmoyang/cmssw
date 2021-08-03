@@ -148,18 +148,18 @@ void GEMEfficiencyAnalyzer::bookEfficiencyMomentum(DQMStore::IBooker& ibooker, c
 
     const TString&& title = kMuonName_.c_str() + title_suffix;
 
-    TH1F* h_muon_pt = new TH1F("muon_pt" + name_suffix, title, pt_nbinsx, &kPtBins_[0]);
+    TH1F* h_muon_pt = new TH1F("muon_pt" + name_suffix, title, pt_nbinsx, &kPtBins_.at(0));
     h_muon_pt->SetXTitle(pt_x_title);
     me_muon_pt_[key] = ibooker.book1D(h_muon_pt->GetName(), h_muon_pt);
-    me_muon_pt_matched_[key] = bookNumerator1D(ibooker, me_muon_pt_[key]);
+    me_muon_pt_matched_[key] = bookNumerator1D(ibooker, me_muon_pt_.at(key));
 
     me_muon_eta_[key] = ibooker.book1D("muon_eta" + name_suffix, title, kEtaNBins_, kEtaLow_, kEtaUp_);
-    me_muon_eta_[key]->setXTitle(eta_x_title);
-    me_muon_eta_matched_[key] = bookNumerator1D(ibooker, me_muon_eta_[key]);
+    me_muon_eta_.at(key)->setXTitle(eta_x_title);
+    me_muon_eta_matched_[key] = bookNumerator1D(ibooker, me_muon_eta_.at(key));
 
     me_muon_phi_[key] = ibooker.book1D("muon_phi" + name_suffix, title, 36, -M_PI, M_PI);
-    me_muon_phi_[key]->setAxisTitle(phi_x_title);
-    me_muon_phi_matched_[key] = bookNumerator1D(ibooker, me_muon_phi_[key]);
+    me_muon_phi_.at(key)->setAxisTitle(phi_x_title);
+    me_muon_phi_matched_[key] = bookNumerator1D(ibooker, me_muon_phi_.at(key));
   }  // station
 }
 
@@ -178,7 +178,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyChamber(DQMStore::IBooker& ibooker, co
     }
 
     const int num_chambers = superchambers.size();
-    for (const GEMChamber* chamber : superchambers[0]->chambers()) {
+    for (const GEMChamber* chamber : superchambers.at(0)->chambers()) {
       const int layer_id = chamber->id().layer();
 
       const TString&& name_suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id);
@@ -187,13 +187,13 @@ void GEMEfficiencyAnalyzer::bookEfficiencyChamber(DQMStore::IBooker& ibooker, co
 
       me_chamber_[key] =
           ibooker.book1D("chamber" + name_suffix, kMuonName_.c_str() + title_suffix, num_chambers, 0.5, num_chambers + 0.5);
-      me_chamber_[key]->setAxisTitle("Chamber");
-      me_chamber_[key]->getTH1F()->SetNdivisions(-num_chambers, "Y");
+      me_chamber_.at(key)->setAxisTitle("Chamber");
+      me_chamber_.at(key)->getTH1F()->SetNdivisions(-num_chambers, "Y");
       for (int binx = 1; binx <= num_chambers; binx++) {
-        me_chamber_[key]->setBinLabel(binx, std::to_string(binx));
+        me_chamber_.at(key)->setBinLabel(binx, std::to_string(binx));
       }
 
-      me_chamber_matched_[key] = bookNumerator1D(ibooker, me_chamber_[key]);
+      me_chamber_matched_[key] = bookNumerator1D(ibooker, me_chamber_.at(key));
     }  // layer
   }    // station
 }
@@ -213,7 +213,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyEtaPartition(DQMStore::IBooker& ibooke
       return;
     }
 
-    for (const GEMChamber* chamber : superchambers[0]->chambers()) {
+    for (const GEMChamber* chamber : superchambers.at(0)->chambers()) {
       const int layer_id = chamber->id().layer();
       const int num_ieta = chamber->nEtaPartitions();
 
@@ -222,13 +222,13 @@ void GEMEfficiencyAnalyzer::bookEfficiencyEtaPartition(DQMStore::IBooker& ibooke
       const GEMDetId&& key = getReStLaKey(chamber->id());
 
       me_ieta_[key] = ibooker.book1D("ieta" + name_suffix, kMuonName_.c_str() + title_suffix, num_ieta, 0.5, num_ieta + 0.5);
-      me_ieta_[key]->setAxisTitle("i#eta");
-      me_ieta_[key]->getTH1F()->SetNdivisions(-num_ieta, "Y");
+      me_ieta_.at(key)->setAxisTitle("i#eta");
+      me_ieta_.at(key)->getTH1F()->SetNdivisions(-num_ieta, "Y");
       for (int binx = 1; binx <= num_ieta; binx++) {
-        me_ieta_[key]->setBinLabel(binx, std::to_string(binx));
+        me_ieta_.at(key)->setBinLabel(binx, std::to_string(binx));
       }
 
-      me_ieta_matched_[key] = bookNumerator1D(ibooker, me_ieta_[key]);
+      me_ieta_matched_[key] = bookNumerator1D(ibooker, me_ieta_.at(key));
     }  // layer
   }    // station
 }
@@ -249,7 +249,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyDetector(DQMStore::IBooker& ibooker, c
 
     const int num_ch = superchambers.size();
 
-    for (const GEMChamber* chamber : superchambers[0]->chambers()) {
+    for (const GEMChamber* chamber : superchambers.at(0)->chambers()) {
       const int layer_id = chamber->id().layer();
       const int num_ieta = chamber->nEtaPartitions();
 
@@ -265,9 +265,9 @@ void GEMEfficiencyAnalyzer::bookEfficiencyDetector(DQMStore::IBooker& ibooker, c
                                          num_ieta,
                                          0.5,
                                          num_ieta + 0.5);
-      setDetLabelsEta(me_detector_[key], station);
+      setDetLabelsEta(me_detector_.at(key), station);
 
-      me_detector_matched_[key] = bookNumerator2D(ibooker, me_detector_[key]);
+      me_detector_matched_[key] = bookNumerator2D(ibooker, me_detector_.at(key));
     }  // layer
   }    // station
 }
@@ -284,13 +284,13 @@ void GEMEfficiencyAnalyzer::bookResolution(DQMStore::IBooker& ibooker, const edm
       return;
     }
 
-    const std::vector<const GEMChamber*>& chambers = superchambers[0]->chambers();
+    const std::vector<const GEMChamber*>& chambers = superchambers.at(0)->chambers();
     if (not checkRefs(chambers)) {
       edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMChamber ptrs" << std::endl;
       return;
     }
 
-    for (const GEMEtaPartition* eta_partition : chambers[0]->etaPartitions()) {
+    for (const GEMEtaPartition* eta_partition : chambers.at(0)->etaPartitions()) {
       const int ieta = eta_partition->id().roll();
 
       const GEMDetId&& key = getReStEtKey(eta_partition->id());
@@ -301,13 +301,13 @@ void GEMEfficiencyAnalyzer::bookResolution(DQMStore::IBooker& ibooker, const edm
 
       me_residual_rphi_[key] =
           ibooker.book1D("residual_rphi" + name_suffix, title, 50, -kResidualRPhiCut_, kResidualRPhiCut_);
-      me_residual_rphi_[key]->setAxisTitle("Residual in R#phi [cm]");
+      me_residual_rphi_.at(key)->setAxisTitle("Residual in R#phi [cm]");
 
       me_residual_y_[key] = ibooker.book1D("residual_y" + name_suffix, title, 60, -12.0, 12.0);
-      me_residual_y_[key]->setAxisTitle("Residual in Local Y [cm]");
+      me_residual_y_.at(key)->setAxisTitle("Residual in Local Y [cm]");
 
       me_pull_y_[key] = ibooker.book1D("pull_y" + name_suffix, title, 60, -3.0, 3.0);
-      me_pull_y_[key]->setAxisTitle("Pull in Local Y");
+      me_pull_y_.at(key)->setAxisTitle("Pull in Local Y");
     }  // ieta
   }    // station
 }
@@ -335,8 +335,8 @@ void GEMEfficiencyAnalyzer::bookMisc(DQMStore::IBooker& ibooker, const edm::ESHa
     const TString&& name_suffix = GEMUtils::getSuffixName(region_id, station_id);
     const TString&& title_suffix = GEMUtils::getSuffixTitle(region_id, station_id);
     me_prop_chamber_[key] = ibooker.book1D("prop_chamber" + name_suffix, title_suffix, num_ch, 0.5, num_ch + 0.5);
-    me_prop_chamber_[key]->setAxisTitle("Destination Chamber Id", 1);
-    me_prop_chamber_[key]->setAxisTitle("Entries", 2);
+    me_prop_chamber_.at(key)->setAxisTitle("Destination Chamber Id", 1);
+    me_prop_chamber_.at(key)->setAxisTitle("Entries", 2);
   }  // station
 }
 
@@ -459,7 +459,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       // FIXME clever way to clamp values?
       fillMEWithinLimits(me_prop_r_err_, dest_global_r_err);
       fillMEWithinLimits(me_prop_phi_err_, dest_global_phi_err);
-      me_prop_chamber_[rs_key]->Fill(gem_id.chamber());
+      me_prop_chamber_.at(rs_key)->Fill(gem_id.chamber());
 
       if (kUsePropRErrorCut_ and (dest_global_r_err > kPropRErrorCut_)) {
         edm::LogInfo(kLogCategory_) << "failed to pass a propagation global R error cut" << std::endl;
@@ -577,11 +577,11 @@ std::vector<GEMEfficiencyAnalyzer::GEMLayerData> GEMEfficiencyAnalyzer::buildGEM
       const int layer_id = key.first;
 
       // chambers should have same R and Z spans.
-      auto [rmin, rmax] = chamber_vector[0]->surface().rSpan();
-      auto [zmin, zmax] = chamber_vector[0]->surface().zSpan();
+      auto [rmin, rmax] = chamber_vector.at(0)->surface().rSpan();
+      auto [zmin, zmax] = chamber_vector.at(0)->surface().zSpan();
 
       // layer position and rotation
-      const float layer_z = chamber_vector[0]->position().z();
+      const float layer_z = chamber_vector.at(0)->position().z();
       Surface::PositionType position{0.f, 0.f, layer_z};
       Surface::RotationType rotation;
 

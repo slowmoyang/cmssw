@@ -74,7 +74,7 @@ void GEMOfflineMonitor::bookDigiOccupancy(DQMStore::IBooker& ibooker, const edm:
                                        num_vfat,
                                        0.5,
                                        num_vfat + 0.5);
-    setDetLabelsVFAT(me_digi_det_[key], station);
+    setDetLabelsVFAT(me_digi_det_.at(key), station);
   }  // station
 }
 
@@ -109,7 +109,7 @@ void GEMOfflineMonitor::bookHitOccupancy(DQMStore::IBooker& ibooker, const edm::
                                       num_etas,
                                       0.5,
                                       num_etas + 0.5);
-    setDetLabelsEta(me_hit_det_[key], station);
+    setDetLabelsEta(me_hit_det_.at(key), station);
   }  // station
 }
 
