@@ -5,26 +5,26 @@ from DQMOffline.Muon.gemEfficiencyAnalyzerCosmicsDefault_cfi import gemEfficienc
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 
 gemEfficiencyAnalyzerCosmics = _gemEfficiencyAnalyzerCosmicsDefault.clone(
-    ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    muonTag = cms.InputTag("muons"),
-    muonTrackType = cms.untracked.string("OuterTrack"),
-    muonName = cms.untracked.string("Cosmic 2-Leg STA Muon"),
-    folder = cms.untracked.string("GEM/Efficiency/type1"),
+    ServiceParameters=MuonServiceProxy.ServiceParameters.clone(),
+    muonTag="muons",
+    muonTrackType="OuterTrack",
+    muonName="Cosmic 2-Leg STA Muon",
+    folder="GEM/Efficiency/type1",
 )
 
 gemEfficiencyAnalyzerCosmicsOneLeg = _gemEfficiencyAnalyzerCosmicsDefault.clone(
-    ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    muonTag = cms.InputTag("muons1Leg"),
-    muonTrackType = cms.untracked.string("OuterTrack"),
-    muonName = cms.untracked.string("Cosmic 1-Leg STA Muon"),
-    folder = cms.untracked.string("GEM/Efficiency/type2"),
+    ServiceParameters=MuonServiceProxy.ServiceParameters.clone(),
+    muonTag="muons1Leg",
+    muonTrackType="OuterTrack",
+    muonName="Cosmic 1-Leg STA Muon",
+    folder="GEM/Efficiency/type2",
 )
 
 from Configuration.Eras.Modifier_phase2_GEM_cff import phase2_GEM
 phase2_GEM.toModify(gemEfficiencyAnalyzerCosmics,
-    etaNbins=cms.untracked.int32(15),
-    etaUp=cms.untracked.double(3.0))
+    etaNbins=15,
+    etaUp=3.0)
 
 phase2_GEM.toModify(gemEfficiencyAnalyzerCosmicsOneLeg,
-    etaNbins=cms.untracked.int32(15),
-    etaUp=cms.untracked.double(3.0))
+    etaNbins=15,
+    etaUp=3.0)
