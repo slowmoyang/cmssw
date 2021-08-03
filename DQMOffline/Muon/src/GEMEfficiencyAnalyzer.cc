@@ -12,37 +12,34 @@
 
 GEMEfficiencyAnalyzer::GEMEfficiencyAnalyzer(const edm::ParameterSet& pset)
     : GEMOfflineDQMBase(pset),
-      gemToken1_(esConsumes<edm::Transition::BeginRun>()),
-      gemToken2_(esConsumes<GEMGeometry, MuonGeometryRecord>()),
-      globalGeomToken_(esConsumes<GlobalTrackingGeometry, GlobalTrackingGeometryRecord>()),
-      trasientTrackToken_(
-          esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder"))) {
-  name_ = pset.getUntrackedParameter<std::string>("name");
-  folder_ = pset.getUntrackedParameter<std::string>("folder");
-
-  rechit_token_ = consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("recHitTag"));
-  muon_token_ = consumes<edm::View<reco::Muon> >(pset.getParameter<edm::InputTag>("muonTag"));
-
-  is_cosmics_ = pset.getUntrackedParameter<bool>("isCosmics");
-  use_global_muon_ = pset.getUntrackedParameter<bool>("useGlobalMuon");
-  use_skip_layer_ = pset.getParameter<bool>("useSkipLayer");
-  use_only_me11_ = pset.getParameter<bool>("useOnlyME11");
-  residual_rphi_cut_ = static_cast<float>(pset.getParameter<double>("residualRPhiCut"));
-  use_prop_r_error_cut_ = pset.getParameter<bool>("usePropRErrorCut");
-  prop_r_error_cut_ = pset.getParameter<double>("propRErrorCut");
-  use_prop_phi_error_cut_ = pset.getParameter<bool>("usePropPhiErrorCut");
-  prop_phi_error_cut_ = pset.getParameter<double>("propPhiErrorCut");
-  pt_bins_ = pset.getUntrackedParameter<std::vector<double> >("ptBins");
-  eta_nbins_ = pset.getUntrackedParameter<int>("etaNbins");
-  eta_low_ = pset.getUntrackedParameter<double>("etaLow");
-  eta_up_ = pset.getUntrackedParameter<double>("etaUp");
+      kGEMTokenBeginRun_(esConsumes<edm::Transition::BeginRun>()),
+      kGEMToken_(esConsumes<GEMGeometry, MuonGeometryRecord>()),
+      kGlobalTrackingGeometryToken_(esConsumes<GlobalTrackingGeometry, GlobalTrackingGeometryRecord>()),
+      kTransientTrackBuilderToken_(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder"))),
+      kGEMRecHitToken_(consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("recHitTag"))),
+      kMuonToken_(consumes<edm::View<reco::Muon> >(pset.getParameter<edm::InputTag>("muonTag"))),
+      kMuonName_(pset.getUntrackedParameter<std::string>("name")),
+      kFolder_(pset.getUntrackedParameter<std::string>("folder")),
+      kIsCosmics_(pset.getUntrackedParameter<bool>("isCosmics")),
+      kUseGlobalMuon_(pset.getUntrackedParameter<bool>("useGlobalMuon")),
+      kUseSkipLayer_(pset.getParameter<bool>("useSkipLayer")),
+      kUseOnlyME11_(pset.getParameter<bool>("useOnlyME11")),
+      kResidualRPhiCut_(static_cast<float>(pset.getParameter<double>("residualRPhiCut"))),
+      kUsePropRErrorCut_(pset.getParameter<bool>("usePropRErrorCut")),
+      kPropRErrorCut_(pset.getParameter<double>("propRErrorCut")),
+      kUsePropPhiErrorCut_(pset.getParameter<bool>("usePropPhiErrorCut")),
+      kPropPhiErrorCut_(pset.getParameter<double>("propPhiErrorCut")),
+      kPtBins_(pset.getUntrackedParameter<std::vector<double> >("ptBins")),
+      kEtaNBins_(pset.getUntrackedParameter<int>("etaNbins")),
+      kEtaLow_(pset.getUntrackedParameter<double>("etaLow")),
+      kEtaUp_(pset.getUntrackedParameter<double>("etaUp")) {
 
   const edm::ParameterSet&& muon_service_parameter = pset.getParameter<edm::ParameterSet>("ServiceParameters");
   muon_service_ = new MuonServiceProxy(muon_service_parameter, consumesCollector());
 
   const double eps = std::numeric_limits<double>::epsilon();
-  pt_clamp_max_ = pt_bins_.back() - eps;
-  eta_clamp_max_ = eta_up_ - eps;
+  pt_clamp_max_ = kPtBins_.back() - eps;
+  eta_clamp_max_ = kEtaUp_ - eps;
 
   // TODO pt, eta, quality check for muons
 }
@@ -110,9 +107,7 @@ void GEMEfficiencyAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& des
 void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker,
                                            edm::Run const& run,
                                            edm::EventSetup const& isetup) {
-  edm::ESHandle<GEMGeometry> gem;
-  gem = isetup.getHandle(gemToken1_);
-
+  edm::ESHandle<GEMGeometry> gem = isetup.getHandle(kGEMTokenBeginRun_);
   if (not gem.isValid()) {
     edm::LogError(kLogCategory_) << "GEMGeometry is invalid" << std::endl;
     return;
@@ -140,10 +135,10 @@ dqm::impl::MonitorElement* GEMEfficiencyAnalyzer::bookNumerator2D(DQMStore::IBoo
 
 void GEMEfficiencyAnalyzer::bookEfficiencyMomentum(DQMStore::IBooker& ibooker, const edm::ESHandle<GEMGeometry>& gem) {
   // TODO Efficiency/Source
-  ibooker.setCurrentFolder(folder_ + "/Efficiency");
+  ibooker.setCurrentFolder(kFolder_ + "/Efficiency");
 
   const TString pt_x_title = "Muon p_{T} [GeV]";
-  const int pt_nbinsx = pt_bins_.size() - 1;
+  const int pt_nbinsx = kPtBins_.size() - 1;
 
   const std::string eta_x_title = "Muon |#eta|";
   const std::string phi_x_title = "Muon #phi [rad]";
@@ -156,14 +151,14 @@ void GEMEfficiencyAnalyzer::bookEfficiencyMomentum(DQMStore::IBooker& ibooker, c
     const TString&& name_suffix = GEMUtils::getSuffixName(region_id, station_id);
     const TString&& title_suffix = GEMUtils::getSuffixTitle(region_id, station_id);
 
-    const TString&& title = name_.c_str() + title_suffix;
+    const TString&& title = kMuonName_.c_str() + title_suffix;
 
-    TH1F* h_muon_pt = new TH1F("muon_pt" + name_suffix, title, pt_nbinsx, &pt_bins_[0]);
+    TH1F* h_muon_pt = new TH1F("muon_pt" + name_suffix, title, pt_nbinsx, &kPtBins_[0]);
     h_muon_pt->SetXTitle(pt_x_title);
     me_muon_pt_[key] = ibooker.book1D(h_muon_pt->GetName(), h_muon_pt);
     me_muon_pt_matched_[key] = bookNumerator1D(ibooker, me_muon_pt_[key]);
 
-    me_muon_eta_[key] = ibooker.book1D("muon_eta" + name_suffix, title, eta_nbins_, eta_low_, eta_up_);
+    me_muon_eta_[key] = ibooker.book1D("muon_eta" + name_suffix, title, kEtaNBins_, kEtaLow_, kEtaUp_);
     me_muon_eta_[key]->setXTitle(eta_x_title);
     me_muon_eta_matched_[key] = bookNumerator1D(ibooker, me_muon_eta_[key]);
 
@@ -175,7 +170,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyMomentum(DQMStore::IBooker& ibooker, c
 
 void GEMEfficiencyAnalyzer::bookEfficiencyChamber(DQMStore::IBooker& ibooker, const edm::ESHandle<GEMGeometry>& gem) {
   // TODO Efficiency/Source
-  ibooker.setCurrentFolder(folder_ + "/Efficiency");
+  ibooker.setCurrentFolder(kFolder_ + "/Efficiency");
 
   for (const GEMStation* station : gem->stations()) {
     const int region_id = station->region();
@@ -196,7 +191,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyChamber(DQMStore::IBooker& ibooker, co
       const GEMDetId&& key = getReStLaKey(chamber->id());
 
       me_chamber_[key] =
-          ibooker.book1D("chamber" + name_suffix, name_.c_str() + title_suffix, num_chambers, 0.5, num_chambers + 0.5);
+          ibooker.book1D("chamber" + name_suffix, kMuonName_.c_str() + title_suffix, num_chambers, 0.5, num_chambers + 0.5);
       me_chamber_[key]->setAxisTitle("Chamber");
       me_chamber_[key]->getTH1F()->SetNdivisions(-num_chambers, "Y");
       for (int binx = 1; binx <= num_chambers; binx++) {
@@ -211,7 +206,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyChamber(DQMStore::IBooker& ibooker, co
 void GEMEfficiencyAnalyzer::bookEfficiencyEtaPartition(DQMStore::IBooker& ibooker,
                                                        const edm::ESHandle<GEMGeometry>& gem) {
   // TODO Efficiency/Source
-  ibooker.setCurrentFolder(folder_ + "/Efficiency");
+  ibooker.setCurrentFolder(kFolder_ + "/Efficiency");
 
   for (const GEMStation* station : gem->stations()) {
     const int region_id = station->region();
@@ -231,7 +226,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyEtaPartition(DQMStore::IBooker& ibooke
       const TString&& title_suffix = GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
       const GEMDetId&& key = getReStLaKey(chamber->id());
 
-      me_ieta_[key] = ibooker.book1D("ieta" + name_suffix, name_.c_str() + title_suffix, num_ieta, 0.5, num_ieta + 0.5);
+      me_ieta_[key] = ibooker.book1D("ieta" + name_suffix, kMuonName_.c_str() + title_suffix, num_ieta, 0.5, num_ieta + 0.5);
       me_ieta_[key]->setAxisTitle("i#eta");
       me_ieta_[key]->getTH1F()->SetNdivisions(-num_ieta, "Y");
       for (int binx = 1; binx <= num_ieta; binx++) {
@@ -245,7 +240,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyEtaPartition(DQMStore::IBooker& ibooke
 
 void GEMEfficiencyAnalyzer::bookEfficiencyDetector(DQMStore::IBooker& ibooker, const edm::ESHandle<GEMGeometry>& gem) {
   // TODO Efficiency/Source
-  ibooker.setCurrentFolder(folder_ + "/Efficiency");
+  ibooker.setCurrentFolder(kFolder_ + "/Efficiency");
 
   for (const GEMStation* station : gem->stations()) {
     const int region_id = station->region();
@@ -268,7 +263,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyDetector(DQMStore::IBooker& ibooker, c
       const GEMDetId&& key = getReStLaKey(chamber->id());
 
       me_detector_[key] = ibooker.book2D("detector" + name_suffix,
-                                         name_.c_str() + title_suffix,
+                                         kMuonName_.c_str() + title_suffix,
                                          num_ch,
                                          0.5,
                                          num_ch + 0.5,
@@ -283,7 +278,7 @@ void GEMEfficiencyAnalyzer::bookEfficiencyDetector(DQMStore::IBooker& ibooker, c
 }
 
 void GEMEfficiencyAnalyzer::bookResolution(DQMStore::IBooker& ibooker, const edm::ESHandle<GEMGeometry>& gem) {
-  ibooker.setCurrentFolder(folder_ + "/Resolution");
+  ibooker.setCurrentFolder(kFolder_ + "/Resolution");
   for (const GEMStation* station : gem->stations()) {
     const int region_id = station->region();
     const int station_id = station->station();
@@ -307,10 +302,10 @@ void GEMEfficiencyAnalyzer::bookResolution(DQMStore::IBooker& ibooker, const edm
       // TODO
       const TString&& name_suffix = TString::Format("_GE%+.2d_R%d", region_id * (station_id * 10 + 1), ieta);
       const TString&& title =
-          name_.c_str() + TString::Format(" : GE%+.2d Roll %d", region_id * (station_id * 10 + 1), ieta);
+          kMuonName_.c_str() + TString::Format(" : GE%+.2d Roll %d", region_id * (station_id * 10 + 1), ieta);
 
       me_residual_rphi_[key] =
-          ibooker.book1D("residual_rphi" + name_suffix, title, 50, -residual_rphi_cut_, residual_rphi_cut_);
+          ibooker.book1D("residual_rphi" + name_suffix, title, 50, -kResidualRPhiCut_, kResidualRPhiCut_);
       me_residual_rphi_[key]->setAxisTitle("Residual in R#phi [cm]");
 
       me_residual_y_[key] = ibooker.book1D("residual_y" + name_suffix, title, 60, -12.0, 12.0);
@@ -323,7 +318,7 @@ void GEMEfficiencyAnalyzer::bookResolution(DQMStore::IBooker& ibooker, const edm
 }
 
 void GEMEfficiencyAnalyzer::bookMisc(DQMStore::IBooker& ibooker, const edm::ESHandle<GEMGeometry>& gem) {
-  ibooker.setCurrentFolder(folder_ + "/Misc");
+  ibooker.setCurrentFolder(kFolder_ + "/Misc");
   // FIXME the range shoule be dependent on the scenario
   me_prop_r_err_ = ibooker.book1D("prop_r_err", ";Propagation Global R Error [cm];Entries", 20, 0.0, 20.0);
   me_prop_phi_err_ = ibooker.book1D("prop_phi_err", "Propagation Global Phi Error [rad];Entries", 20, 0.0, M_PI);
@@ -352,38 +347,33 @@ void GEMEfficiencyAnalyzer::bookMisc(DQMStore::IBooker& ibooker, const edm::ESHa
 
 void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<GEMRecHitCollection> rechit_collection;
-  event.getByToken(rechit_token_, rechit_collection);
+  event.getByToken(kGEMRecHitToken_, rechit_collection);
   if (not rechit_collection.isValid()) {
     edm::LogError(kLogCategory_) << "GEMRecHitCollection is invalid" << std::endl;
     return;
   }
 
   edm::Handle<edm::View<reco::Muon> > muon_view;
-  event.getByToken(muon_token_, muon_view);
+  event.getByToken(kMuonToken_, muon_view);
   if (not muon_view.isValid()) {
     edm::LogError(kLogCategory_) << "View<Muon> is invalid" << std::endl;
     return;
   }
 
-  edm::ESHandle<GEMGeometry> gem;
-  gem = setup.getHandle(gemToken2_);
-
+  edm::ESHandle<GEMGeometry> gem = setup.getHandle(kGEMToken_);
   if (not gem.isValid()) {
     edm::LogError(kLogCategory_) << "GEMGeometry is invalid" << std::endl;
     return;
   }
 
-  edm::ESHandle<GlobalTrackingGeometry> global_tracking_geometry;
-
-  global_tracking_geometry = setup.getHandle(globalGeomToken_);
-
+  edm::ESHandle<GlobalTrackingGeometry> global_tracking_geometry = setup.getHandle(kGlobalTrackingGeometryToken_);
   if (not global_tracking_geometry.isValid()) {
     edm::LogError(kLogCategory_) << "GlobalTrackingGeometry is invalid" << std::endl;
     return;
   }
 
   edm::ESHandle<TransientTrackBuilder> transient_track_builder;
-  transient_track_builder = setup.getHandle(trasientTrackToken_);
+  transient_track_builder = setup.getHandle(kTransientTrackBuilderToken_);
 
   if (not transient_track_builder.isValid()) {
     edm::LogError(kLogCategory_) << "TransientTrackRecord is invalid" << std::endl;
@@ -423,7 +413,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
     }
 
     for (const GEMLayerData& layer : layer_vector) {
-      if (use_skip_layer_ and skipLayer(track, layer)) {
+      if (kUseSkipLayer_ and skipLayer(track, layer)) {
         edm::LogInfo(kLogCategory_) << "skip GEM Layer" << std::endl;
         continue;
       }
@@ -435,7 +425,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         continue;
       }
 
-      if (use_only_me11_ and (not isME11(start_id))) {
+      if (kUseOnlyME11_ and (not isME11(start_id))) {
         edm::LogInfo(kLogCategory_) << "skip a starting state because it is not ME11" << std::endl;
         continue;
       }
@@ -482,18 +472,18 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       me_prop_phi_err_->Fill(std::min(dest_global_r_err, M_PI - 0.0001));
       me_prop_chamber_[rs_key]->Fill(gem_id.chamber());
 
-      if (use_prop_r_error_cut_ and (dest_global_r_err > prop_r_error_cut_)) {
+      if (kUsePropRErrorCut_ and (dest_global_r_err > kPropRErrorCut_)) {
         edm::LogInfo(kLogCategory_) << "failed to pass a propagation global R error cut" << std::endl;
         continue;
       }
 
-      if (use_prop_phi_error_cut_ and (dest_global_phi_err > prop_phi_error_cut_)) {
+      if (kUsePropPhiErrorCut_ and (dest_global_phi_err > kPropPhiErrorCut_)) {
         edm::LogInfo(kLogCategory_) << "failed to pass a propagation global phi error cut" << std::endl;
         continue;
       }
 
       const double muon_pt = std::min(muon.pt(), pt_clamp_max_);
-      const double muon_eta = std::clamp(std::fabs(muon.eta()), eta_low_, eta_clamp_max_);
+      const double muon_eta = std::clamp(std::fabs(muon.eta()), kEtaLow_, eta_clamp_max_);
 
       fillME(me_muon_pt_, rs_key, muon_pt);
       fillME(me_muon_eta_, rs_key, muon_eta);
@@ -511,7 +501,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       }
 
       me_all_abs_residual_rphi_->Fill(std::min(std::abs(residual_rphi), 19.999f));
-      if (std::abs(residual_rphi) > residual_rphi_cut_) {
+      if (std::abs(residual_rphi) > kResidualRPhiCut_) {
         edm::LogInfo(kLogCategory_) << "failed to pass the residual rphi cut" << std::endl;
         continue;
       }
@@ -593,16 +583,16 @@ std::vector<GEMEfficiencyAnalyzer::GEMLayerData> GEMEfficiencyAnalyzer::buildGEM
 const reco::Track* GEMEfficiencyAnalyzer::getTrack(const reco::Muon& muon) {
   const reco::Track* track = nullptr;
 
-  if (is_cosmics_) {
+  if (kIsCosmics_) {
     if (muon.outerTrack().isNonnull())
       track = muon.outerTrack().get();
 
   } else {
     // beams, i.e. pp or heavy ions
-    if (use_global_muon_ and muon.globalTrack().isNonnull())
+    if (kUseGlobalMuon_ and muon.globalTrack().isNonnull())
       track = muon.globalTrack().get();
 
-    else if ((not use_global_muon_) and muon.outerTrack().isNonnull())
+    else if ((not kUseGlobalMuon_) and muon.outerTrack().isNonnull())
       track = muon.outerTrack().get();
   }
 
@@ -616,7 +606,7 @@ std::pair<TrajectoryStateOnSurface, DetId> GEMEfficiencyAnalyzer::getStartingSta
   TrajectoryStateOnSurface starting_state;
   DetId starting_id;
 
-  if (use_global_muon_) {
+  if (kUseGlobalMuon_) {
     std::tie(starting_state, starting_id) = findStartingState(transient_track, layer, geometry);
 
   } else {
@@ -686,7 +676,7 @@ bool GEMEfficiencyAnalyzer::skipLayer(const reco::Track* track, const GEMLayerDa
   const bool is_same_region = track->eta() * layer.region > 0;
 
   bool skip = false;
-  if (is_cosmics_) {
+  if (kIsCosmics_) {
     float p2_in = track->innerMomentum().mag2();
     float p2_out = track->outerMomentum().mag2();
     if (isInsideOut(*track))

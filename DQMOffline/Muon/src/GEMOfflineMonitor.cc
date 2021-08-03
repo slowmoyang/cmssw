@@ -5,12 +5,13 @@
 #include "Validation/MuonGEMHits/interface/GEMValidationUtils.h"
 
 GEMOfflineMonitor::GEMOfflineMonitor(const edm::ParameterSet& pset)
-    : GEMOfflineDQMBase(pset), gemToken_(esConsumes<GEMGeometry, MuonGeometryRecord>()) {
-  digi_token_ = consumes<GEMDigiCollection>(pset.getParameter<edm::InputTag>("digiTag"));
-  rechit_token_ = consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("recHitTag"));
-  do_digi_occupancy_ = pset.getUntrackedParameter<bool>("doDigiOccupancy");
-  do_hit_occupancy_ = pset.getUntrackedParameter<bool>("doHitOccupancy");
-  log_category_ = pset.getUntrackedParameter<std::string>("logCategory");
+    : GEMOfflineDQMBase(pset),
+      kGEMTokenBeginRun_(esConsumes<edm::Transition::BeginRun>()),
+      kGEMToken_(esConsumes<GEMGeometry, MuonGeometryRecord>()),
+      kGEMDigiToken_(consumes<GEMDigiCollection>(pset.getParameter<edm::InputTag>("digiTag"))),
+      kGEMRecHitToken_(consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("recHitTag"))),
+      kDoDigiOccupancy_(pset.getUntrackedParameter<bool>("doDigiOccupancy")),
+      kDoHitOccupancy_(pset.getUntrackedParameter<bool>("doHitOccupancy")) {
 }
 
 GEMOfflineMonitor::~GEMOfflineMonitor() {}
@@ -26,18 +27,16 @@ void GEMOfflineMonitor::fillDescriptions(edm::ConfigurationDescriptions& descrip
 }
 
 void GEMOfflineMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& run, edm::EventSetup const& setup) {
-  edm::ESHandle<GEMGeometry> gem;
-  gem = setup.getHandle(gemToken_);
-
+  edm::ESHandle<GEMGeometry> gem = setup.getHandle(kGEMTokenBeginRun_);
   if (not gem.isValid()) {
     edm::LogError(log_category_) << "GEMGeometry is invalid" << std::endl;
     return;
   }
 
-  if (do_digi_occupancy_)
+  if (kDoDigiOccupancy_)
     bookDigiOccupancy(ibooker, gem);
 
-  if (do_hit_occupancy_)
+  if (kDoHitOccupancy_)
     bookHitOccupancy(ibooker, gem);
 }
 
@@ -116,8 +115,8 @@ void GEMOfflineMonitor::bookHitOccupancy(DQMStore::IBooker& ibooker, const edm::
 
 void GEMOfflineMonitor::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<GEMDigiCollection> digi_collection;
-  if (do_digi_occupancy_) {
-    event.getByToken(digi_token_, digi_collection);
+  if (kDoDigiOccupancy_) {
+    event.getByToken(kGEMDigiToken_, digi_collection);
     if (not digi_collection.isValid()) {
       edm::LogError(log_category_) << "GEMDigiCollection is invalid!" << std::endl;
       return;
@@ -125,26 +124,24 @@ void GEMOfflineMonitor::analyze(const edm::Event& event, const edm::EventSetup& 
   }
 
   edm::Handle<GEMRecHitCollection> rechit_collection;
-  if (do_hit_occupancy_) {
-    event.getByToken(rechit_token_, rechit_collection);
+  if (kDoHitOccupancy_) {
+    event.getByToken(kGEMRecHitToken_, rechit_collection);
     if (not rechit_collection.isValid()) {
       edm::LogError(log_category_) << "GEMRecHitCollection is invalid" << std::endl;
       return;
     }
   }
 
-  edm::ESHandle<GEMGeometry> gem;
-  gem = setup.getHandle(gemToken_);
-
+  edm::ESHandle<GEMGeometry> gem = setup.getHandle(kGEMToken_);
   if (not gem.isValid()) {
     edm::LogError(log_category_) << "GEMGeometry is invalid" << std::endl;
     return;
   }
 
-  if (do_digi_occupancy_)
+  if (kDoDigiOccupancy_)
     doDigiOccupancy(gem, digi_collection);
 
-  if (do_hit_occupancy_)
+  if (kDoHitOccupancy_)
     doHitOccupancy(gem, rechit_collection);
 }
 

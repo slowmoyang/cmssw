@@ -27,16 +27,20 @@ private:
   void doDigiOccupancy(const edm::ESHandle<GEMGeometry> &, const edm::Handle<GEMDigiCollection> &);
   void doHitOccupancy(const edm::ESHandle<GEMGeometry> &, const edm::Handle<GEMRecHitCollection> &);
 
-  edm::EDGetTokenT<GEMDigiCollection> digi_token_;
-  edm::EDGetTokenT<GEMRecHitCollection> rechit_token_;
+  // const member initialized in the Constructor initializer list
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMTokenBeginRun_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMToken_;
+  const edm::EDGetTokenT<GEMDigiCollection> kGEMDigiToken_;
+  const edm::EDGetTokenT<GEMRecHitCollection> kGEMRecHitToken_;
+  const bool kDoDigiOccupancy_;
+  const bool kDoHitOccupancy_;
 
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken_;
-
-  bool do_digi_occupancy_;
-  bool do_hit_occupancy_;
-
+  // MonitorElement
   MEMap me_digi_det_;  // TH2F, region-station
   MEMap me_hit_det_;   // TH2F, region-station
+
+  // const
+  const std::string kLogCategory_ = "GEMOfflineMonitor";
 };
 
 #endif  // DQMOffline_Muon_GEMOfflineMonitor_h

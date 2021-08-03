@@ -44,10 +44,6 @@ private:
     int region, station, layer;
   };
 
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken1_;
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken2_;
-  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> globalGeomToken_;
-  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> trasientTrackToken_;
 
   MonitorElement *bookNumerator1D(DQMStore::IBooker &, MonitorElement *);
   MonitorElement *bookNumerator2D(DQMStore::IBooker &, MonitorElement *);
@@ -77,26 +73,28 @@ private:
                                                     const GEMRecHitCollection::range &,
                                                     const GEMEtaPartition *);
 
-  // data members
-
-  // parameters
-  std::string name_;
-  std::string folder_;
-  edm::EDGetTokenT<GEMRecHitCollection> rechit_token_;
-  edm::EDGetTokenT<edm::View<reco::Muon> > muon_token_;
-  bool is_cosmics_;
-  bool use_global_muon_;
-  bool use_skip_layer_;
-  bool use_only_me11_;
-  float residual_rphi_cut_;
-  bool use_prop_r_error_cut_;
-  double prop_r_error_cut_;
-  bool use_prop_phi_error_cut_;
-  double prop_phi_error_cut_;
-  std::vector<double> pt_bins_;
-  int eta_nbins_;
-  double eta_low_;
-  double eta_up_;
+  // const member initialized in the Constructor initializer list
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMTokenBeginRun_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMToken_;
+  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> kGlobalTrackingGeometryToken_;
+  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> kTransientTrackBuilderToken_;
+  const edm::EDGetTokenT<GEMRecHitCollection> kGEMRecHitToken_;
+  const edm::EDGetTokenT<edm::View<reco::Muon> > kMuonToken_;
+  const std::string kMuonName_;
+  const std::string kFolder_;
+  const bool kIsCosmics_;
+  const bool kUseGlobalMuon_;
+  const bool kUseSkipLayer_;
+  const bool kUseOnlyME11_;
+  const float kResidualRPhiCut_;
+  const bool kUsePropRErrorCut_;
+  const double kPropRErrorCut_;
+  const bool kUsePropPhiErrorCut_;
+  const double kPropPhiErrorCut_;
+  const std::vector<double> kPtBins_;
+  const int kEtaNBins_;
+  const double kEtaLow_;
+  const double kEtaUp_;
 
   // data mebers derived from parameters
   MuonServiceProxy *muon_service_;
