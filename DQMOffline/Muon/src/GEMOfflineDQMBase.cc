@@ -13,7 +13,7 @@ int GEMOfflineDQMBase::getDetOccXBin(const GEMDetId& gem_id, const edm::ESHandle
 
 void GEMOfflineDQMBase::setDetLabelsVFAT(MonitorElement* me, const GEMStation* station) {
   if (me == nullptr) {
-    edm::LogError(log_category_) << "MonitorElement* is nullptr" << std::endl;
+    edm::LogError(kLogCategory_) << "MonitorElement* is nullptr" << std::endl;
     return;
   }
 
@@ -32,7 +32,7 @@ void GEMOfflineDQMBase::setDetLabelsVFAT(MonitorElement* me, const GEMStation* s
   me->setAxisTitle("VFAT (i#eta)", 2);
   const int max_vfat = getMaxVFAT(station->station());
   if (max_vfat < 0) {
-    edm::LogError(log_category_) << "Wrong max VFAT: " << max_vfat << " at Station " << station->station() << std::endl;
+    edm::LogError(kLogCategory_) << "Wrong max VFAT: " << max_vfat << " at Station " << station->station() << std::endl;
     return;
   }
 
@@ -48,7 +48,7 @@ void GEMOfflineDQMBase::setDetLabelsVFAT(MonitorElement* me, const GEMStation* s
 
 void GEMOfflineDQMBase::setDetLabelsEta(MonitorElement* me, const GEMStation* station) {
   if (me == nullptr) {
-    edm::LogError(log_category_) << "MonitorElement* is nullptr" << std::endl;
+    edm::LogError(kLogCategory_) << "MonitorElement* is nullptr" << std::endl;
     return;
   }
 
@@ -70,13 +70,13 @@ void GEMOfflineDQMBase::setDetLabelsEta(MonitorElement* me, const GEMStation* st
 int GEMOfflineDQMBase::getNumEtaPartitions(const GEMStation* station) {
   const auto&& superchambers = station->superChambers();
   if (not checkRefs(superchambers)) {
-    edm::LogError(log_category_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
+    edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
     return 0;
   }
 
   const auto& chambers = superchambers.front()->chambers();
   if (not checkRefs(chambers)) {
-    edm::LogError(log_category_) << "failed to get a valid vector of GEMChamber ptrs" << std::endl;
+    edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMChamber ptrs" << std::endl;
     return 0;
   }
 
@@ -86,7 +86,7 @@ int GEMOfflineDQMBase::getNumEtaPartitions(const GEMStation* station) {
 void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x) {
   if UNLIKELY (me_map.find(key) == me_map.end()) {
     const std::string hint = me_map.empty() ? "empty" : me_map.begin()->second->getName();
-    edm::LogError(log_category_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
+    edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
     me_map[key]->Fill(x);
@@ -96,7 +96,7 @@ void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x
 void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x, const float y) {
   if UNLIKELY (me_map.find(key) == me_map.end()) {
     const std::string hint = me_map.empty() ? "empty" : me_map.begin()->second->getName();
-    edm::LogError(log_category_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
+    edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
     me_map[key]->Fill(x, y);
@@ -113,7 +113,7 @@ void GEMOfflineDQMBase::fillMEWithinLimits(dqm::impl::MonitorElement* me, const 
 void GEMOfflineDQMBase::fillMEWithinLimits(MEMap& me_map, const GEMDetId& key, const double x) {
   if UNLIKELY (me_map.find(key) == me_map.end()) {
     const std::string hint = me_map.empty() ? "empty" : me_map.begin()->second->getName();
-    edm::LogError(log_category_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
+    edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
 
   } else {
     fillMEWithinLimits(me_map[key], x);

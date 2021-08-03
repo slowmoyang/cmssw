@@ -36,7 +36,8 @@ private:
   int findResolutionBin(const T&, const std::vector<T>&);
 
   std::string folder_;
-  std::string log_category_;
+
+  const std::string kLogCategory_ = "GEMEfficiencyHarvester";
 };
 
 template <typename T>

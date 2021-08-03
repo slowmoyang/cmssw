@@ -29,7 +29,7 @@ void GEMOfflineMonitor::fillDescriptions(edm::ConfigurationDescriptions& descrip
 void GEMOfflineMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& run, edm::EventSetup const& setup) {
   edm::ESHandle<GEMGeometry> gem = setup.getHandle(kGEMTokenBeginRun_);
   if (not gem.isValid()) {
-    edm::LogError(log_category_) << "GEMGeometry is invalid" << std::endl;
+    edm::LogError(kLogCategory_) << "GEMGeometry is invalid" << std::endl;
     return;
   }
 
@@ -52,7 +52,7 @@ void GEMOfflineMonitor::bookDigiOccupancy(DQMStore::IBooker& ibooker, const edm:
 
     const auto&& superchambers = station->superChambers();
     if (not checkRefs(superchambers)) {
-      edm::LogError(log_category_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
       return;
     }
 
@@ -91,7 +91,7 @@ void GEMOfflineMonitor::bookHitOccupancy(DQMStore::IBooker& ibooker, const edm::
 
     const auto&& superchambers = station->superChambers();
     if (not checkRefs(superchambers)) {
-      edm::LogError(log_category_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
       return;
     }
 
@@ -118,7 +118,7 @@ void GEMOfflineMonitor::analyze(const edm::Event& event, const edm::EventSetup& 
   if (kDoDigiOccupancy_) {
     event.getByToken(kGEMDigiToken_, digi_collection);
     if (not digi_collection.isValid()) {
-      edm::LogError(log_category_) << "GEMDigiCollection is invalid!" << std::endl;
+      edm::LogError(kLogCategory_) << "GEMDigiCollection is invalid!" << std::endl;
       return;
     }
   }
@@ -127,14 +127,14 @@ void GEMOfflineMonitor::analyze(const edm::Event& event, const edm::EventSetup& 
   if (kDoHitOccupancy_) {
     event.getByToken(kGEMRecHitToken_, rechit_collection);
     if (not rechit_collection.isValid()) {
-      edm::LogError(log_category_) << "GEMRecHitCollection is invalid" << std::endl;
+      edm::LogError(kLogCategory_) << "GEMRecHitCollection is invalid" << std::endl;
       return;
     }
   }
 
   edm::ESHandle<GEMGeometry> gem = setup.getHandle(kGEMToken_);
   if (not gem.isValid()) {
-    edm::LogError(log_category_) << "GEMGeometry is invalid" << std::endl;
+    edm::LogError(kLogCategory_) << "GEMGeometry is invalid" << std::endl;
     return;
   }
 

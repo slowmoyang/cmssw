@@ -39,7 +39,7 @@ public:
   template <typename T>
   inline bool checkRefs(const std::vector<T*>&);
 
-  std::string log_category_;
+  const std::string kLogCategory_;
   const double kEps_ = std::numeric_limits<double>::epsilon();
 };
 

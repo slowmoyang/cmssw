@@ -7,7 +7,6 @@
 
 GEMEfficiencyHarvester::GEMEfficiencyHarvester(const edm::ParameterSet& pset) {
   folder_ = pset.getUntrackedParameter<std::string>("folder");
-  log_category_ = "GEMEfficiencyHarvester";
 }
 
 GEMEfficiencyHarvester::~GEMEfficiencyHarvester() {}
@@ -21,7 +20,7 @@ void GEMEfficiencyHarvester::fillDescriptions(edm::ConfigurationDescriptions& de
 TProfile* GEMEfficiencyHarvester::computeEfficiency(
     const TH1F* passed, const TH1F* total, const char* name, const char* title, const double confidence_level) {
   if (not TEfficiency::CheckConsistency(*passed, *total)) {
-    edm::LogError(log_category_) << "failed to pass TEfficiency::CheckConsistency. " << name << std::endl;
+    edm::LogError(kLogCategory_) << "failed to pass TEfficiency::CheckConsistency. " << name << std::endl;
     return nullptr;
   }
 
@@ -61,7 +60,7 @@ TH2F* GEMEfficiencyHarvester::computeEfficiency(const TH2F* passed,
                                                 const char* name,
                                                 const char* title) {
   if (not TEfficiency::CheckConsistency(*passed, *total)) {
-    edm::LogError(log_category_) << "failed to pass TEfficiency::CheckConsistency. " << name << std::endl;
+    edm::LogError(kLogCategory_) << "failed to pass TEfficiency::CheckConsistency. " << name << std::endl;
     return nullptr;
   }
 
@@ -102,7 +101,7 @@ void GEMEfficiencyHarvester::doEfficiency(DQMStore::IBooker& ibooker, DQMStore::
     const std::string fullpath = efficiency_folder + name;
     const MonitorElement* me = igetter.get(fullpath);
     if (me == nullptr) {
-      edm::LogError(log_category_) << "failed to get " << fullpath << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get " << fullpath << std::endl;
       continue;
     }
 
@@ -125,17 +124,17 @@ void GEMEfficiencyHarvester::doEfficiency(DQMStore::IBooker& ibooker, DQMStore::
   for (auto&& [key, value] : me_pairs) {
     const auto& [me_passed, me_total] = value;
     if (me_passed == nullptr) {
-      edm::LogError(log_category_) << "numerator is missing. " << key << std::endl;
+      edm::LogError(kLogCategory_) << "numerator is missing. " << key << std::endl;
       continue;
     }
 
     if (me_total == nullptr) {
-      edm::LogError(log_category_) << "denominator is missing. " << key << std::endl;
+      edm::LogError(kLogCategory_) << "denominator is missing. " << key << std::endl;
       continue;
     }
 
     if (me_passed->kind() != me_total->kind()) {
-      edm::LogError(log_category_) << "inconsistency between kinds of passed and total" << key << std::endl;
+      edm::LogError(kLogCategory_) << "inconsistency between kinds of passed and total" << key << std::endl;
       continue;
     }
 
@@ -145,21 +144,21 @@ void GEMEfficiencyHarvester::doEfficiency(DQMStore::IBooker& ibooker, DQMStore::
     if (me_passed->kind() == MonitorElement::Kind::TH1F) {
       TH1F* h_passed = me_passed->getTH1F();
       if (h_passed == nullptr) {
-        edm::LogError(log_category_) << "failed to get TH1F from passed " << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to get TH1F from passed " << key << std::endl;
         continue;
       }
       h_passed->Sumw2();
 
       TH1F* h_total = me_total->getTH1F();
       if (h_total == nullptr) {
-        edm::LogError(log_category_) << "failed to get TH1F from total" << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to get TH1F from total" << key << std::endl;
         continue;
       }
       h_total->Sumw2();
 
       TProfile* eff = computeEfficiency(h_passed, h_total, name.c_str(), title.c_str());
       if (eff == nullptr) {
-        edm::LogError(log_category_) << "failed to compute the efficiency " << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to compute the efficiency " << key << std::endl;
         continue;
       }
 
@@ -168,28 +167,28 @@ void GEMEfficiencyHarvester::doEfficiency(DQMStore::IBooker& ibooker, DQMStore::
     } else if (me_passed->kind() == MonitorElement::Kind::TH2F) {
       TH2F* h_passed = me_passed->getTH2F();
       if (h_passed == nullptr) {
-        edm::LogError(log_category_) << "failed to get TH1F from passed " << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to get TH1F from passed " << key << std::endl;
         continue;
       }
       h_passed->Sumw2();
 
       TH2F* h_total = me_total->getTH2F();
       if (h_total == nullptr) {
-        edm::LogError(log_category_) << "failed to get TH1F from total" << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to get TH1F from total" << key << std::endl;
         continue;
       }
       h_total->Sumw2();
 
       TH2F* eff = computeEfficiency(h_passed, h_total, name.c_str(), title.c_str());
       if (eff == nullptr) {
-        edm::LogError(log_category_) << "failed to compute the efficiency " << key << std::endl;
+        edm::LogError(kLogCategory_) << "failed to compute the efficiency " << key << std::endl;
         continue;
       }
 
       ibooker.book2D(name, eff);
 
     } else {
-      edm::LogError(log_category_) << "not implemented" << std::endl;
+      edm::LogError(kLogCategory_) << "not implemented" << std::endl;
       continue;
     }
   }  // me_pairs
@@ -261,19 +260,19 @@ void GEMEfficiencyHarvester::doResolution(DQMStore::IBooker& ibooker,
     const std::string fullpath = resolution_folder + name;
     const MonitorElement* me = igetter.get(fullpath);
     if (me == nullptr) {
-      edm::LogError(log_category_) << "failed to get " << fullpath << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get " << fullpath << std::endl;
       continue;
     }
 
     const TH1F* hist = me->getTH1F();
     if (hist == nullptr) {
-      edm::LogError(log_category_) << "failed to get TH1F" << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get TH1F" << std::endl;
       continue;
     }
 
     auto&& [region_sign, station, ieta] = parseResidualName(name, prefix);
     if (region_sign.empty() or station < 0 or ieta < 0) {
-      edm::LogError(log_category_) << "failed to parse the name of the residual histogram: " << name << std::endl;
+      edm::LogError(kLogCategory_) << "failed to parse the name of the residual histogram: " << name << std::endl;
       continue;
     }
     std::pair<std::string, int> region_station(region_sign, station);
@@ -286,7 +285,7 @@ void GEMEfficiencyHarvester::doResolution(DQMStore::IBooker& ibooker,
   }  // MonitorElement
 
   if (hist_vector.empty()) {
-    edm::LogError(log_category_) << "failed to find " << prefix << std::endl;
+    edm::LogError(kLogCategory_) << "failed to find " << prefix << std::endl;
     return;
   }
 
@@ -350,13 +349,13 @@ void GEMEfficiencyHarvester::doResolution(DQMStore::IBooker& ibooker,
   for (auto [hist, region_station, ieta] : hist_vector) {
     const int xbin = findResolutionBin(ieta, ieta_vec);
     if (xbin < 0) {
-      edm::LogError(log_category_) << "found a wrong x bin = " << xbin << std::endl;
+      edm::LogError(kLogCategory_) << "found a wrong x bin = " << xbin << std::endl;
       continue;
     }
 
     const int ybin = findResolutionBin(region_station, re_st_vec);
     if (ybin < 0) {
-      edm::LogError(log_category_) << "found a wrong y bin = " << ybin << std::endl;
+      edm::LogError(kLogCategory_) << "found a wrong y bin = " << ybin << std::endl;
       continue;
     }
 
