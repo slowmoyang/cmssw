@@ -57,8 +57,9 @@ private:
 
   inline bool isInsideOut(const reco::Track &);
 
+  reco::Muon::MuonTrackType getMuonTrackType(const std::string&);
   std::vector<GEMLayerData> buildGEMLayers(const edm::ESHandle<GEMGeometry> &);
-  const reco::Track *getTrack(const reco::Muon &);
+  bool areSameLayer(const GEMLayerData&, const uint32_t);
   std::pair<TrajectoryStateOnSurface, DetId> getStartingState(const reco::TransientTrack &,
                                                               const GEMLayerData &,
                                                               const edm::ESHandle<GlobalTrackingGeometry> &);
@@ -80,10 +81,10 @@ private:
   const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> kTransientTrackBuilderToken_;
   const edm::EDGetTokenT<GEMRecHitCollection> kGEMRecHitToken_;
   const edm::EDGetTokenT<edm::View<reco::Muon> > kMuonToken_;
+  const reco::Muon::MuonTrackType kMuonTrackType_;
   const std::string kMuonName_;
   const std::string kFolder_;
   const bool kIsCosmics_;
-  const bool kUseGlobalMuon_;
   const bool kUseSkipLayer_;
   const bool kUseOnlyME11_;
   const float kResidualRPhiCut_;
@@ -98,8 +99,6 @@ private:
 
   // data mebers derived from parameters
   MuonServiceProxy *muon_service_;
-  double pt_clamp_max_;
-  double eta_clamp_max_;
 
   // MonitorElement
   // efficiency

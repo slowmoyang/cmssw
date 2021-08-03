@@ -18,10 +18,10 @@ GEMEfficiencyAnalyzer::GEMEfficiencyAnalyzer(const edm::ParameterSet& pset)
       kTransientTrackBuilderToken_(esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder"))),
       kGEMRecHitToken_(consumes<GEMRecHitCollection>(pset.getParameter<edm::InputTag>("recHitTag"))),
       kMuonToken_(consumes<edm::View<reco::Muon> >(pset.getParameter<edm::InputTag>("muonTag"))),
-      kMuonName_(pset.getUntrackedParameter<std::string>("name")),
+      kMuonTrackType_(getMuonTrackType(pset.getUntrackedParameter<std::string>("muonTrackType"))),
+      kMuonName_(pset.getUntrackedParameter<std::string>("muonName")),
       kFolder_(pset.getUntrackedParameter<std::string>("folder")),
       kIsCosmics_(pset.getUntrackedParameter<bool>("isCosmics")),
-      kUseGlobalMuon_(pset.getUntrackedParameter<bool>("useGlobalMuon")),
       kUseSkipLayer_(pset.getParameter<bool>("useSkipLayer")),
       kUseOnlyME11_(pset.getParameter<bool>("useOnlyME11")),
       kResidualRPhiCut_(static_cast<float>(pset.getParameter<double>("residualRPhiCut"))),
@@ -45,12 +45,12 @@ void GEMEfficiencyAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& des
   // beam scenario
   {
     edm::ParameterSetDescription desc;
-    desc.addUntracked<std::string>("name", "GlobalMuon");
+    desc.addUntracked<std::string>("muonTrackType", "CombinedTrack");
+    desc.addUntracked<std::string>("muonName", "Global Muon");
     desc.addUntracked<std::string>("folder", "GEM/Efficiency/type0");
     desc.add<edm::InputTag>("recHitTag", edm::InputTag("gemRecHits"));
     desc.add<edm::InputTag>("muonTag", edm::InputTag("muons"));
     desc.addUntracked<bool>("isCosmics", false);
-    desc.addUntracked<bool>("useGlobalMuon", true);
     desc.add<bool>("useSkipLayer", true);
     desc.add<bool>("useOnlyME11", false);
     desc.add<double>("residualRPhiCut", 2.0);  // TODO need to be tuned
@@ -73,12 +73,12 @@ void GEMEfficiencyAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& des
   // cosmic scenario
   {
     edm::ParameterSetDescription desc;
-    desc.addUntracked<std::string>("name", "GlobalMuon");  // FIXME
+    desc.addUntracked<std::string>("muonTrackType", "CombinedTrack");
+    desc.addUntracked<std::string>("muonName", "Global Muon");
     desc.addUntracked<std::string>("folder", "GEM/Efficiency/type0");
     desc.add<edm::InputTag>("recHitTag", edm::InputTag("gemRecHits"));
     desc.add<edm::InputTag>("muonTag", edm::InputTag("muons"));
     desc.addUntracked<bool>("isCosmics", true);
-    desc.addUntracked<bool>("useGlobalMuon", false);
     desc.add<bool>("useSkipLayer", true);
     desc.add<bool>("useOnlyME11", true);
     desc.add<double>("residualRPhiCut", 5.0);  // TODO need to be tuned
@@ -341,6 +341,10 @@ void GEMEfficiencyAnalyzer::bookMisc(DQMStore::IBooker& ibooker, const edm::ESHa
 }
 
 void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& setup) {
+  if (kMuonTrackType_ == reco::Muon::MuonTrackType::None) {
+    return;
+  }
+
   edm::Handle<GEMRecHitCollection> rechit_collection;
   event.getByToken(kGEMRecHitToken_, rechit_collection);
   if (not rechit_collection.isValid()) {
@@ -367,9 +371,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
     return;
   }
 
-  edm::ESHandle<TransientTrackBuilder> transient_track_builder;
-  transient_track_builder = setup.getHandle(kTransientTrackBuilderToken_);
-
+  edm::ESHandle<TransientTrackBuilder> transient_track_builder = setup.getHandle(kTransientTrackBuilderToken_);
   if (not transient_track_builder.isValid()) {
     edm::LogError(kLogCategory_) << "TransientTrackRecord is invalid" << std::endl;
     return;
@@ -382,11 +384,6 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
     return;
   }
 
-  if (rechit_collection->size() < 1) {
-    edm::LogInfo(kLogCategory_) << "empty rechit collection" << std::endl;
-    return;
-  }
-
   if (muon_view->empty()) {
     edm::LogInfo(kLogCategory_) << "empty muon collection" << std::endl;
     return;
@@ -395,7 +392,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
   const std::vector<GEMLayerData>&& layer_vector = buildGEMLayers(gem);
 
   for (const reco::Muon& muon : *muon_view) {
-    const reco::Track* track = getTrack(muon);
+    const reco::Track* track = muon.muonTrack(kMuonTrackType_).get();
     if (track == nullptr) {
       edm::LogError(kLogCategory_) << "failed to get a muon track" << std::endl;
       continue;
@@ -459,9 +456,6 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       const GEMDetId&& rsl_key = getReStLaKey(gem_id);
       const GEMDetId&& rse_key = getReStEtKey(gem_id);
 
-      const int chamber_id = gem_id.chamber();
-      const int ieta = gem_id.ieta();
-
       // FIXME clever way to clamp values?
       fillMEWithinLimits(me_prop_r_err_, dest_global_r_err);
       fillMEWithinLimits(me_prop_phi_err_, dest_global_phi_err);
@@ -476,6 +470,9 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         edm::LogInfo(kLogCategory_) << "failed to pass a propagation global phi error cut" << std::endl;
         continue;
       }
+
+      const int chamber_id = gem_id.chamber();
+      const int ieta = gem_id.ieta();
 
       const double muon_pt = muon.pt();
       const double muon_eta = std::fabs(muon.eta());
@@ -521,6 +518,32 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       fillME(me_pull_y_, rse_key, pull_y);
     }  // layer
   }    // Muon
+}
+
+reco::Muon::MuonTrackType GEMEfficiencyAnalyzer::getMuonTrackType(const std::string& name) {
+  reco::Muon::MuonTrackType muon_track_type;
+
+  // NOTE do NOT allow typo
+  if (name == "InnerTrack") {
+    // tracker
+    muon_track_type = reco::Muon::MuonTrackType::InnerTrack;
+
+  } else if (name == "OuterTrack") {
+    // standalone
+    muon_track_type = reco::Muon::MuonTrackType::OuterTrack;
+
+  } else if (name == "CombinedTrack") {
+    // global
+    muon_track_type = reco::Muon::MuonTrackType::CombinedTrack;
+
+  } else {
+    muon_track_type = reco::Muon::MuonTrackType::None;
+    edm::LogError(kLogCategory_) << "got a wrong MuonTrackType label: "
+                                 << name.c_str()
+                                 << ". All events will be skipped." << std::endl;
+  }
+
+  return muon_track_type;
 }
 
 std::vector<GEMEfficiencyAnalyzer::GEMLayerData> GEMEfficiencyAnalyzer::buildGEMLayers(
@@ -576,23 +599,14 @@ std::vector<GEMEfficiencyAnalyzer::GEMLayerData> GEMEfficiencyAnalyzer::buildGEM
   return layer_vector;
 }
 
-const reco::Track* GEMEfficiencyAnalyzer::getTrack(const reco::Muon& muon) {
-  const reco::Track* track = nullptr;
+bool GEMEfficiencyAnalyzer::areSameLayer(const GEMEfficiencyAnalyzer::GEMLayerData& layer, const uint32_t raw_id) {
+  if (not MuonHitHelper::isGEM(raw_id)) return false;
 
-  if (kIsCosmics_) {
-    if (muon.outerTrack().isNonnull())
-      track = muon.outerTrack().get();
+  const GEMDetId gem_id{raw_id};
+  if (layer.region != gem_id.region()) return false;
+  if (layer.station != gem_id.station()) return false;
 
-  } else {
-    // beams, i.e. pp or heavy ions
-    if (kUseGlobalMuon_ and muon.globalTrack().isNonnull())
-      track = muon.globalTrack().get();
-
-    else if ((not kUseGlobalMuon_) and muon.outerTrack().isNonnull())
-      track = muon.outerTrack().get();
-  }
-
-  return track;
+  return (layer.layer == gem_id.layer());
 }
 
 std::pair<TrajectoryStateOnSurface, DetId> GEMEfficiencyAnalyzer::getStartingState(
@@ -602,16 +616,16 @@ std::pair<TrajectoryStateOnSurface, DetId> GEMEfficiencyAnalyzer::getStartingSta
   TrajectoryStateOnSurface starting_state;
   DetId starting_id;
 
-  if (kUseGlobalMuon_) {
+  if (kMuonTrackType_ == reco::Muon::MuonTrackType::CombinedTrack) {
     std::tie(starting_state, starting_id) = findStartingState(transient_track, layer, geometry);
 
-  } else {
-    // if outer track
+  } else if (kMuonTrackType_ == reco::Muon::MuonTrackType::OuterTrack) {
     const reco::Track& track = transient_track.track();
     const bool is_insideout = isInsideOut(track);
 
     const DetId inner_id{(is_insideout ? track.outerDetId() : track.innerDetId())};
-    if (MuonHitHelper::isGEM(inner_id.rawId())) {
+
+    if (areSameLayer(layer, inner_id.rawId())) {
       std::tie(starting_state, starting_id) = findStartingState(transient_track, layer, geometry);
 
     } else {
@@ -621,7 +635,19 @@ std::pair<TrajectoryStateOnSurface, DetId> GEMEfficiencyAnalyzer::getStartingSta
       else
         starting_state = transient_track.innermostMeasurementState();
     }
+
+  } else if (kMuonTrackType_ == reco::Muon::MuonTrackType::InnerTrack) {
+    const reco::Track& track = transient_track.track();
+    const bool is_insideout = isInsideOut(track);
+
+    starting_id = DetId{(is_insideout ? track.innerDetId() : track.outerDetId())};
+
+    if (is_insideout)
+      starting_state = transient_track.innermostMeasurementState();
+    else
+      starting_state = transient_track.outermostMeasurementState();
   }
+
 
   return std::make_pair(starting_state, starting_id);
 }
@@ -639,7 +665,7 @@ std::pair<TrajectoryStateOnSurface, DetId> GEMEfficiencyAnalyzer::findStartingSt
   for (auto rechit = transient_track.recHitsBegin(); rechit != transient_track.recHitsEnd(); rechit++) {
     const DetId&& det_id = (*rechit)->geographicalId();
 
-    if (MuonHitHelper::isGEM(det_id.rawId())) {
+    if (areSameLayer(layer, det_id.rawId())) {
       continue;
     }
 
@@ -665,7 +691,7 @@ bool GEMEfficiencyAnalyzer::isME11(const DetId& det_id) {
   if (not MuonHitHelper::isCSC(det_id))
     return false;
   const CSCDetId csc_id{det_id};
-  return (csc_id.station() == 1) or ((csc_id.ring() == 1) or (csc_id.ring() == 4));
+  return (csc_id.station() == 1) and ((csc_id.ring() == 1) or (csc_id.ring() == 4));
 }
 
 bool GEMEfficiencyAnalyzer::skipLayer(const reco::Track* track, const GEMLayerData& layer) {

@@ -4,41 +4,39 @@ from RecoMuon.TrackingTools.MuonServiceProxy_cff import MuonServiceProxy
 from DQMOffline.Muon.gemEfficiencyAnalyzerDefault_cfi import gemEfficiencyAnalyzerDefault as _gemEfficiencyAnalyzerDefault
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 
-gemOfflineDQMTightGlbMuons = cms.EDFilter("MuonSelector",
-    src = cms.InputTag('muons'),
+gemEffTightGlbMuons = cms.EDFilter("MuonSelector",
+    src = cms.InputTag("muons"),
     cut = cms.string(
-        '(pt > 20)'
-        '&& isGlobalMuon'
-        '&& globalTrack.isNonnull'
-        '&& passed(\'CutBasedIdTight\')'
+        "(pt > 20)"
+        "&& isGlobalMuon"
+        "&& globalTrack.isNonnull"
+        "&& passed(\"CutBasedIdTight\")"
     ),
-    filter = cms.bool(False)
 )
 
-gemOfflineDQMStaMuons = cms.EDFilter("MuonSelector",
-    src = cms.InputTag('muons'),
+gemEffStaMuons = cms.EDFilter("MuonSelector",
+    src = cms.InputTag("muons"),
     cut = cms.string(
-        '(pt > 20)'
-        '&& isStandAloneMuon'
-        '&& outerTrack.isNonnull'
+        "(pt > 20)"
+        "&& isStandAloneMuon"
+        "&& outerTrack.isNonnull"
     ),
-    filter = cms.bool(False)
 )
 
 gemEfficiencyAnalyzerTightGlb = _gemEfficiencyAnalyzerDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    folder = cms.untracked.string('GEM/Efficiency/type1'),
-    muonTag = cms.InputTag('gemOfflineDQMTightGlbMuons'),
-    name = cms.untracked.string('Tight GLB Muon'),
-    useGlobalMuon = cms.untracked.bool(True),
+    muonTag = cms.InputTag("gemEffTightGlbMuons"),
+    muonTrackType = cms.untracked.string("CombinedTrack"),
+    muonName = cms.untracked.string("Tight GLB Muon"),
+    folder = cms.untracked.string("GEM/Efficiency/type1"),
 )
 
 gemEfficiencyAnalyzerSta = _gemEfficiencyAnalyzerDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    muonTag = cms.InputTag("gemOfflineDQMStaMuons"),
-    folder = cms.untracked.string('GEM/Efficiency/type2'),
-    name = cms.untracked.string('STA Muon'),
-    useGlobalMuon = cms.untracked.bool(False),
+    muonTag = cms.InputTag("gemEffStaMuons"),
+    muonTrackType = cms.untracked.string("OuterTrack"),
+    muonName = cms.untracked.string("STA Muon"),
+    folder = cms.untracked.string("GEM/Efficiency/type2"),
 )
 
 from Configuration.Eras.Modifier_phase2_GEM_cff import phase2_GEM
@@ -53,9 +51,9 @@ phase2_GEM.toModify(
     etaUp=cms.untracked.double(3.0))
 
 gemEfficiencyAnalyzerTightGlbSeq = cms.Sequence(
-    cms.ignore(gemOfflineDQMTightGlbMuons) *
+    cms.ignore(gemEffTightGlbMuons) *
     gemEfficiencyAnalyzerTightGlb)
 
 gemEfficiencyAnalyzerStaSeq = cms.Sequence(
-    cms.ignore(gemOfflineDQMStaMuons) *
+    cms.ignore(gemEffStaMuons) *
     gemEfficiencyAnalyzerSta)
