@@ -102,3 +102,21 @@ void GEMOfflineDQMBase::fillME(MEMap& me_map, const GEMDetId& key, const float x
     me_map[key]->Fill(x, y);
   }
 }
+
+void GEMOfflineDQMBase::fillMEWithinLimits(dqm::impl::MonitorElement* me, const double x) {
+  // https://github.com/cms-sw/cmssw/blob/CMSSW_12_0_0_pre3/DQMOffline/L1Trigger/src/L1TFillWithinLimits.cc
+  const double xlow = me->getAxisMin(1);
+  const double xup = me->getAxisMax(1) - kEps_;
+  me->Fill(std::clamp(x, xlow, xup));
+}
+
+void GEMOfflineDQMBase::fillMEWithinLimits(MEMap& me_map, const GEMDetId& key, const double x) {
+  if UNLIKELY (me_map.find(key) == me_map.end()) {
+    const std::string hint = me_map.empty() ? "empty" : me_map.begin()->second->getName();
+    edm::LogError(log_category_) << "got an invalid key: " << key << ", hint=" << hint << std::endl;
+
+  } else {
+    fillMEWithinLimits(me_map[key], x);
+
+  }
+}

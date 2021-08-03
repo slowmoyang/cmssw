@@ -37,11 +37,6 @@ GEMEfficiencyAnalyzer::GEMEfficiencyAnalyzer(const edm::ParameterSet& pset)
   const edm::ParameterSet&& muon_service_parameter = pset.getParameter<edm::ParameterSet>("ServiceParameters");
   muon_service_ = new MuonServiceProxy(muon_service_parameter, consumesCollector());
 
-  const double eps = std::numeric_limits<double>::epsilon();
-  pt_clamp_max_ = kPtBins_.back() - eps;
-  eta_clamp_max_ = kEtaUp_ - eps;
-
-  // TODO pt, eta, quality check for muons
 }
 
 GEMEfficiencyAnalyzer::~GEMEfficiencyAnalyzer() {}
@@ -468,8 +463,8 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       const int ieta = gem_id.ieta();
 
       // FIXME clever way to clamp values?
-      me_prop_r_err_->Fill(std::min(dest_global_r_err, 19.999));
-      me_prop_phi_err_->Fill(std::min(dest_global_r_err, M_PI - 0.0001));
+      fillMEWithinLimits(me_prop_r_err_, dest_global_r_err);
+      fillMEWithinLimits(me_prop_phi_err_, dest_global_phi_err);
       me_prop_chamber_[rs_key]->Fill(gem_id.chamber());
 
       if (kUsePropRErrorCut_ and (dest_global_r_err > kPropRErrorCut_)) {
@@ -482,12 +477,13 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         continue;
       }
 
-      const double muon_pt = std::min(muon.pt(), pt_clamp_max_);
-      const double muon_eta = std::clamp(std::fabs(muon.eta()), kEtaLow_, eta_clamp_max_);
+      const double muon_pt = muon.pt();
+      const double muon_eta = std::fabs(muon.eta());
+      const double muon_phi = muon.phi();
 
-      fillME(me_muon_pt_, rs_key, muon_pt);
-      fillME(me_muon_eta_, rs_key, muon_eta);
-      fillME(me_muon_phi_, rs_key, muon.phi());
+      fillMEWithinLimits(me_muon_pt_, rs_key, muon_pt);
+      fillMEWithinLimits(me_muon_eta_, rs_key, muon_eta);
+      fillME(me_muon_phi_, rs_key, muon_phi);
 
       fillME(me_chamber_, rsl_key, chamber_id);
       fillME(me_ieta_, rsl_key, ieta);
@@ -500,19 +496,19 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         continue;
       }
 
-      me_all_abs_residual_rphi_->Fill(std::min(std::abs(residual_rphi), 19.999f));
+      fillMEWithinLimits(me_all_abs_residual_rphi_, std::abs(residual_rphi));
       if (std::abs(residual_rphi) > kResidualRPhiCut_) {
         edm::LogInfo(kLogCategory_) << "failed to pass the residual rphi cut" << std::endl;
         continue;
       }
 
-      fillME(me_muon_pt_matched_, rs_key, muon_pt);
-      fillME(me_muon_eta_matched_, rs_key, muon_eta);
-      fillME(me_muon_phi_matched_, rs_key, muon.phi());
+      fillMEWithinLimits(me_muon_pt_matched_, rs_key, muon_pt);
+      fillMEWithinLimits(me_muon_eta_matched_, rs_key, muon_eta);
+      fillME(me_muon_phi_matched_, rs_key, muon_phi);
 
-      fillME(me_chamber_matched_, rsl_key, gem_id.chamber());
-      fillME(me_ieta_matched_, rsl_key, gem_id.ieta());
-      fillME(me_detector_matched_, rsl_key, gem_id.chamber(), ieta);
+      fillME(me_chamber_matched_, rsl_key, chamber_id);
+      fillME(me_ieta_matched_, rsl_key, ieta);
+      fillME(me_detector_matched_, rsl_key, chamber_id, ieta);
 
       const LocalPoint&& hit_local_pos = hit->localPosition();
       const LocalError&& hit_local_err = hit->localPositionError();
