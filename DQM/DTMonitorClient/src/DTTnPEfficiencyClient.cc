@@ -140,6 +140,7 @@ void DTTnPEfficiencyClient::bookHistos(DQMStore::IBooker& ibooker, std::string f
   
   effHistos["DT_chamberEff_allCh"] = ibooker.book1D("DT_chamberEff_allCh","DT_chamberEff_allCh", 20, 1., 15.);
   effHistos["CSC_chamberEff_allCh"] = ibooker.book2D("CSC_chamberEff_allCh","CSC_chamberEff_allCh", 9, -4., 5., 4, 0.,4.5);
+  effHistos["GEM_chamberEff_allCh"] = ibooker.book2D("GEM_chamberEff_allCh","GEM_chamberEff_allCh", 2, 0, 2, 4, 0.,4.5);
 
   for (int wh = -2; wh <= 2; wh++) {
     std::string histoName = std::string("DT_chamberEff_W") + std::to_string(wh);

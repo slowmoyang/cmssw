@@ -21,6 +21,7 @@
 #include "DataFormats/MuonReco/interface/MuonSegmentMatch.h"
 
 #include "DataFormats/MuonDetId/interface/RPCDetId.h"
+#include "DataFormats/MuonDetId/interface/GEMDetId.h"
 
 //Root
 #include "TH1.h"
@@ -34,6 +35,7 @@
 
 DTTnPEfficiencyTask::DTTnPEfficiencyTask(const edm::ParameterSet& config) : 
   m_nEvents(0),
+  m_nGEM(0),
   m_muToken(consumes<reco::MuonCollection>(config.getUntrackedParameter<edm::InputTag>("inputTagMuons"))),
   m_primaryVerticesToken(consumes<std::vector<reco::Vertex>>(config.getUntrackedParameter<edm::InputTag>("inputTagPrimaryVertices"))),
   m_triggerResultsToken(consumes<edm::TriggerResults>(config.getUntrackedParameter<edm::InputTag>("trigResultsTag"))),
@@ -126,6 +128,11 @@ void DTTnPEfficiencyTask::bookHistograms(DQMStore::IBooker& iBooker, edm::Run co
 
   MonitorElement* me_CSC_pass_allCh_1D = iBooker.book1D("CSC_nPassingProbe_allCh_1D", "CSC_nPassingProbe_allCh_1D", 9, -4., 5.);
   MonitorElement* me_CSC_fail_allCh_1D = iBooker.book1D("CSC_nFailingProbe_allCh_1D", "CSC_nFailingProbe_allCh_1D", 9, -4., 5.);
+
+  MonitorElement* me_GEM_pass_allCh = iBooker.book2D("GEM_nPassingProbe_allCh", "GEM_nPassingProbe_allCh", 2, -1.5, 1.5, 4, 0, 4.5);
+  MonitorElement* me_GEM_fail_allCh = iBooker.book2D("GEM_nFailingProbe_allCh", "GEM_nFailingProbe_allCh", 2, -1.5, 1.5, 4, 0, 4.5);
+  MonitorElement* me_GEM_pass_allCh_1D = iBooker.book1D("GEM_nPassingProbe_allCh_1D", "GEM_nPassingProbe_allCh_1D", 2, -1.5, 1.5);
+  MonitorElement* me_GEM_fail_allCh_1D = iBooker.book1D("GEM_nFailingProbe_allCh_1D", "GEM_nFailingProbe_allCh_1D", 2, -1.5, 1.5);
 
   MonitorElement* me_RPC_barrel_pass_allCh_1D = iBooker.book1D("RPC_nPassingProbe_Barrel_allCh_1D", "RPC_nPassingProbe_Barrel_allCh_1D", 20, 0.5, 20.5);
   MonitorElement* me_RPC_barrel_fail_allCh_1D = iBooker.book1D("RPC_nFailingProbe_Barrel_allCh_1D", "RPC_nFailingProbe_Barrel_allCh_1D", 20, 0.5, 20.5);
@@ -224,6 +231,30 @@ void DTTnPEfficiencyTask::bookHistograms(DQMStore::IBooker& iBooker, edm::Run co
   me_CSC_fail_allCh_1D->setBinLabel(8, "ME3", 1);
   me_CSC_fail_allCh_1D->setBinLabel(9, "ME4", 1);
   me_CSC_fail_allCh_1D->setAxisTitle("Number of failing probes", 2);
+  
+  me_GEM_pass_allCh->setBinLabel(1, "GE-11", 1);
+  me_GEM_pass_allCh->setBinLabel(2, "GE11", 1);
+  for (int i=1; i<5; ++i){
+    me_GEM_pass_allCh->setBinLabel(i, std::to_string(i), 2);
+  }
+  me_GEM_pass_allCh->setAxisTitle("Ring", 2);
+  me_GEM_pass_allCh->setAxisTitle("Number of passing probes", 3);
+
+  me_GEM_fail_allCh->setBinLabel(1, "GE-11", 1);
+  me_GEM_fail_allCh->setBinLabel(2, "GE11", 1);
+  for (int i=1; i<5; ++i){
+    me_GEM_fail_allCh->setBinLabel(i, std::to_string(i), 2);
+  }
+  me_GEM_fail_allCh->setAxisTitle("Ring", 2);
+  me_GEM_fail_allCh->setAxisTitle("Number of failing probes", 3);
+
+  me_GEM_pass_allCh_1D->setBinLabel(1, "GE-11", 1);
+  me_GEM_pass_allCh_1D->setBinLabel(2, "GE11", 1);
+  me_GEM_pass_allCh_1D->setAxisTitle("Number of passing probes", 2);
+
+  me_GEM_fail_allCh_1D->setBinLabel(1, "GE-11", 1);
+  me_GEM_fail_allCh_1D->setBinLabel(2, "GE11", 1);
+  me_GEM_fail_allCh_1D->setAxisTitle("Number of failing probes", 2);
 
   me_RPC_barrel_pass_allCh_1D->setBinLabel(1 , "RB1/YB-2", 1);
   me_RPC_barrel_pass_allCh_1D->setBinLabel(2 , "RB2/YB-2", 1);
@@ -298,6 +329,11 @@ void DTTnPEfficiencyTask::bookHistograms(DQMStore::IBooker& iBooker, edm::Run co
   m_histos["CSC_nPassingProbe_allCh_1D"] = me_CSC_pass_allCh_1D;
   m_histos["CSC_nFailingProbe_allCh_1D"] = me_CSC_fail_allCh_1D;
 
+  m_histos["GEM_nPassingProbe_allCh"] = me_GEM_pass_allCh;
+  m_histos["GEM_nFailingProbe_allCh"] = me_GEM_fail_allCh;
+  m_histos["GEM_nPassingProbe_allCh_1D"] = me_GEM_pass_allCh_1D;
+  m_histos["GEM_nFailingProbe_allCh_1D"] = me_GEM_fail_allCh_1D;
+
   m_histos["RPC_nPassingProbe_Barrel_allCh_1D"] = me_RPC_barrel_pass_allCh_1D;
   m_histos["RPC_nFailingProbe_Barrel_allCh_1D"] = me_RPC_barrel_fail_allCh_1D;
 
@@ -334,7 +370,15 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
   std::vector<std::vector<int>> probe_coll_CSC_ring;
   std::vector<std::vector<int>> probe_coll_CSC_sta;
   std::vector<std::vector<float>> probe_coll_CSC_dx;
+  std::vector<std::vector<float>> probe_coll_CSC_anySegMatch;
   std::vector<uint8_t> probe_coll_CSC_staMatch;
+  //GEM variables
+  std::vector<std::vector<int>> probe_coll_GEM_region;
+  std::vector<std::vector<int>> probe_coll_GEM_ring;
+  std::vector<std::vector<int>> probe_coll_GEM_lay;
+  std::vector<std::vector<int>> probe_coll_GEM_sta;
+  std::vector<std::vector<float>> probe_coll_GEM_dx;
+  std::vector<uint8_t> probe_coll_GEM_staMatch;
   //RPC variables
   std::vector<std::vector<int>> probe_coll_RPC_region;
   std::vector<std::vector<int>> probe_coll_RPC_ring;
@@ -350,6 +394,7 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
   std::vector<unsigned> tag_indices;
   std::vector<unsigned> preSel_probe_indices;
   std::vector<unsigned> probe_indices;
+
 
   if (muons.isValid() && vtxs.isValid()) 
   {
@@ -431,7 +476,15 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
       std::vector<int> probe_CSC_ring;
       std::vector<int> probe_CSC_sta;
       std::vector<float> probe_CSC_dx;
+      std::vector<float> probe_CSC_anySegMatch;
       uint8_t CSC_stationMatching = 0;
+      //GEM variables
+      std::vector<int> probe_GEM_region;
+      std::vector<int> probe_GEM_ring;
+      std::vector<int> probe_GEM_sta;
+      std::vector<int> probe_GEM_lay;
+      std::vector<float> probe_GEM_dx;
+      uint8_t GEM_stationMatching = 0;
       //RPC variables
       std::vector<int> probe_RPC_region;
       std::vector<int> probe_RPC_ring;
@@ -487,6 +540,42 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
           }  
         }
 
+        // look in GEM
+        else if (chambMatch.detector() == MuonSubdetId::GEM)
+    {
+          if (chambMatch.edgeX < m_borderCut && 
+              chambMatch.edgeY < m_borderCut){
+
+              GEMDetId chId(chambMatch.id.rawId());
+
+              int region    = chId.region(); 
+              int ring      = chId.ring();
+              int station   = chId.station();
+              int layer     = chId.layer();
+
+              reco::MuonSegmentMatch closest_matchedSegment;
+              double smallestDx = 99999.;
+
+              for (auto & seg : chambMatch.gemMatches)
+              { 
+                float dx = std::abs(chambMatch.x - seg.x);
+                if (dx < smallestDx){
+                  smallestDx = dx;
+                  closest_matchedSegment = seg;
+                }
+              }
+
+              GEM_stationMatching = GEM_stationMatching | (1 << (station-1));
+
+              probe_GEM_region.push_back(region);
+              probe_GEM_ring.push_back(ring);
+              probe_GEM_sta.push_back(station);
+              probe_GEM_lay.push_back(layer);
+              probe_GEM_dx.push_back(smallestDx);
+
+          }
+    }
+
         // look in CSCs
         else if (chambMatch.detector() == MuonSubdetId::CSC)
 	{
@@ -500,9 +589,11 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
             int station = chId.station();
 
 	    reco::MuonSegmentMatch closest_matchedSegment;
-            double smallestDx = 99999.;
+        double smallestDx = 99999.;
+        bool anySegMatches_CSC = false;
 	    for (auto & seg : chambMatch.segmentMatches)
 	    {
+	      anySegMatches_CSC = true;
 	      float dx = std::abs(chambMatch.x - seg.x) ;
               if (dx < smallestDx){
 	        smallestDx = dx;
@@ -517,18 +608,21 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
             probe_CSC_ring.push_back(ring);
             probe_CSC_sta.push_back(station);
             probe_CSC_dx.push_back(smallestDx);
+            probe_CSC_anySegMatch.push_back(anySegMatches_CSC ? 1. : 0.);
 	    }
 	    else if (station == 1 && ring == 1 && chambMatch.y > -31.5){
             probe_CSC_zend.push_back(zendcap);
             probe_CSC_ring.push_back(ring);
             probe_CSC_sta.push_back(station);
             probe_CSC_dx.push_back(smallestDx);
+            probe_CSC_anySegMatch.push_back(anySegMatches_CSC ? 1. : 0.);
 	    }
 	    else if (station>1 || ring==2 || ring==3){
             probe_CSC_zend.push_back(zendcap);
             probe_CSC_ring.push_back(ring);
             probe_CSC_sta.push_back(station);
             probe_CSC_dx.push_back(smallestDx);
+            probe_CSC_anySegMatch.push_back(anySegMatches_CSC ? 1. : 0.);
 	    }
           }  
 	}
@@ -587,7 +681,15 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
       probe_coll_CSC_ring.push_back(probe_CSC_ring);
       probe_coll_CSC_sta.push_back(probe_CSC_sta);
       probe_coll_CSC_dx.push_back(probe_CSC_dx);
+      probe_coll_CSC_anySegMatch.push_back(probe_CSC_anySegMatch);
       probe_coll_CSC_staMatch.push_back(CSC_stationMatching);
+      //Fill GEM variables
+      probe_coll_GEM_region.push_back(probe_GEM_region);
+      probe_coll_GEM_ring.push_back(probe_GEM_ring);
+      probe_coll_GEM_sta.push_back(probe_GEM_sta);
+      probe_coll_GEM_lay.push_back(probe_GEM_lay);
+      probe_coll_GEM_dx.push_back(probe_GEM_dx);
+      probe_coll_GEM_staMatch.push_back(GEM_stationMatching);
       //Fill RPC variables
       probe_coll_RPC_region.push_back(probe_RPC_region);
       probe_coll_RPC_ring.push_back(probe_RPC_ring);
@@ -605,6 +707,7 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
       
       uint8_t DT_matchPatt  = probe_coll_DT_staMatch.at(i);
       uint8_t CSC_matchPatt = probe_coll_CSC_staMatch.at(i);
+      uint8_t GEM_matchPatt = probe_coll_GEM_staMatch.at(i);
       uint8_t RPC_matchPatt = probe_coll_RPC_staMatch.at(i);
 
       //Loop over DT matches
@@ -661,6 +764,30 @@ void DTTnPEfficiencyTask::analyze(const edm::Event& event, const edm::EventSetup
         }
       }
 
+      //Loop over GEM matches
+      unsigned nGEM_matches = probe_coll_GEM_region.at(i).size();
+      for(unsigned j=0; j<nGEM_matches; ++j){
+          //GEM variables
+          int GEM_region = probe_coll_GEM_region.at(i).at(j);
+          int GEM_ring   = probe_coll_GEM_ring.at(i).at(j);
+          int GEM_sta    = probe_coll_GEM_sta.at(i).at(j);
+          int GEM_lay    = probe_coll_GEM_lay.at(i).at(j);
+          float GEM_dx   = probe_coll_GEM_dx.at(i).at(j);
+
+        if ((GEM_matchPatt & (1<<(GEM_sta-1))) != 0) //avoids 0 station matching
+        {
+          if (GEM_dx < m_dxCut)
+          {
+            m_histos.find("GEM_nPassingProbe_allCh")->second->Fill(GEM_region*GEM_sta, GEM_ring);
+            m_histos.find("GEM_nPassingProbe_allCh_1D")->second->Fill(GEM_region*GEM_sta);
+          }
+          else
+          {
+            m_histos.find("GEM_nFailingProbe_allCh")->second->Fill(GEM_region*GEM_sta, GEM_ring);
+            m_histos.find("GEM_nFailingProbe_allCh_1D")->second->Fill(GEM_region*GEM_sta);
+          }
+        }
+      }
 
       //Loop over RPC matches
       unsigned nRPC_matches = probe_coll_RPC_region.at(i).size();

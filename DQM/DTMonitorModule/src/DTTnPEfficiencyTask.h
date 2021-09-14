@@ -82,6 +82,7 @@ protected:
 private:
 
   int m_nEvents;
+  int m_nGEM;
 
   edm::EDGetTokenT<reco::MuonCollection> m_muToken;
   edm::EDGetTokenT<std::vector<reco::Vertex>> m_primaryVerticesToken;

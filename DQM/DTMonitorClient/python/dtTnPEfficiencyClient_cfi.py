@@ -38,5 +38,7 @@ dtTnPEfficiencyClient = DQMEDHarvester("DTTnPEfficiencyClient",
                                                                           "RPC_nPassingProbe_Endcap_allCh_1D:RPC_nFailingProbe_Endcap_allCh_1D",
                                                                           "CSC_nPassingProbe_allCh:CSC_nFailingProbe_allCh",
                                                                           "CSC_nPassingProbe_allCh_1D:CSC_nFailingProbe_allCh_1D",
+                                                                          "GEM_nPassingProbe_allCh:GEM_nFailingProbe_allCh",
+                                                                          "GEM_nPassingProbe_allCh_1D:GEM_nFailingProbe_allCh_1D",
                                                                           "DT_nPassingProbe_allCh:DT_nFailingProbe_allCh"),
                                        diagnosticPrescale = cms.untracked.int32(1))
