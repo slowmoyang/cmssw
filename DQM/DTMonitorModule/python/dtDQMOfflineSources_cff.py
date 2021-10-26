@@ -19,7 +19,7 @@ dtDataIntegrityUnpacker = cms.EDProducer("DTUnpackingModule",
     inputLabel = cms.InputTag('rawDataCollector'),
     fedbyType = cms.bool(False),
     useStandardFEDid = cms.bool(False),
-    dqmOnly = cms.bool(True),                       
+    dqmOnly = cms.bool(True),
     readOutParameters = cms.PSet(
         debug = cms.untracked.bool(False),
         rosParameters = cms.PSet(
@@ -40,14 +40,17 @@ from DQM.DTMonitorModule.dtDataIntegrityTask_cfi import *
 
 from DQM.DTMonitorModule.dtTriggerEfficiencyTask_cfi import *
 
+from DQM.DTMonitorModule.dtTnPEfficiencyTask_cfi import *
+
 dtSources = cms.Sequence(dtDataIntegrityUnpacker  +
                          dtDataIntegrityTaskOffline +
-                         dtRunConditionVar + 
+                         dtRunConditionVar +
                          dtSegmentAnalysisMonitor +
                          dtResolutionAnalysisMonitor +
                          dtEfficiencyMonitor +
                          dtTriggerEfficiencyMonitor +
                          dtOccupancyMonitor +
+                         dtTnPEfficiencyMonitor +
                          dqmInfoDT)
 
 import EventFilter.DTRawToDigi.dturosunpacker_cfi
