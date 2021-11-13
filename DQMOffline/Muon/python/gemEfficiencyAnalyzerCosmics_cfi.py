@@ -4,25 +4,31 @@ from RecoMuon.TrackingTools.MuonServiceProxy_cff import MuonServiceProxy
 from DQMOffline.Muon.gemEfficiencyAnalyzerCosmicsDefault_cfi import gemEfficiencyAnalyzerCosmicsDefault as _gemEfficiencyAnalyzerCosmicsDefault
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 
-gemEfficiencyAnalyzerCosmics = _gemEfficiencyAnalyzerCosmicsDefault.clone(
+gemEfficiencyAnalyzerCosmicsGlb = _gemEfficiencyAnalyzerCosmicsDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    muonTag = cms.InputTag('muons'),
-    name = cms.untracked.string('Cosmic 2-Leg STA Muon'),
-    folder = cms.untracked.string('GEM/Efficiency/type1'),
+    muonTag = 'muons',
+    muonTrackType = 'CombinedTrack',
+    name = 'Cosmic 2-Leg GLB Muon',
+    folder = 'GEM/Efficiency/GLB',
 )
 
-gemEfficiencyAnalyzerCosmicsOneLeg = _gemEfficiencyAnalyzerCosmicsDefault.clone(
+gemEfficiencyAnalyzerCosmicsSta = _gemEfficiencyAnalyzerCosmicsDefault.clone(
     ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
-    muonTag = cms.InputTag('muons1Leg'),
-    name = cms.untracked.string('Cosmic 1-Leg STA Muon'),
-    folder = cms.untracked.string('GEM/Efficiency/type2'),
+    muonTag = 'muons',
+    muonTrackType = 'OuterTrack',
+    name = 'Cosmic 2-Leg STA Muon',
+    folder = 'GEM/Efficiency/STA',
+)
+
+gemEfficiencyAnalyzerCosmicsTracker = _gemEfficiencyAnalyzerCosmicsDefault.clone(
+    ServiceParameters = MuonServiceProxy.ServiceParameters.clone(),
+    muonTag = 'muons',
+    muonTrackType = 'InnerTrack',
+    name = 'Cosmic 2-Leg Tracker Muon',
+    folder = 'GEM/Efficiency/TRK',
 )
 
 from Configuration.Eras.Modifier_phase2_GEM_cff import phase2_GEM
-phase2_GEM.toModify(gemEfficiencyAnalyzerCosmics,
-    etaNbins=cms.untracked.int32(15),
-    etaUp=cms.untracked.double(3.0))
-
-phase2_GEM.toModify(gemEfficiencyAnalyzerCosmicsOneLeg,
-    etaNbins=cms.untracked.int32(15),
-    etaUp=cms.untracked.double(3.0))
+phase2_GEM.toModify(gemEfficiencyAnalyzerCosmicsGlb, etaNbins=15, etaUp=3.0)
+phase2_GEM.toModify(gemEfficiencyAnalyzerCosmicsSta, etaNbins=15, etaUp=3.0)
+phase2_GEM.toModify(gemEfficiencyAnalyzerCosmicsTracker, etaNbins=15, etaUp=3.0)

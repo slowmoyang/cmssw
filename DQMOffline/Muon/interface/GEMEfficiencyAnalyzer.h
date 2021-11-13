@@ -25,6 +25,9 @@
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 
+using MuonTrackType = reco::Muon::MuonTrackType;
+
+
 class GEMEfficiencyAnalyzer : public GEMOfflineDQMBase {
 public:
   explicit GEMEfficiencyAnalyzer(const edm::ParameterSet &);
@@ -44,11 +47,6 @@ private:
     int region, station, layer;
   };
 
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken1_;
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken2_;
-  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> globalGeomToken_;
-  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> trasientTrackToken_;
-
   MonitorElement *bookNumerator1D(DQMStore::IBooker &, MonitorElement *);
   MonitorElement *bookNumerator2D(DQMStore::IBooker &, MonitorElement *);
 
@@ -61,8 +59,9 @@ private:
 
   inline bool isInsideOut(const reco::Track &);
 
+  reco::Muon::MuonTrackType getMuonTrackType(const std::string&);
   std::vector<GEMLayerData> buildGEMLayers(const edm::ESHandle<GEMGeometry> &);
-  const reco::Track *getTrack(const reco::Muon &);
+  bool areSameLayer(const GEMLayerData&, const uint32_t);
   std::pair<TrajectoryStateOnSurface, DetId> getStartingState(const reco::TransientTrack &,
                                                               const GEMLayerData &,
                                                               const edm::ESHandle<GlobalTrackingGeometry> &);
@@ -72,7 +71,8 @@ private:
   bool isME11(const DetId &);
   bool skipLayer(const reco::Track *, const GEMLayerData &);
   bool checkBounds(const GlobalPoint &, const Plane &);
-  const GEMEtaPartition *findEtaPartition(const GlobalPoint &, const std::vector<const GEMChamber *> &);
+  bool checkBounds(const GlobalPoint &, const GlobalError&, const Plane &);
+  const GEMEtaPartition *findEtaPartition(const GlobalPoint &, const GlobalError&, const std::vector<const GEMChamber *> &);
   std::pair<const GEMRecHit *, float> findClosetHit(const GlobalPoint &,
                                                     const GEMRecHitCollection::range &,
                                                     const GEMEtaPartition *);
@@ -80,26 +80,26 @@ private:
   // data members
 
   // parameters
-  std::string name_;
-  std::string folder_;
-  edm::EDGetTokenT<GEMRecHitCollection> rechit_token_;
-  edm::EDGetTokenT<edm::View<reco::Muon> > muon_token_;
-  bool is_cosmics_;
-  bool use_global_muon_;
-  bool use_skip_layer_;
-  bool use_only_me11_;
-  float residual_rphi_cut_;
-  bool use_prop_r_error_cut_;
-  double prop_r_error_cut_;
-  bool use_prop_phi_error_cut_;
-  double prop_phi_error_cut_;
-  std::vector<double> pt_bins_;
-  int eta_nbins_;
-  double eta_low_;
-  double eta_up_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord>                      kGEMToken_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord>                      kGEMTokenBeginRun_;
+  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> kGlobalTrackingGeometryToken_;
+  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>          kTrasientTrackToken_;
+  const edm::EDGetTokenT<GEMRecHitCollection>                                 kRecHitToken_;
+  const edm::EDGetTokenT<edm::View<reco::Muon> >                              kMuonToken_;
+  const reco::Muon::MuonTrackType kMuonTrackType_;
+  const std::string kName_;
+  const std::string kFolder_;
+  bool kIsCosmics_;
+  bool kUseSkipLayer_;
+  bool kUseOnlyME11_;
+  float kResidualRPhiCut_;
+  std::vector<double> kPtBins_;
+  int kEtaNBins_;
+  double kEtaLow_;
+  double kEtaUp_;
 
-  // data mebers derived from parameters
-  MuonServiceProxy *muon_service_;
+  std::unique_ptr<MuonServiceProxy> muon_service_;
+
   double pt_clamp_max_;
   double eta_clamp_max_;
 
@@ -131,6 +131,7 @@ private:
   const std::string kLogCategory_ = "GEMEfficiencyAnalyzer";
 };
 
+// FIXME
 inline bool GEMEfficiencyAnalyzer::isInsideOut(const reco::Track &track) {
   return track.innerPosition().mag2() > track.outerPosition().mag2();
 }
