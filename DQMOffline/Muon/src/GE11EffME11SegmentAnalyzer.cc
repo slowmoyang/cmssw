@@ -329,7 +329,7 @@ bool GE11EffME11SegmentAnalyzer::checkFiducialCut(const GlobalPoint& global_posi
   const float local_y = local_position.y();
   const float local_phi = TMath::RadToDeg() * eta_partition->specificTopology().stripAngle(eta_partition->strip(local_position));
 
-  if (std::abs(local_phi_deg) > angle_cut) {
+  if (std::abs(local_phi) > angle_cut) {
     return false;
   }
 
@@ -344,7 +344,6 @@ bool GE11EffME11SegmentAnalyzer::checkFiducialCut(const GlobalPoint& global_posi
   // pass fiducial cuts
   return true;
 }
-
 
 // Returns
 std::pair<const GEMRecHit*, float> GE11EffME11SegmentAnalyzer::findClosestHit(
