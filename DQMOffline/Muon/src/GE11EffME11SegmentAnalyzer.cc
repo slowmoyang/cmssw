@@ -61,7 +61,7 @@ void GE11EffME11SegmentAnalyzer::bookHistograms(DQMStore::IBooker& booker,
                                            edm::EventSetup const& setup) {
   const edm::ESHandle<GEMGeometry>&& gem = setup.getHandle(kGEMTokenBeginRun_);
   if (not gem.isValid()) {
-    edm::LogError(kLogCategory_) << "GEMGeometry is invalid" << std::endl;
+    edm::LogError(kLogCategory_) << "GEMGeometry is invalid";
     return;
   }
 
@@ -72,7 +72,7 @@ void GE11EffME11SegmentAnalyzer::bookHistograms(DQMStore::IBooker& booker,
 
     const std::vector<const GEMSuperChamber*>&& superchambers = station->superChambers();
     if (not checkRefs(superchambers)) {
-      edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMSuperChamber ptrs" << std::endl;
+      edm::LogError(kLogCategory_) << "failed to get a valid vector of GEMSuperChamber ptrs";
       return;
     }
 
