@@ -48,6 +48,7 @@ private:
                                             const edm::ESHandle<CSCGeometry>&);
 
   bool checkBounds(const GlobalPoint&, const Plane&);
+  bool checkBounds(const GlobalPoint &, const GlobalError&, const Plane &);
   bool checkFiducialCut(const GlobalPoint&, const GEMEtaPartition*);
   bool isGoodPropagation(const TrajectoryStateOnSurface&,
                          const GEMEtaPartition*,
@@ -65,12 +66,17 @@ private:
   MonitorElement *bookNumerator1D(DQMStore::IBooker &, MonitorElement *);
   MonitorElement *bookNumerator2D(DQMStore::IBooker &, MonitorElement *);
   reco::Muon::MuonTrackType getMuonTrackType(const std::string&);
-  bool isME11(const CSCDetId&);
   bool isME11(const DetId&);
 
   // MonitorElement
   MEMap me_chamber_;  // 2D, region-station-layer
   MEMap me_chamber_matched_;
+
+  MonitorElement * me_me11_strip_region_;
+  MonitorElement * me_me11_strip_region_matched_;
+
+  MonitorElement* me_has_inner_muon_;
+  MonitorElement* me_has_inner_muon_matched_;
 
   // parameters
   const edm::ESGetToken<GEMGeometry, MuonGeometryRecord>                      kGEMToken_;
@@ -84,9 +90,11 @@ private:
   const edm::EDGetTokenT<edm::View<reco::Muon> >                              kMuonToken_;
   const reco::Muon::MuonTrackType kMuonTrackType_;
   const bool kIsCosmics_;
-  const float kMinRdPhi_;
+  const bool kUseME11A_;
+  const bool kUseFiducialCut_;
   const float kFiducialCutY_; // cm
-  const float kFiducialCutPhi_; // deg
+  const float kFiducialCutPhi_; // degree
+  const float kMinRdPhi_; // cm * radian
   const std::string kFolder_;
 
 

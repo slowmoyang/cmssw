@@ -25,6 +25,7 @@
 #include "DQMOffline/Muon/interface/GEMEfficiencyAnalyzer.h"
 #include "DQMOffline/Muon/interface/GEMEfficiencyHarvester.h"
 #include "DQMOffline/Muon/interface/GE11EffME11SegmentAnalyzer.h"
+#include "DQMOffline/Muon/interface/GE11EffME11SegmentAnalyzerV2.h"
 
 DEFINE_FWK_MODULE(MuonTrackResidualsTest);
 DEFINE_FWK_MODULE(MuonRecoTest);
@@ -47,3 +48,4 @@ DEFINE_FWK_MODULE(GEMOfflineMonitor);
 DEFINE_FWK_MODULE(GEMEfficiencyAnalyzer);
 DEFINE_FWK_MODULE(GEMEfficiencyHarvester);
 DEFINE_FWK_MODULE(GE11EffME11SegmentAnalyzer);
+DEFINE_FWK_MODULE(GE11EffME11SegmentAnalyzerV2);

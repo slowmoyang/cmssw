@@ -5,7 +5,8 @@
 
 #include "TEfficiency.h"
 
-GEMEfficiencyHarvester::GEMEfficiencyHarvester(const edm::ParameterSet& pset) {
+GEMEfficiencyHarvester::GEMEfficiencyHarvester(const edm::ParameterSet& pset)
+    : kDoResidualSummary_(pset.getUntrackedParameter<bool>("doResidualSummary")) {
   folder_ = pset.getUntrackedParameter<std::string>("folder");
   log_category_ = "GEMEfficiencyHarvester";
 }
@@ -15,6 +16,7 @@ GEMEfficiencyHarvester::~GEMEfficiencyHarvester() {}
 void GEMEfficiencyHarvester::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.addUntracked<std::string>("folder", "GEM/Efficiency/type0");
+  desc.addUntracked<bool>("doResidualSummary", true);
   descriptions.add("gemEfficiencyHarvesterDefault", desc);
 }
 
@@ -381,5 +383,7 @@ void GEMEfficiencyHarvester::doResolution(DQMStore::IBooker& ibooker,
 
 void GEMEfficiencyHarvester::dqmEndJob(DQMStore::IBooker& ibooker, DQMStore::IGetter& igetter) {
   doEfficiency(ibooker, igetter);
-  doResolution(ibooker, igetter, "residual_rphi");
+  if (kDoResidualSummary_) {
+    doResolution(ibooker, igetter, "residual_rphi");
+  }
 }

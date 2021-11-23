@@ -37,6 +37,7 @@ private:
 
   std::string folder_;
   std::string log_category_;
+  const bool kDoResidualSummary_;
 };
 
 template <typename T>

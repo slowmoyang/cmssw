@@ -23,9 +23,11 @@ GE11EffME11SegmentAnalyzer::GE11EffME11SegmentAnalyzer(const edm::ParameterSet& 
       kMuonToken_(consumes<edm::View<reco::Muon> >(parameter_set.getParameter<edm::InputTag>("muonTag"))),
       kMuonTrackType_(getMuonTrackType(parameter_set.getUntrackedParameter<std::string>("muonTrackType"))),
       kIsCosmics_(parameter_set.getUntrackedParameter<bool>("isCosmics")),
-      kMinRdPhi_(static_cast<float>(parameter_set.getUntrackedParameter<double>("minRdPhi"))),
+      kUseME11A_(parameter_set.getUntrackedParameter<bool>("useME11A")),
+      kUseFiducialCut_(parameter_set.getUntrackedParameter<bool>("useFiducialCut")),
       kFiducialCutY_(static_cast<float>(parameter_set.getUntrackedParameter<double>("fiducialCutY"))),
       kFiducialCutPhi_(static_cast<float>(parameter_set.getUntrackedParameter<double>("fiducialCutPhi"))),
+      kMinRdPhi_(static_cast<float>(parameter_set.getUntrackedParameter<double>("minRdPhi"))),
       kFolder_(parameter_set.getUntrackedParameter<std::string>("folder"))
 {
 
@@ -44,9 +46,11 @@ void GE11EffME11SegmentAnalyzer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<edm::InputTag>("muonTag", edm::InputTag("muons"));
   desc.addUntracked<std::string>("muonTrackType", "InnerTrack");
   desc.addUntracked<bool>("isCosmics", false);
-  desc.addUntracked<double>("fiducialCutY", 5.0);
-  desc.addUntracked<double>("fiducialCutPhi", 1.0);
-  desc.addUntracked<double>("minRdPhi", 2.0);
+  desc.addUntracked<bool>("useME11A", false);
+  desc.addUntracked<bool>("useFiducialCut", true);
+  desc.addUntracked<double>("fiducialCutY", 5.0); // cm
+  desc.addUntracked<double>("fiducialCutPhi", 1.0); // degree
+  desc.addUntracked<double>("minRdPhi", 2.0); // cm * radian
   desc.addUntracked<std::string>("folder", "GEM/Efficiency/ME11Segment");
   {
     edm::ParameterSetDescription psd0;
@@ -59,6 +63,7 @@ void GE11EffME11SegmentAnalyzer::fillDescriptions(edm::ConfigurationDescriptions
 void GE11EffME11SegmentAnalyzer::bookHistograms(DQMStore::IBooker& booker,
                                                edm::Run const& run,
                                            edm::EventSetup const& setup) {
+
   const edm::ESHandle<GEMGeometry>&& gem = setup.getHandle(kGEMTokenBeginRun_);
   if (not gem.isValid()) {
     edm::LogError(kLogCategory_) << "GEMGeometry is invalid";
@@ -69,6 +74,10 @@ void GE11EffME11SegmentAnalyzer::bookHistograms(DQMStore::IBooker& booker,
   for (const GEMStation* station : gem->stations()) {
     const int region_id = station->region();
     const int station_id = station->station();
+
+    if (station_id != 1) {
+      continue;
+    }
 
     const std::vector<const GEMSuperChamber*>&& superchambers = station->superChambers();
     if (not checkRefs(superchambers)) {
@@ -96,6 +105,19 @@ void GE11EffME11SegmentAnalyzer::bookHistograms(DQMStore::IBooker& booker,
     }  // layer
   }    // station
 
+  me_me11_strip_region_ = booker.book1D("me11_segment_strip_region", "", 2, 0.5, 2.5);
+  me_me11_strip_region_->setBinLabel(1, "ME1/1A");
+  me_me11_strip_region_->setBinLabel(2, "ME1/1B");
+
+  me_me11_strip_region_matched_ = bookNumerator1D(booker, me_me11_strip_region_);
+
+  // NOTE
+  me_has_inner_muon_ = booker.book1D("has_inner_track", "", 2, -0.5, 1.5);
+  me_has_inner_muon_->setAxisTitle("inner track", 1);
+  me_has_inner_muon_->setBinLabel(1, "false");
+  me_has_inner_muon_->setBinLabel(2, "true");
+
+  me_has_inner_muon_matched_ = bookNumerator1D(booker, me_has_inner_muon_);
 }
 
 
@@ -152,7 +174,7 @@ void GE11EffME11SegmentAnalyzer::analyze(const edm::Event& event, const edm::Eve
   //////////////////////////////////////////////////////////////////////////////
   for (const reco::Muon& muon : *muon_collection) {
     if (not muon.isStandAloneMuon()) {
-      edm::LogError(kLogCategory_) << "failed to pass reco::Muon::isStandAloneMuon";
+      edm::LogInfo(kLogCategory_) << "failed to pass reco::Muon::isStandAloneMuon";
       continue;
     }
 
@@ -197,10 +219,6 @@ void GE11EffME11SegmentAnalyzer::propagate(
       continue;
     }
 
-    const GEMDetId&& gem_id = eta_partition->id();
-    const GEMDetId&& rsl_key = getReStLaKey(gem_id);
-    const int chamber_id = gem_id.chamber();
-
     const TrajectoryStateOnSurface&& propagated_state = propagator->propagate(
         starting_state, eta_partition->surface());
     if (not isGoodPropagation(starting_state, eta_partition, propagated_state)) {
@@ -208,7 +226,16 @@ void GE11EffME11SegmentAnalyzer::propagate(
       continue;
     }
 
+    const GEMDetId&& gem_id = eta_partition->id();
+    const GEMDetId&& rsl_key = getReStLaKey(gem_id);
+    const int chamber_id = gem_id.chamber();
+
+    const int me11_strip_region_bin = me11_segment->cscDetId().isME1a() ? 1 : 2;
+    const bool inner_track_bin = muon.track().isNull() ? 0 : 1;
+
     fillME(me_chamber_, rsl_key, chamber_id);
+    me_me11_strip_region_->Fill(me11_strip_region_bin);
+    me_has_inner_muon_->Fill(inner_track_bin);
 
     const auto& [matched_hit, rdphi] = findClosestHit(starting_state.globalPosition(),
                                                       eta_partition,
@@ -219,23 +246,26 @@ void GE11EffME11SegmentAnalyzer::propagate(
     }
 
     fillME(me_chamber_matched_, rsl_key, chamber_id);
+    me_me11_strip_region_matched_->Fill(me11_strip_region_bin);
+    me_has_inner_muon_matched_->Fill(inner_track_bin);
   }
 }
 
 const CSCSegment* GE11EffME11SegmentAnalyzer::findME11Segment(const reco::Muon& muon) {
-  const CSCSegment* me11_segment = nullptr;
+  // const CSCSegment* me11_segment = nullptr;
+
+  std::vector<const CSCSegment*> me11_segment_vector;
+
+  // TODO the case of multiple segments
 
   if (kIsCosmics_) {
     for (const reco::MuonChamberMatch& chamber_match : muon.matches()) {
-      if (chamber_match.detector() != MuonSubdetId::CSC) {
+      if (not isME11(chamber_match.id)) {
         continue;
       }
 
       for (const reco::MuonSegmentMatch& segment_match : chamber_match.segmentMatches) {
-        const CSCDetId&& csc_id = segment_match.cscSegmentRef->cscDetId();
-        if (isME11(csc_id)) {
-          me11_segment = segment_match.cscSegmentRef.get();
-        }
+        me11_segment_vector.push_back(segment_match.cscSegmentRef.get());
       }
     }
 
@@ -243,13 +273,20 @@ const CSCSegment* GE11EffME11SegmentAnalyzer::findME11Segment(const reco::Muon& 
     // pp or HeavyIons
     const reco::Track* track = muon.outerTrack().get();
     for (const TrackingRecHit* tracking_rechit : track->recHits()) {
-      if (isME11(tracking_rechit->geographicalId())) {
-        if(tracking_rechit->dimension() == 4) {
-          // https://github.com/cms-sw/cmssw/blob/master/DataFormats/CSCRecHit/interface/CSCSegment.h#L60
-          me11_segment = dynamic_cast<const CSCSegment*>(tracking_rechit);
-        }
+      if (not isME11(tracking_rechit->geographicalId())) {
+        continue;
+      }
+
+      if(tracking_rechit->dimension() == 4) {
+        // https://github.com/cms-sw/cmssw/blob/master/DataFormats/CSCRecHit/interface/CSCSegment.h#L60
+        me11_segment_vector.push_back(dynamic_cast<const CSCSegment*>(tracking_rechit));
       }
     }
+  }
+
+  const CSCSegment* me11_segment = nullptr;
+  if (me11_segment_vector.size() == 1) {
+    me11_segment = me11_segment_vector.at(0);
 
   }
 
@@ -292,18 +329,21 @@ bool GE11EffME11SegmentAnalyzer::isGoodPropagation(
     return false;
   } 
 
-  if (propagated_state.globalPosition().z() * starting_state.globalPosition().z() < 0) {
+  const GlobalPoint&& prop_global_pos = propagated_state.globalPosition();
+
+  if (prop_global_pos.z() * starting_state.globalPosition().z() < 0) {
     edm::LogInfo(kLogCategory_) << "ME11 segment is propagated to the opposite region";
     return false;
   }
 
-  if (not checkBounds(propagated_state.globalPosition(), destination->surface())) {
+  if (not checkBounds(prop_global_pos, destination->surface())) {
     edm::LogInfo(kLogCategory_) << "The propagated ME11 segment is outside the destination";
     return false;
   }
 
-  if (not checkFiducialCut(propagated_state.globalPosition(), destination)) {
+  if (kUseFiducialCut_ and (not checkFiducialCut(prop_global_pos, destination))) {
     edm::LogInfo(kLogCategory_) << "failed to pass fiducial cuts";
+    return false;
   }
 
   return true;
@@ -314,6 +354,21 @@ bool GE11EffME11SegmentAnalyzer::checkBounds(const GlobalPoint& global_point, co
   const LocalPoint local_point_2d(local_point.x(), local_point.y(), 0.0f);
   return plane.bounds().inside(local_point_2d);
 }
+
+bool GE11EffME11SegmentAnalyzer::checkBounds(const GlobalPoint& global_point,
+                                        const GlobalError& global_error,
+                                        const Plane& plane) {
+
+  const LocalPoint&& local_point = plane.toLocal(global_point);
+  const LocalError&& local_error = ErrorFrameTransformer::transform(global_error, plane);
+
+  const LocalPoint local_point_2d{local_point.x(), local_point.y(), 0.0f};
+  // https://github.com/cms-sw/cmssw/blob/CMSSW_12_0_0_pre3/DataFormats/GeometrySurface/src/SimpleDiskBounds.cc#L20-L35
+  // TODO comment on the scale
+  return plane.bounds().inside(local_point_2d, local_error, -1.0f);
+}
+
+
 
 bool GE11EffME11SegmentAnalyzer::checkFiducialCut(const GlobalPoint& global_position,
                                                   const GEMEtaPartition* eta_partition) {
@@ -330,13 +385,16 @@ bool GE11EffME11SegmentAnalyzer::checkFiducialCut(const GlobalPoint& global_posi
   const float local_phi = TMath::RadToDeg() * eta_partition->specificTopology().stripAngle(eta_partition->strip(local_position));
 
   if (std::abs(local_phi) > angle_cut) {
+    edm::LogInfo(kLogCategory_) << "failed to pas";
     return false;
   }
 
   if ((ieta == 1) and (local_y > y_cut)) {
+    edm::LogInfo(kLogCategory_) << "";
     return false;
 
-  } else if ((ieta == GEMeMap::maxiEtaIdGE11_) and (local_y < -1.0 * y_cut)) {
+  } else if ((ieta == GEMeMap::maxiEtaIdGE11_) and (local_y < -y_cut)) {
+    edm::LogInfo(kLogCategory_) << "";
     return false;
 
   }
@@ -351,6 +409,10 @@ std::pair<const GEMRecHit*, float> GE11EffME11SegmentAnalyzer::findClosestHit(
     const GEMEtaPartition* prop_eta_partition,
     const edm::Handle<GEMRecHitCollection>& rechit_collection,
     const edm::ESHandle<GEMGeometry>& gem) {
+
+  const GEMRecHit* closest_hit = nullptr;
+  float min_rdphi = 1e6f; // just big number
+
   const GEMDetId&& prop_gem_id = prop_eta_partition->id();
   const int prop_ieta = prop_gem_id.ieta();
 
@@ -358,12 +420,9 @@ std::pair<const GEMRecHit*, float> GE11EffME11SegmentAnalyzer::findClosestHit(
   const GEMChamber* chamber = gem->chamber(chamber_id);
   if (chamber == nullptr) {
     edm::LogError(kLogCategory_) << chamber_id;
-    return std::make_pair(nullptr, 1e6f);
+    return std::make_pair(closest_hit, min_rdphi);
   }
   const LocalPoint&& prop_chamber_pos = chamber->toLocal(prop_global_pos);
-
-  const GEMRecHit* closest_hit = nullptr;
-  float min_rdphi = 1e6f; // just big number
 
   for (const GEMEtaPartition* hit_eta_partition : chamber->etaPartitions()) {
     const GEMDetId&& hit_gem_id = hit_eta_partition->id();
@@ -383,7 +442,7 @@ std::pair<const GEMRecHit*, float> GE11EffME11SegmentAnalyzer::findClosestHit(
       const float dx = prop_chamber_pos.x() - hit_chamber_pos.x();
       const float dy = prop_chamber_pos.y() - hit_chamber_pos.y();
 
-      const float rdphi = std::cos(hit_strip_angle) * dx - std::sin(hit_strip_angle) * dy;
+      const float rdphi = std::abs(std::cos(hit_strip_angle) * dx - std::sin(hit_strip_angle) * dy);
 
       if (rdphi < min_rdphi) {
         closest_hit = &(*hit);
@@ -434,16 +493,21 @@ reco::Muon::MuonTrackType GE11EffME11SegmentAnalyzer::getMuonTrackType(const std
   return muon_track_type;
 }
 
-bool GE11EffME11SegmentAnalyzer::isME11(const CSCDetId& csc_id) {
-  // https://github.com/cms-sw/cmssw/blob/CMSSW_12_2_0_pre1/DataFormats/MuonDetId/interface/CSCDetId.h#L278
-  return csc_id.station() == 1 and (csc_id.ring() == 1 or csc_id.ring() == 4);
-}
-
+// Returns 
 bool GE11EffME11SegmentAnalyzer::isME11(const DetId& det_id) {
-  if (MuonHitHelper::isCSC(det_id)) {
-    const CSCDetId csc_id{det_id};
-    return isME11(csc_id);
-  } else {
+  if (not MuonHitHelper::isCSC(det_id)) {
     return false;
   }
+
+  const CSCDetId csc_id{det_id};
+
+  if (not csc_id.isME11()) {
+    return false;
+  }
+
+  if ((not kUseME11A_) and csc_id.isME1a()) {
+    return false;
+  }
+
+  return true;
 }
