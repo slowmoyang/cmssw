@@ -21,7 +21,7 @@ gemSegments = cms.EDProducer("GEMSegmentProducer",
     ),
     algo_pset = cms.PSet(
         minHitsPerSegment = cms.uint32(2),
-        preClustering = cms.bool(True),            # False => all hits in chamber are given to the fitter 
+        preClustering = cms.bool(True),            # False => all hits in chamber are given to the fitter
         dXclusBoxMax = cms.double(1.),             # Clstr Hit dPhi
         dYclusBoxMax = cms.double(5.),             # Clstr Hit dEta
         preClusteringUseChaining = cms.bool(True), # True ==> use Chaining() , False ==> use Clustering() Fnct
