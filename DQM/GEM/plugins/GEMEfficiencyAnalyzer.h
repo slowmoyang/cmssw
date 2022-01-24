@@ -25,6 +25,7 @@
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 
+
 class GEMEfficiencyAnalyzer : public GEMOfflineDQMBase {
 public:
   explicit GEMEfficiencyAnalyzer(const edm::ParameterSet &);
@@ -44,11 +45,6 @@ private:
     int region, station, layer;
   };
 
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken1_;
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gemToken2_;
-  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> globalGeomToken_;
-  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> trasientTrackToken_;
-
   MonitorElement *bookNumerator1D(DQMStore::IBooker &, MonitorElement *);
   MonitorElement *bookNumerator2D(DQMStore::IBooker &, MonitorElement *);
 
@@ -61,47 +57,50 @@ private:
 
   inline bool isInsideOut(const reco::Track &);
 
+  reco::Muon::MuonTrackType getMuonTrackType(const std::string&);
   std::vector<GEMLayerData> buildGEMLayers(const edm::ESHandle<GEMGeometry> &);
-  const reco::Track *getTrack(const reco::Muon &);
-  std::pair<TrajectoryStateOnSurface, DetId> getStartingState(const reco::TransientTrack &,
-                                                              const GEMLayerData &,
-                                                              const edm::ESHandle<GlobalTrackingGeometry> &);
+  bool areSameLayer(const GEMLayerData&, const uint32_t);
   std::pair<TrajectoryStateOnSurface, DetId> findStartingState(const reco::TransientTrack &,
                                                                const GEMLayerData &,
                                                                const edm::ESHandle<GlobalTrackingGeometry> &);
-  bool isME11(const DetId &);
   bool skipLayer(const reco::Track *, const GEMLayerData &);
   bool checkBounds(const GlobalPoint &, const Plane &);
-  const GEMEtaPartition *findEtaPartition(const GlobalPoint &, const std::vector<const GEMChamber *> &);
-  std::pair<const GEMRecHit *, float> findClosetHit(const GlobalPoint &,
-                                                    const GEMRecHitCollection::range &,
-                                                    const GEMEtaPartition *);
+  bool checkBounds(const GlobalPoint &, const GlobalError&, const Plane &);
+  const GEMEtaPartition *findEtaPartition(const GlobalPoint &, const GlobalError&, const std::vector<const GEMChamber *> &);
+  std::pair<const GEMRecHit*, float> findClosestHit(
+      const GlobalPoint&,
+      const GEMEtaPartition*,
+      const edm::Handle<GEMRecHitCollection>&,
+      const edm::ESHandle<GEMGeometry>&);
 
   // data members
 
   // parameters
-  std::string name_;
-  std::string folder_;
-  edm::EDGetTokenT<GEMRecHitCollection> rechit_token_;
-  edm::EDGetTokenT<edm::View<reco::Muon> > muon_token_;
-  bool is_cosmics_;
-  bool use_global_muon_;
-  bool use_skip_layer_;
-  bool use_only_me11_;
-  float residual_rphi_cut_;
-  bool use_prop_r_error_cut_;
-  double prop_r_error_cut_;
-  bool use_prop_phi_error_cut_;
-  double prop_phi_error_cut_;
-  std::vector<double> pt_bins_;
-  int eta_nbins_;
-  double eta_low_;
-  double eta_up_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord>                      kGEMToken_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord>                      kGEMTokenBeginRun_;
+  const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> kGlobalTrackingGeometryToken_;
+  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord>          kTrasientTrackToken_;
+  const edm::EDGetTokenT<GEMRecHitCollection>                                 kRecHitToken_;
+  const edm::EDGetTokenT<edm::View<reco::Muon> >                              kMuonToken_;
+  const reco::Muon::MuonTrackType kMuonTrackType_;
+  const std::string kName_;
+  const std::string kFolder_;
+  const bool kIsCosmics_;
+  const float kMuonPtMin_;
+  const float kMuonAbsEtaMin_;
+  const float kMuonAbsEtaMax_;
+  const bool kUseSkipLayer_;
+  const bool kUseOnlyME11_;
+  const float kPropagationRErrorCut_; // cm
+  const float kPropagationPhiErrorCut_; // degree
+  const float kBoundsErrorScale_;
+  const float kResidualRPhiCut_;
+  const std::vector<double> kPtBins_;
+  const int kEtaNBins_;
+  const double kEtaLow_;
+  const double kEtaUp_;
 
-  // data mebers derived from parameters
-  MuonServiceProxy *muon_service_;
-  double pt_clamp_max_;
-  double eta_clamp_max_;
+  std::unique_ptr<MuonServiceProxy> muon_service_;
 
   // MonitorElement
   // efficiency
@@ -119,18 +118,26 @@ private:
   MEMap me_detector_matched_;
   // resolution
   MEMap me_residual_rphi_;  // global
-  MEMap me_residual_y_;     // local
-  MEMap me_pull_y_;
   // MEs for optimizing cut values
   MonitorElement *me_prop_r_err_;    // clamped
   MonitorElement *me_prop_phi_err_;  // clamped
   MonitorElement *me_all_abs_residual_rphi_;
   MEMap me_prop_chamber_;
 
+  // DEBUG
+  MEMap me_start_det_;
+  MEMap me_start_det_matched_;
+  MEMap me_prop_err_r_;
+  MEMap me_prop_err_r_matched_;
+  MEMap me_prop_err_phi_;
+  MEMap me_prop_err_phi_matched_;
+
+
   // const
   const std::string kLogCategory_ = "GEMEfficiencyAnalyzer";
 };
 
+// FIXME
 inline bool GEMEfficiencyAnalyzer::isInsideOut(const reco::Track &track) {
   return track.innerPosition().mag2() > track.outerPosition().mag2();
 }

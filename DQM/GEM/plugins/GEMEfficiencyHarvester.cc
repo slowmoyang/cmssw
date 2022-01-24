@@ -15,7 +15,7 @@ GEMEfficiencyHarvester::~GEMEfficiencyHarvester() {}
 void GEMEfficiencyHarvester::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
   desc.addUntracked<std::string>("folder", "GEM/Efficiency/type0");
-  descriptions.add("gemEfficiencyHarvesterDefault", desc);
+  descriptions.addWithDefaultLabel(desc);
 }
 
 TProfile* GEMEfficiencyHarvester::computeEfficiency(
