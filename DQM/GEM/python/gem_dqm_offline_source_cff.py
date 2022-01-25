@@ -12,4 +12,5 @@ gemSources = cms.Sequence(
     GEMRecHitSource *
     gemEfficiencyAnalyzerTightGlbSeq *
     gemEfficiencyAnalyzerSta
+    gemEfficiencyAnalyzerTrk
 )

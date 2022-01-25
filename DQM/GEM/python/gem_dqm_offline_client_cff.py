@@ -7,4 +7,5 @@ gemClients = cms.Sequence(
     GEMDQMHarvester *
     gemEfficiencyHarvesterTightGlb *
     gemEfficiencyHarvesterSta
+    gemEfficiencyHarvesterTrk
 )

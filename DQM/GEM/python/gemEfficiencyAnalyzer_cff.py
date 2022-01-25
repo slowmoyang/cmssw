@@ -24,6 +24,12 @@ gemEfficiencyAnalyzerSta = gemEfficiencyAnalyzer.clone(
     name = 'STA Muon',
 )
 
+gemEfficiencyAnalyzerTrk = gemEfficiencyAnalyzer.clone(
+    muonTrackType = 'InnerTrack',
+    folder = 'GEM/Efficiency/TRKMuon',
+    name = 'TRK Muon',
+)
+
 gemEfficiencyAnalyzerTightGlbSeq = cms.Sequence(
     cms.ignore(gemDQMTightGlbMuons) *
     gemEfficiencyAnalyzerTightGlb)
