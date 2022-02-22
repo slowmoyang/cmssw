@@ -5,6 +5,5 @@ from DQM.GEM.gemEfficiencyHarvester_cff import *
 
 gemClients = cms.Sequence(
     GEMDQMHarvester *
-    gemEfficiencyHarvesterTightGlb *
-    gemEfficiencyHarvesterSta
+    gemEfficiencyHarvesterQianyingTrk
 )
