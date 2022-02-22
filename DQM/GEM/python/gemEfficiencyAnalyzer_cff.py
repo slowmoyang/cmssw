@@ -4,42 +4,34 @@ from DQM.GEM.gemEfficiencyAnalyzer_cfi import *
 gemOfflineDQMTightGlbMuons = cms.EDFilter("MuonSelector",
     src = cms.InputTag('muons'),
     cut = cms.string(
-        '(pt > 20)'
-        '&& isGlobalMuon'
+        'isGlobalMuon'
         '&& globalTrack.isNonnull'
         '&& passed(\'CutBasedIdTight\')'
     ),
     filter = cms.bool(False)
 )
 
-gemOfflineDQMStaMuons = cms.EDFilter("MuonSelector",
-    src = cms.InputTag('muons'),
-    cut = cms.string(
-        '(pt > 20)'
-        '&& isStandAloneMuon'
-        '&& outerTrack.isNonnull'
-    ),
-    filter = cms.bool(False)
-)
-
 gemEfficiencyAnalyzerTightGlb = gemEfficiencyAnalyzer.clone(
-    folder = 'GEM/Efficiency/type1',
     muonTag = 'gemOfflineDQMTightGlbMuons',
+    muonTrackType = 'CombinedTrack',
+    folder = 'GEM/Efficiency/GLBMuon',
     name = 'Tight GLB Muon',
-    useGlobalMuon = True
 )
 
 gemEfficiencyAnalyzerSta = gemEfficiencyAnalyzer.clone(
-    muonTag = "gemOfflineDQMStaMuons",
-    folder = 'GEM/Efficiency/type2',
+    muonTag = "muons",
+    muonTrackType = 'OuterTrack',
+    folder = 'GEM/Efficiency/STAMuon',
     name = 'STA Muon',
-    useGlobalMuon = False
+)
+
+gemEfficiencyAnalyzerTrk = gemEfficiencyAnalyzer.clone(
+    muonTag = "muons",
+    muonTrackType = 'InnerTrack',
+    folder = 'GEM/Efficiency/TRKMuon',
+    name = 'TRK Muon',
 )
 
 gemEfficiencyAnalyzerTightGlbSeq = cms.Sequence(
     cms.ignore(gemOfflineDQMTightGlbMuons) *
     gemEfficiencyAnalyzerTightGlb)
-
-gemEfficiencyAnalyzerStaSeq = cms.Sequence(
-    cms.ignore(gemOfflineDQMStaMuons) *
-    gemEfficiencyAnalyzerSta)
