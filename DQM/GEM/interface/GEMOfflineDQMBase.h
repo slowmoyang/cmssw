@@ -31,14 +31,20 @@ public:
   void setDetLabelsVFAT(MonitorElement*, const GEMStation*);
   void setDetLabelsEta(MonitorElement*, const GEMStation*);
   int getNumEtaPartitions(const GEMStation*);  // the number of eta partitions per GEMChamber
-  void fillME(MEMap& me_map, const GEMDetId& key, const float x);
-  void fillME(MEMap& me_map, const GEMDetId& key, const float x, const float y);
+
+  bool hasMEKey(const MEMap&, const GEMDetId&);
+  void fillME(MEMap& me_map, const GEMDetId& key, const double);
+  void fillME(MEMap& me_map, const GEMDetId& key, const double, const double);
+  void fillMEWithinLimits(dqm::impl::MonitorElement*, const double);
+  void fillMEWithinLimits(dqm::impl::MonitorElement*, const double, const double);
+  void fillMEWithinLimits(MEMap&, const GEMDetId&, const double);
+  void fillMEWithinLimits(MEMap&, const GEMDetId&, const double, const double);
 
   template <typename T>
   inline bool checkRefs(const std::vector<T*>&);
 
-  //
-  std::string log_category_;
+  const std::string kLogCategory_; // defined in the child class
+  const double kEps_ = std::numeric_limits<double>::epsilon();
 };
 
 inline int GEMOfflineDQMBase::getMaxVFAT(const int station) {

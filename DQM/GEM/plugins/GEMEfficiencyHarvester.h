@@ -14,8 +14,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 
-#include <vector>
-#include <string>
+#include "DQM/GEM/interface/GEMDQMEfficiencyCalculator.h"
+
 
 class GEMEfficiencyHarvester : public DQMEDHarvester {
 public:
@@ -25,18 +25,20 @@ public:
   void dqmEndJob(DQMStore::IBooker&, DQMStore::IGetter&) override;
 
 private:
-  TProfile* computeEfficiency(const TH1F*, const TH1F*, const char*, const char*, const double confidence_level = 0.683);
-  TH2F* computeEfficiency(const TH2F*, const TH2F*, const char*, const char*);
+  void doEfficiency(DQMStore::IBooker&, DQMStore::IGetter&);
+
   std::vector<std::string> splitString(std::string, const std::string);
   std::tuple<std::string, int, int> parseResidualName(std::string, const std::string);
-  void doEfficiency(DQMStore::IBooker&, DQMStore::IGetter&);
   void doResolution(DQMStore::IBooker&, DQMStore::IGetter&, const std::string);
 
   template <typename T>
   int findResolutionBin(const T&, const std::vector<T>&);
 
-  std::string folder_;
-  std::string log_category_;
+  const std::string kFolder_;
+  const std::string kLogCategory_;
+  const std::vector<std::string> kResolutionSummaryPrefixes_;
+
+  std::unique_ptr<GEMDQMEfficiencyCalculator> efficiency_calculator_;
 };
 
 template <typename T>
