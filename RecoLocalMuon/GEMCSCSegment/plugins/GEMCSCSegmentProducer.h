@@ -14,6 +14,8 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
 #include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
@@ -31,14 +33,15 @@ public:
   explicit GEMCSCSegmentProducer(const edm::ParameterSet&);
   /// Destructor
   ~GEMCSCSegmentProducer() override;
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   /// Produce the GEM-CSCSegment collection
   void produce(edm::Event&, const edm::EventSetup&) override;
 
 private:
-  const edm::ESGetToken<CSCGeometry, MuonGeometryRecord> kCSCGeometryToken_;
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMGeometryToken_;
-  const edm::EDGetTokenT<CSCSegmentCollection> kCSCSegmentCollectionToken_;
-  const edm::EDGetTokenT<GEMRecHitCollection> kGEMRecHitCollectionToken_;
+  const edm::ESGetToken<CSCGeometry, MuonGeometryRecord> csc_geometry_token_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gem_geometry_token_;
+  const edm::EDGetTokenT<CSCSegmentCollection> csc_segment_collection_token_;
+  const edm::EDGetTokenT<GEMRecHitCollection> gem_rec_hit_collection_token_;
 
   int iev;  // events through
   GEMCSCSegmentBuilder* segmentBuilder_;

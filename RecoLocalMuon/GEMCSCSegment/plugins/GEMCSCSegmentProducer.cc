@@ -18,10 +18,10 @@
 #include <DataFormats/CSCRecHit/interface/CSCSegment.h>
 
 GEMCSCSegmentProducer::GEMCSCSegmentProducer(const edm::ParameterSet& pas)
-    : kCSCGeometryToken_(esConsumes<CSCGeometry, MuonGeometryRecord>()),
-      kGEMGeometryToken_(esConsumes<GEMGeometry, MuonGeometryRecord>()),
-      kCSCSegmentCollectionToken_(consumes<CSCSegmentCollection>(pas.getParameter<edm::InputTag>("inputObjectsCSC"))),
-      kGEMRecHitCollectionToken_(consumes<GEMRecHitCollection>(pas.getParameter<edm::InputTag>("inputObjectsGEM"))),
+    : csc_geometry_token_(esConsumes<CSCGeometry, MuonGeometryRecord>()),
+      gem_geometry_token_(esConsumes<GEMGeometry, MuonGeometryRecord>()),
+      csc_segment_collection_token_(consumes<CSCSegmentCollection>(pas.getParameter<edm::InputTag>("inputObjectsCSC"))),
+      gem_rec_hit_collection_token_(consumes<GEMRecHitCollection>(pas.getParameter<edm::InputTag>("inputObjectsGEM"))),
       iev(0) {
   segmentBuilder_ = new GEMCSCSegmentBuilder(pas);  // pass on the parameterset
 
@@ -34,18 +34,42 @@ GEMCSCSegmentProducer::~GEMCSCSegmentProducer() {
   delete segmentBuilder_;
 }
 
+void GEMCSCSegmentProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  // gemcscSegments
+  edm::ParameterSetDescription desc;
+  desc.add<edm::InputTag>("inputObjectsGEM", edm::InputTag("gemRecHits"));
+  desc.add<edm::InputTag>("inputObjectsCSC", edm::InputTag("cscSegments"));
+  desc.add<bool>("enableME21GE21", false);
+  desc.add<std::string>("algo_name", "GEMCSCSegAlgoRR");
+  {
+    edm::ParameterSetDescription psd0;
+    psd0.addUntracked<bool>("GEMCSCDebug", true);
+    psd0.add<unsigned int>("minHitsPerSegment", 2);
+    psd0.add<bool>("preClustering", true);
+    psd0.add<double>("dXclusBoxMax", 1.0);
+    psd0.add<double>("dYclusBoxMax", 5.0);
+    psd0.add<bool>("preClusteringUseChaining", true);
+    psd0.add<double>("dPhiChainBoxMax", 1.0);
+    psd0.add<double>("dThetaChainBoxMax", 0.02);
+    psd0.add<double>("dRChainBoxMax", 0.5);
+    psd0.add<int>("maxRecHitsInCluster", 6);
+    desc.add<edm::ParameterSetDescription>("algo_psets", psd0);
+  }
+  descriptions.add("gemcscSegments", desc);
+}
+
 void GEMCSCSegmentProducer::produce(edm::Event& ev, const edm::EventSetup& setup) {
   LogDebug("GEMCSCSegment") << "start producing segments for " << ++iev << "th event w/ gem and csc data";
 
   // find the geometry (& conditions?) for this event & cache it in the builder
-  const auto cscg = setup.getHandle(kCSCGeometryToken_);
+  const auto cscg = setup.getHandle(csc_geometry_token_);
   if (not cscg.isValid()) {
     edm::LogError("GEMCSCSegment") << "invalid CSCGeometry";
     return;
   }
   const CSCGeometry* cgeom = &*cscg;
 
-  const auto gemg = setup.getHandle(kGEMGeometryToken_);
+  const auto gemg = setup.getHandle(gem_geometry_token_);
   if (not gemg.isValid()) {
     edm::LogError("GEMCSCSegment") << "invalid GEMGeometry";
     return;
@@ -59,13 +83,13 @@ void GEMCSCSegmentProducer::produce(edm::Event& ev, const edm::EventSetup& setup
   segmentBuilder_->LinkGEMRollsToCSCChamberIndex(ggeom, cgeom);
 
   // get the collection of CSCSegment and GEMRecHits
-  const auto cscSegment = ev.getHandle(kCSCSegmentCollectionToken_);
+  const auto cscSegment = ev.getHandle(csc_segment_collection_token_);
   if (not cscSegment.isValid()) {
     edm::LogError("GEMCSCSegment") << "invalid CSCSegmentCollection";
     return;
   }
 
-  const auto gemRecHits = ev.getHandle(kGEMRecHitCollectionToken_);
+  const auto gemRecHits = ev.getHandle(gem_rec_hit_collection_token_);
   if (not gemRecHits.isValid()) {
     edm::LogError("GEMCSCSegment") << "invalid GEMRecHitCollection";
     return;
