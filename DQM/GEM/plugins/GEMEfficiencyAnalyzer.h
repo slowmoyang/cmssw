@@ -115,44 +115,43 @@ private:
   // mainly retrieved from edm::ParameterSet
   //////////////////////////////////////////////////////////////////////////////
   // ES
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMGeometryTokenBeginRun_;
-  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> kTransientTrackBuilderToken_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gem_geometry_token_begin_run_;
+  const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> transient_track_builder_token_;
   // ED
-  const edm::EDGetTokenT<GEMRecHitCollection> kGEMRecHitCollectionToken_;
-  const edm::EDGetTokenT<edm::View<reco::Muon> > kMuonViewToken_;
+  const edm::EDGetTokenT<GEMRecHitCollection> gem_rec_hit_collection_token_;
+  const edm::EDGetTokenT<edm::View<reco::Muon> > muon_view_token_;
   //
-  const std::string kMuonTrackTypeName_;
-  const reco::Muon::MuonTrackType kMuonTrackType_;
-  const TString kMuonName_;
-  const std::string kFolder_;
-  const ScenarioOption kScenario_;
+  const std::string muon_track_type_name_;
+  const reco::Muon::MuonTrackType muon_track_type_;
+  const TString muon_name_;
+  const std::string folder_;
+  const ScenarioOption scenario_;
   // cuts
-  const StartingStateType kStartingStateType_;
-  const std::vector<std::vector<int> > kMuonSubdetForGEM_;
-  const std::vector<std::vector<int> > kCSCForGEM_;  // when using StartingStateType::kStateOnSurfaceWithCSCSegment
-  const float kMuonSegmentMatchDRCut_;               // for cosmics
+  const StartingStateType starting_state_type_;
+  const std::vector<std::vector<int> > muon_subdetector_for_gem_;
+  const std::vector<std::vector<int> > csc_for_gem_;  // when using StartingStateType::kStateOnSurfaceWithCSCSegment
+  const float muon_segment_match_dr_cut_;             // for cosmics
 
-  const std::vector<double> kMuonPtMinCuts_;   // station as index
-  const std::vector<double> kMuonEtaMinCuts_;  // station as index
-  const std::vector<double> kMuonEtaMaxCuts_;  // station as index
-  const float kPropagationErrorRCut_;          // cm
-  const float kPropagationErrorPhiCut_;        // degree
-  const float kBoundsErrorScale_;              // TODO doc
+  const std::vector<double> muon_pt_min_cuts_;   // station as index
+  const std::vector<double> muon_eta_min_cuts_;  // station as index
+  const std::vector<double> muon_eta_max_cuts_;  // station as index
+  const float propagation_error_r_cut_;          // cm
+  const float propagation_error_phi_cut_;        // degree
+  const float bounds_error_scale_;               // TODO doc
   // matching
-  const MatchingMetric kMatchingMetric_;
-  const float kMatchingCut_;
+  const MatchingMetric matching_metric_;
+  const float matching_cut_;
   // for MinotorElement
-  const std::vector<double> kMuonPtBins_;  // station as index
-  const std::vector<int> kMuonEtaNbins_;   // station as index
-  const std::vector<double> kMuonEtaLow_;  // station as index
-  const std::vector<double> kMuonEtaUp_;   // station as index
+  const std::vector<double> muon_pt_bins_;  // station as index
+  const std::vector<int> muon_eta_nbins_;   // station as index
+  const std::vector<double> muon_eta_low_;  // station as index
+  const std::vector<double> muon_eta_up_;   // station as index
 
   // const
-  const bool kModeDev_;
+  const bool mode_dev_;
 
   //////////////////////////////////////////////////////////////////////////////
   // const data members
-  // FIXME static?
   //////////////////////////////////////////////////////////////////////////////
   // https://github.com/cms-sw/cmssw/blob/CMSSW_12_4_0_pre3/DataFormats/CSCRecHit/interface/CSCSegment.h#L60
   const int kCSCSegmentDimension_ = 4;

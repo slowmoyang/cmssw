@@ -57,14 +57,14 @@ public:
   template <typename T>
   bool checkRefs(const std::vector<T*>&);
 
-  const edm::EDGetTokenT<GEMOHStatusCollection> kGEMOHStatusCollectionToken_;
-  const edm::EDGetTokenT<GEMVFATStatusCollection> kGEMVFATStatusCollectionToken_;
+  const edm::EDGetTokenT<GEMOHStatusCollection> gem_oh_status_collection_token_;
+  const edm::EDGetTokenT<GEMVFATStatusCollection> gem_vfat_status_collection_token_;
 
-  const bool kMonitorGE11_;
-  const bool kMonitorGE21_;
-  const bool kMonitorGE0_;
-  const bool kMaskChamberWithError_;
-  const std::string kLogCategory_;
+  const bool monitor_ge11_;
+  const bool monitor_ge21_;
+  const bool monitor_ge0_;
+  const bool mask_chamber_with_error_;
+  const std::string log_category_;
 };
 
 template <typename T>

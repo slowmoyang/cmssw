@@ -12,65 +12,66 @@
 
 GEMEfficiencyAnalyzer::GEMEfficiencyAnalyzer(const edm::ParameterSet& ps)
     : GEMDQMEfficiencySourceBase(ps),
-      kGEMGeometryTokenBeginRun_(esConsumes<edm::Transition::BeginRun>()),
-      kTransientTrackBuilderToken_(
+      gem_geometry_token_begin_run_(esConsumes<edm::Transition::BeginRun>()),
+      transient_track_builder_token_(
           esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder"))),
-      kGEMRecHitCollectionToken_(consumes<GEMRecHitCollection>(ps.getUntrackedParameter<edm::InputTag>("recHitTag"))),
-      kMuonViewToken_(consumes<edm::View<reco::Muon> >(ps.getUntrackedParameter<edm::InputTag>("muonTag"))),
-      kMuonTrackTypeName_(ps.getUntrackedParameter<std::string>("muonTrackType")),
-      kMuonTrackType_(getMuonTrackType(kMuonTrackTypeName_)),
-      kMuonName_(TString(ps.getUntrackedParameter<std::string>("muonName"))),
-      kFolder_(ps.getUntrackedParameter<std::string>("folder")),
-      kScenario_(getScenarioOption(ps.getUntrackedParameter<std::string>("scenario"))),
-      kStartingStateType_(getStartingStateType(ps.getUntrackedParameter<std::string>("startingStateType"))),
-      kMuonSubdetForGEM_({
+      gem_rec_hit_collection_token_(
+          consumes<GEMRecHitCollection>(ps.getUntrackedParameter<edm::InputTag>("recHitTag"))),
+      muon_view_token_(consumes<edm::View<reco::Muon> >(ps.getUntrackedParameter<edm::InputTag>("muonTag"))),
+      muon_track_type_name_(ps.getUntrackedParameter<std::string>("muonTrackType")),
+      muon_track_type_(getMuonTrackType(muon_track_type_name_)),
+      muon_name_(TString(ps.getUntrackedParameter<std::string>("muonName"))),
+      folder_(ps.getUntrackedParameter<std::string>("folder")),
+      scenario_(getScenarioOption(ps.getUntrackedParameter<std::string>("scenario"))),
+      starting_state_type_(getStartingStateType(ps.getUntrackedParameter<std::string>("startingStateType"))),
+      muon_subdetector_for_gem_({
           ps.getUntrackedParameter<std::vector<int> >("muonSubdetForGE0"),
           ps.getUntrackedParameter<std::vector<int> >("muonSubdetForGE11"),
           ps.getUntrackedParameter<std::vector<int> >("muonSubdetForGE21"),
       }),
-      kCSCForGEM_({
+      csc_for_gem_({
           ps.getUntrackedParameter<std::vector<int> >("cscForGE0"),
           ps.getUntrackedParameter<std::vector<int> >("cscForGE11"),
           ps.getUntrackedParameter<std::vector<int> >("cscForGE21"),
       }),
-      kMuonSegmentMatchDRCut_(static_cast<float>(ps.getUntrackedParameter<double>("muonSegmentMatchDRCut"))),
-      kMuonPtMinCuts_({
+      muon_segment_match_dr_cut_(static_cast<float>(ps.getUntrackedParameter<double>("muonSegmentMatchDRCut"))),
+      muon_pt_min_cuts_({
           ps.getUntrackedParameter<double>("muonPtMinCutGE0"),
           ps.getUntrackedParameter<double>("muonPtMinCutGE11"),
           ps.getUntrackedParameter<double>("muonPtMinCutGE21"),
       }),
-      kMuonEtaMinCuts_({
+      muon_eta_min_cuts_({
           ps.getUntrackedParameter<double>("muonEtaMinCutGE0"),
           ps.getUntrackedParameter<double>("muonEtaMinCutGE11"),
           ps.getUntrackedParameter<double>("muonEtaMinCutGE21"),
       }),
-      kMuonEtaMaxCuts_({
+      muon_eta_max_cuts_({
           ps.getUntrackedParameter<double>("muonEtaMaxCutGE0"),
           ps.getUntrackedParameter<double>("muonEtaMaxCutGE11"),
           ps.getUntrackedParameter<double>("muonEtaMaxCutGE21"),
       }),
-      kPropagationErrorRCut_(static_cast<float>(ps.getUntrackedParameter<double>("propagationErrorRCut"))),
-      kPropagationErrorPhiCut_(static_cast<float>(ps.getUntrackedParameter<double>("propagationErrorPhiCut"))),
-      kBoundsErrorScale_(static_cast<float>(ps.getUntrackedParameter<double>("boundsErrorScale"))),
-      kMatchingMetric_(getMatchingMetric(ps.getUntrackedParameter<std::string>("matchingMetric"))),
-      kMatchingCut_(static_cast<float>(ps.getUntrackedParameter<double>("matchingCut"))),
-      kMuonPtBins_(ps.getUntrackedParameter<std::vector<double> >("muonPtBins")),
-      kMuonEtaNbins_({
+      propagation_error_r_cut_(static_cast<float>(ps.getUntrackedParameter<double>("propagationErrorRCut"))),
+      propagation_error_phi_cut_(static_cast<float>(ps.getUntrackedParameter<double>("propagationErrorPhiCut"))),
+      bounds_error_scale_(static_cast<float>(ps.getUntrackedParameter<double>("boundsErrorScale"))),
+      matching_metric_(getMatchingMetric(ps.getUntrackedParameter<std::string>("matchingMetric"))),
+      matching_cut_(static_cast<float>(ps.getUntrackedParameter<double>("matchingCut"))),
+      muon_pt_bins_(ps.getUntrackedParameter<std::vector<double> >("muonPtBins")),
+      muon_eta_nbins_({
           ps.getUntrackedParameter<int>("muonEtaNbinsGE0"),
           ps.getUntrackedParameter<int>("muonEtaNbinsGE11"),
           ps.getUntrackedParameter<int>("muonEtaNbinsGE21"),
       }),
-      kMuonEtaLow_({
+      muon_eta_low_({
           ps.getUntrackedParameter<double>("muonEtaLowGE0"),
           ps.getUntrackedParameter<double>("muonEtaLowGE11"),
           ps.getUntrackedParameter<double>("muonEtaLowGE21"),
       }),
-      kMuonEtaUp_({
+      muon_eta_up_({
           ps.getUntrackedParameter<double>("muonEtaUpGE0"),
           ps.getUntrackedParameter<double>("muonEtaUpGE11"),
           ps.getUntrackedParameter<double>("muonEtaUpGE21"),
       }),
-      kModeDev_(ps.getUntrackedParameter<bool>("modeDev")) {
+      mode_dev_(ps.getUntrackedParameter<bool>("modeDev")) {
   muon_service_ =
       std::make_unique<MuonServiceProxy>(ps.getParameter<edm::ParameterSet>("ServiceParameters"), consumesCollector());
 }
@@ -168,7 +169,7 @@ GEMEfficiencyAnalyzer::MatchingMetric GEMEfficiencyAnalyzer::getMatchingMetric(c
     method = MatchingMetric::kRdPhi;
 
   } else {
-    edm::LogError(kLogCategory_) << "received an unexpected MatchingMetric: " << name
+    edm::LogError(log_category_) << "received an unexpected MatchingMetric: " << name
                                  << " -> MatchingMetric::kDeltaPhi will be used instead.";
     method = MatchingMetric::kDeltaPhi;
   }
@@ -193,7 +194,7 @@ GEMEfficiencyAnalyzer::StartingStateType GEMEfficiencyAnalyzer::getStartingState
     type = StartingStateType::kAlignmentStyle;
 
   } else {
-    edm::LogError(kLogCategory_) << "received an unexpected StartingStateType: " << name
+    edm::LogError(log_category_) << "received an unexpected StartingStateType: " << name
                                  << " -> StartingStateType::kOutermostMeasurementState will be used instead.";
     type = StartingStateType::kOutermostMeasurementState;
   }
@@ -216,7 +217,7 @@ reco::Muon::MuonTrackType GEMEfficiencyAnalyzer::getMuonTrackType(const std::str
     muon_track_type = reco::Muon::MuonTrackType::CombinedTrack;
 
   } else {
-    edm::LogError(kLogCategory_) << "received an unexpected reco::Muon::MuonTrackType: " << name
+    edm::LogError(log_category_) << "received an unexpected reco::Muon::MuonTrackType: " << name
                                  << " --> OuterTrack will be used instead.";
 
     muon_track_type = reco::Muon::MuonTrackType::OuterTrack;
@@ -236,7 +237,7 @@ GEMEfficiencyAnalyzer::ScenarioOption GEMEfficiencyAnalyzer::getScenarioOption(c
   } else if (name == "HeavyIons") {
     scenario = ScenarioOption::kHeavyIons;
 
-    edm::LogInfo(kLogCategory_) << "The scenario is set to \"HeavyIons\""
+    edm::LogInfo(log_category_) << "The scenario is set to \"HeavyIons\""
                                 << " but there is no strategy dedicated to"
                                 << "\"HeavyIons\" scenario. The strategy for "
                                 << "the \"pp\" scenario will be used insteqad.";
@@ -244,7 +245,7 @@ GEMEfficiencyAnalyzer::ScenarioOption GEMEfficiencyAnalyzer::getScenarioOption(c
   } else {
     scenario = ScenarioOption::kPP;
 
-    edm::LogError(kLogCategory_) << "received an unexpected ScenarioOption: " << name
+    edm::LogError(log_category_) << "received an unexpected ScenarioOption: " << name
                                  << ". Choose from (\"pp\", \"cosmics\", \"HeavyIons\")"
                                  << " --> pp will be used instead.";
   }
@@ -253,13 +254,13 @@ GEMEfficiencyAnalyzer::ScenarioOption GEMEfficiencyAnalyzer::getScenarioOption(c
 }
 
 void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const&, edm::EventSetup const& setup) {
-  ibooker.setCurrentFolder(kFolder_);
+  ibooker.setCurrentFolder(folder_);
 
   const GEMGeometry* gem = nullptr;
-  if (auto handle = setup.getHandle(kGEMGeometryTokenBeginRun_)) {
+  if (auto handle = setup.getHandle(gem_geometry_token_begin_run_)) {
     gem = handle.product();
   } else {
-    edm::LogError(kLogCategory_ + "|bookHistograms") << "failed to get GEMGeometry";
+    edm::LogError(log_category_ + "|bookHistograms") << "failed to get GEMGeometry";
     return;
   }
 
@@ -277,10 +278,10 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
     {  // shadowing to reuse short variable names
       const GEMDetId key = getReStKey(region_id, station_id);
       const TString suffix = GEMUtils::getSuffixName(region_id, station_id);
-      const TString title = kMuonName_ + GEMUtils::getSuffixTitle(region_id, station_id);
+      const TString title = muon_name_ + GEMUtils::getSuffixTitle(region_id, station_id);
 
       // sources for eff. vs muon pt
-      TH1F* h_muon_pt = new TH1F("muon_pt" + suffix, title, kMuonPtBins_.size() - 1, &kMuonPtBins_[0]);
+      TH1F* h_muon_pt = new TH1F("muon_pt" + suffix, title, muon_pt_bins_.size() - 1, &muon_pt_bins_[0]);
       me_muon_pt_[key] = ibooker.book1D(h_muon_pt->GetName(), h_muon_pt);
       me_muon_pt_[key]->setAxisTitle("Muon p_{T} [GeV]", 1);
       me_muon_pt_matched_[key] = bookNumerator1D(ibooker, me_muon_pt_[key]);
@@ -288,9 +289,9 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
       // sources for eff. vs muon eta
       me_muon_eta_[key] = ibooker.book1D("muon_eta" + suffix,
                                          title,
-                                         kMuonEtaNbins_.at(station_id),
-                                         kMuonEtaLow_.at(station_id),
-                                         kMuonEtaUp_.at(station_id));
+                                         muon_eta_nbins_.at(station_id),
+                                         muon_eta_low_.at(station_id),
+                                         muon_eta_up_.at(station_id));
       me_muon_eta_[key]->setAxisTitle("Muon |#eta|", 1);
       me_muon_eta_matched_[key] = bookNumerator1D(ibooker, me_muon_eta_[key]);
 
@@ -299,18 +300,18 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
       me_muon_phi_[key]->setAxisTitle("Muon #phi [deg]");
       me_muon_phi_matched_[key] = bookNumerator1D(ibooker, me_muon_phi_[key]);
 
-      if (kModeDev_) {
+      if (mode_dev_) {
         // without cuts except the fiducial cut
-        TH1F* h_muon_pt_all = new TH1F("muon_pt_all" + suffix, title, kMuonPtBins_.size() - 1, &kMuonPtBins_[0]);
+        TH1F* h_muon_pt_all = new TH1F("muon_pt_all" + suffix, title, muon_pt_bins_.size() - 1, &muon_pt_bins_[0]);
         me_muon_pt_all_[key] = ibooker.book1D(h_muon_pt_all->GetName(), h_muon_pt_all);
         me_muon_pt_all_[key]->setAxisTitle("Muon p_{T} [GeV]", 1);
         me_muon_pt_all_matched_[key] = bookNumerator1D(ibooker, me_muon_pt_all_[key]);
 
         me_muon_eta_all_[key] = ibooker.book1D("muon_eta_all" + suffix,
                                                title,
-                                               kMuonEtaNbins_.at(station_id),
-                                               kMuonEtaLow_.at(station_id),
-                                               kMuonEtaUp_.at(station_id));
+                                               muon_eta_nbins_.at(station_id),
+                                               muon_eta_low_.at(station_id),
+                                               muon_eta_up_.at(station_id));
         me_muon_eta_all_[key]->setAxisTitle("Muon |#eta|", 1);
         me_muon_eta_all_matched_[key] = bookNumerator1D(ibooker, me_muon_eta_all_[key]);
 
@@ -325,13 +326,13 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
     ////////////////////////////////////////////////////////////////////////////
     const std::vector<const GEMSuperChamber*> superchamber_vec = station->superChambers();
     if (not checkRefs(superchamber_vec)) {
-      edm::LogError(kLogCategory_) << "got an invalid ptr from GEMStation::superChambers";
+      edm::LogError(log_category_) << "got an invalid ptr from GEMStation::superChambers";
       return;
     }
 
     const std::vector<const GEMChamber*> chamber_vec = superchamber_vec.front()->chambers();
     if (not checkRefs(chamber_vec)) {
-      edm::LogError(kLogCategory_) << "got an invalid ptr from GEMSuperChamber::chambers";
+      edm::LogError(log_category_) << "got an invalid ptr from GEMSuperChamber::chambers";
       return;
     }
 
@@ -342,12 +343,12 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
       {  // shadowing
         const GEMDetId key = getReStLaKey(chamber->id());
         const TString suffix = GEMUtils::getSuffixName(region_id, station_id, layer_id);
-        const TString title = kMuonName_ + GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
+        const TString title = muon_name_ + GEMUtils::getSuffixTitle(region_id, station_id, layer_id);
 
         me_chamber_ieta_[key] = bookChamberEtaPartition(ibooker, "chamber_ieta" + suffix, title, station);
         me_chamber_ieta_matched_[key] = bookNumerator2D(ibooker, me_chamber_ieta_[key]);
 
-        if (kModeDev_) {
+        if (mode_dev_) {
           me_prop_path_length_[key] = ibooker.book1D("prop_path_length" + suffix, title, 50, 0.0, 5.0);
           me_prop_path_length_[key]->setAxisTitle("Propagation path length [cm]", 1);
           me_prop_path_length_matched_[key] = bookNumerator1D(ibooker, me_prop_path_length_[key]);
@@ -365,11 +366,11 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
           // cutflow
           me_cutflow_[key] = ibooker.book1D("cutflow" + suffix, title, 5, 0.5, 5.5);
           me_cutflow_[key]->setBinLabel(1, "All");
-          me_cutflow_[key]->setBinLabel(2, Form("#sigma_{R} < %.3f cm", kPropagationErrorRCut_));
-          me_cutflow_[key]->setBinLabel(3, Form("#sigma_{phi} < %.3f deg", kPropagationErrorPhiCut_));
-          me_cutflow_[key]->setBinLabel(4, Form("p_{T} > %.1f GeV", kMuonPtMinCuts_.at(station_id)));
+          me_cutflow_[key]->setBinLabel(2, Form("#sigma_{R} < %.3f cm", propagation_error_r_cut_));
+          me_cutflow_[key]->setBinLabel(3, Form("#sigma_{phi} < %.3f deg", propagation_error_phi_cut_));
+          me_cutflow_[key]->setBinLabel(4, Form("p_{T} > %.1f GeV", muon_pt_min_cuts_.at(station_id)));
           me_cutflow_[key]->setBinLabel(
-              5, Form("%.2f < |#eta| < %.2f", kMuonEtaMinCuts_.at(station_id), kMuonEtaMaxCuts_.at(station_id)));
+              5, Form("%.2f < |#eta| < %.2f", muon_eta_min_cuts_.at(station_id), muon_eta_max_cuts_.at(station_id)));
 
           me_cutflow_matched_[key] = bookNumerator1D(ibooker, me_cutflow_.at(key));
         }
@@ -381,7 +382,7 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
     ////////////////////////////////////////////////////////////////////////////
     const std::vector<const GEMEtaPartition*> eta_partition_vec = chamber_vec.front()->etaPartitions();
     if (not checkRefs(eta_partition_vec)) {
-      edm::LogError(kLogCategory_) << "got an invalid ptr from GEMChamber::etaPartitions";
+      edm::LogError(log_category_) << "got an invalid ptr from GEMChamber::etaPartitions";
       continue;
     }
 
@@ -392,22 +393,22 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
         const GEMDetId key = getReStEtKey(eta_partition->id());
         const TString gem_label = TString::Format("GE%d1-%c-E%d", station_id, (region_id > 0 ? 'P' : 'M'), ieta);
         const TString suffix = "_" + gem_label;
-        const TString title = kMuonName_ + " " + gem_label;
+        const TString title = muon_name_ + " " + gem_label;
 
         // FIXME
-        const float dphi_up = (kMatchingMetric_ == MatchingMetric::kDeltaPhi) ? kMatchingCut_
-                              : (kScenario_ == ScenarioOption::kCosmics)      ? 1.0
+        const float dphi_up = (matching_metric_ == MatchingMetric::kDeltaPhi) ? matching_cut_
+                              : (scenario_ == ScenarioOption::kCosmics)       ? 1.0
                                                                               : 0.2;
         me_residual_phi_[key] = ibooker.book1D("residual_phi" + suffix, title, 41, -dphi_up, dphi_up);
         me_residual_phi_[key]->setAxisTitle("Residual in global #phi [deg]", 1);
 
-        if (kModeDev_) {
+        if (mode_dev_) {
           // matching metric
           std::string matching_metric_x_title;
-          if (kMatchingMetric_ == MatchingMetric::kDeltaPhi) {
+          if (matching_metric_ == MatchingMetric::kDeltaPhi) {
             matching_metric_x_title = "#Delta#phi [deg]";
 
-          } else if (kMatchingMetric_ == MatchingMetric::kRdPhi) {
+          } else if (matching_metric_ == MatchingMetric::kRdPhi) {
             matching_metric_x_title = "R#Delta#phi [cm]";
 
           } else {
@@ -416,12 +417,12 @@ void GEMEfficiencyAnalyzer::bookHistograms(DQMStore::IBooker& ibooker, edm::Run 
 
           // matching metrics without any cuts
           me_matching_metric_all_[key] =
-              ibooker.book1D("matching_metric_all" + suffix, title, 101, -3 * kMatchingCut_, 3 * kMatchingCut_);
+              ibooker.book1D("matching_metric_all" + suffix, title, 101, -3 * matching_cut_, 3 * matching_cut_);
           me_matching_metric_all_[key]->setAxisTitle(matching_metric_x_title, 1);
 
           // matching metrics after cuts
           me_matching_metric_[key] =
-              ibooker.book1D("matching_metric" + suffix, title, 101, -kMatchingCut_, kMatchingCut_);
+              ibooker.book1D("matching_metric" + suffix, title, 101, -matching_cut_, matching_cut_);
           me_matching_metric_[key]->setAxisTitle(matching_metric_x_title, 1);
 
           // residuals in the global phi for muons (q < 0)
@@ -510,7 +511,7 @@ void GEMEfficiencyAnalyzer::buildGEMLayers(const GEMGeometry* gem) {
 
     gem_layers_.emplace_back(layer, chambers, gem_id);
 
-    LogDebug(kLogCategory_) << gem_id
+    LogDebug(log_category_) << gem_id
                             << Form(" ==> (z_origin, z_min, z_max) = (%.2f, %.2f, %.2f)", z_origin, z_min, z_max);
   }  // ring
 }
@@ -521,7 +522,7 @@ bool GEMEfficiencyAnalyzer::checkPropagationDirection(const reco::Track* track, 
   const bool is_same_region = track->eta() * layer.id.region() > 0;
 
   bool skip = false;
-  if (kScenario_ == ScenarioOption::kCosmics) {
+  if (scenario_ == ScenarioOption::kCosmics) {
     float p2_in = track->innerMomentum().mag2();
     float p2_out = track->outerMomentum().mag2();
     if (isInsideOut(*track))
@@ -544,7 +545,7 @@ GEMEfficiencyAnalyzer::StartingState GEMEfficiencyAnalyzer::buildStartingState(
   TrajectoryStateOnSurface state;
   DetId det_id;
 
-  switch (kStartingStateType_) {
+  switch (starting_state_type_) {
     case StartingStateType::kOutermostMeasurementState: {
       std::tie(found, state, det_id) = getOutermostMeasurementState(transient_track);
       break;
@@ -562,7 +563,7 @@ GEMEfficiencyAnalyzer::StartingState GEMEfficiencyAnalyzer::buildStartingState(
       break;
     }
     default: {
-      edm::LogError(kLogCategory_) << "got an unexpected StartingStateType";
+      edm::LogError(log_category_) << "got an unexpected StartingStateType";
       break;
     }
   }
@@ -581,7 +582,7 @@ GEMEfficiencyAnalyzer::StartingState GEMEfficiencyAnalyzer::buildStartingState(
       const bool are_same_station = gem_layer.id.station() == start_id.station();
       const bool are_same_layer = gem_layer.id.layer() == start_id.layer();
       if (are_same_region and are_same_station and are_same_layer) {
-        LogDebug(kLogCategory_)
+        LogDebug(log_category_)
             << "The starting detector of the muon propagation is same with the destination. Skip this propagation.";
         found = false;
       }
@@ -710,7 +711,7 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegmentBeam(const reco::Transien
        tracking_rechit_iter++) {
     const TrackingRecHit* tracking_rechit = *tracking_rechit_iter;
     if (not tracking_rechit->isValid()) {
-      LogDebug(kLogCategory_) << "got an invalid trackingRecHit_iterator from transient_track. skip it.";
+      LogDebug(log_category_) << "got an invalid trackingRecHit_iterator from transient_track. skip it.";
       continue;
     }
 
@@ -731,7 +732,7 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegmentBeam(const reco::Transien
     if (auto csc_segment = dynamic_cast<const CSCSegment*>(tracking_rechit)) {
       const GeomDet* det = muon_service_->trackingGeometry()->idToDet(csc_id);
       if (det == nullptr) {
-        edm::LogError(kLogCategory_) << "GlobalTrackingGeometry::idToDet returns nullptr; CSCDetId=" << csc_id;
+        edm::LogError(log_category_) << "GlobalTrackingGeometry::idToDet returns nullptr; CSCDetId=" << csc_id;
         continue;
       }
       const GlobalPoint global_position = det->toGlobal(csc_segment->localPosition());
@@ -743,7 +744,7 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegmentBeam(const reco::Transien
       }
 
     } else {
-      edm::LogError(kLogCategory_)
+      edm::LogError(log_category_)
           << "failed to perform the conversion from `const TrackingRechit*` to `const CSCSegment*`";
     }
   }  // trackingRecHit_iterator
@@ -773,10 +774,10 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegmentCosmics(const reco::Muon&
       }
 
       const float dr = std::hypot(x_track - segment_match.x, y_track - segment_match.y);
-      std::cout << kLogCategory_ << ": dr=" << dr << std::endl;
+      std::cout << log_category_ << ": dr=" << dr << std::endl;
 
-      if (dr > kMuonSegmentMatchDRCut_) {
-        LogDebug(kLogCategory_) << "too large dR(muon, segment)";
+      if (dr > muon_segment_match_dr_cut_) {
+        LogDebug(log_category_) << "too large dR(muon, segment)";
         break;
       }
 
@@ -793,7 +794,7 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegmentCosmics(const reco::Muon&
 const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegment(const reco::Muon& muon,
                                                         const reco::TransientTrack& transient_track,
                                                         const GEMLayer& gem_layer) {
-  if (kScenario_ == ScenarioOption::kCosmics) {
+  if (scenario_ == ScenarioOption::kCosmics) {
     return findCSCSegmentCosmics(muon, gem_layer);
   } else {
     // pp or HI
@@ -803,17 +804,17 @@ const CSCSegment* GEMEfficiencyAnalyzer::findCSCSegment(const reco::Muon& muon,
 
 bool GEMEfficiencyAnalyzer::isMuonSubdetAllowed(const DetId& det_id, const int gem_station) {
   if ((gem_station < 0) or (gem_station > 2)) {
-    edm::LogError(kLogCategory_) << "got unexpected gem station " << gem_station;
+    edm::LogError(log_category_) << "got unexpected gem station " << gem_station;
     return false;
   }
 
   if (det_id.det() != DetId::Detector::Muon) {
-    edm::LogError(kLogCategory_) << Form(
+    edm::LogError(log_category_) << Form(
         "(Detector, Subdetector) = (%d, %d)", static_cast<int>(det_id.det()), det_id.subdetId());
     return false;
   }
 
-  const std::vector<int> allowed = kMuonSubdetForGEM_.at(gem_station);
+  const std::vector<int> allowed = muon_subdetector_for_gem_.at(gem_station);
   return allowed.empty() or (std::find(allowed.begin(), allowed.end(), det_id.subdetId()) != allowed.end());
 }
 
@@ -824,14 +825,14 @@ bool GEMEfficiencyAnalyzer::isMuonSubdetAllowed(const DetId& det_id, const int g
 // `buildStartingStateAlignmentStyle`
 bool GEMEfficiencyAnalyzer::isCSCAllowed(const CSCDetId& csc_id, const int gem_station) {
   if ((gem_station < 0) or (gem_station > 2)) {
-    edm::LogError(kLogCategory_) << "got unexpected gem station " << gem_station;
+    edm::LogError(log_category_) << "got unexpected gem station " << gem_station;
     return false;
   }
 
   // unsigned short to int
   const int csc_chamber_type = static_cast<int>(csc_id.iChamberType());
 
-  const std::vector<int> allowed = kCSCForGEM_.at(gem_station);
+  const std::vector<int> allowed = csc_for_gem_.at(gem_station);
   return allowed.empty() or (std::find(allowed.begin(), allowed.end(), csc_chamber_type) != allowed.end());
 }
 
@@ -859,12 +860,12 @@ const GEMEtaPartition* GEMEfficiencyAnalyzer::findEtaPartition(const GlobalPoint
                                                                const std::vector<const GEMChamber*>& chamber_vector) {
   const GEMEtaPartition* bound = nullptr;
   for (const GEMChamber* chamber : chamber_vector) {
-    if (not checkBounds(chamber->surface(), global_point, global_error, kBoundsErrorScale_)) {
+    if (not checkBounds(chamber->surface(), global_point, global_error, bounds_error_scale_)) {
       continue;
     }
 
     for (const GEMEtaPartition* eta_partition : chamber->etaPartitions()) {
-      if (checkBounds(eta_partition->surface(), global_point, global_error, kBoundsErrorScale_)) {
+      if (checkBounds(eta_partition->surface(), global_point, global_error, bounds_error_scale_)) {
         bound = eta_partition;
         break;
       }
@@ -903,7 +904,7 @@ float GEMEfficiencyAnalyzer::computeMatchingMetric(const GlobalPoint& prop_globa
                                                    const LocalPoint& hit_local_pos,
                                                    const GEMEtaPartition* eta_partition) {
   float metric;
-  switch (kMatchingMetric_) {
+  switch (matching_metric_) {
     case MatchingMetric::kDeltaPhi: {
       metric = computeDeltaPhi(prop_global_pos, hit_local_pos, eta_partition);
       break;
@@ -913,7 +914,7 @@ float GEMEfficiencyAnalyzer::computeMatchingMetric(const GlobalPoint& prop_globa
       break;
     }
     default: {
-      edm::LogError(kLogCategory_) << "unknown MatchingMetric.";  // TODO
+      edm::LogError(log_category_) << "unknown MatchingMetric.";  // TODO
       metric = std::numeric_limits<float>::infinity();
     }
   }
@@ -947,10 +948,10 @@ std::pair<const GEMRecHit*, float> GEMEfficiencyAnalyzer::findClosestHit(const G
 
 void GEMEfficiencyAnalyzer::dqmBeginRun(edm::Run const&, edm::EventSetup const& setup) {
   const GEMGeometry* gem = nullptr;
-  if (auto handle = setup.getHandle(kGEMGeometryTokenBeginRun_)) {
+  if (auto handle = setup.getHandle(gem_geometry_token_begin_run_)) {
     gem = handle.product();
   } else {
-    edm::LogError(kLogCategory_ + "|dqmBeginRun") << "failed to get GEMGeometry";
+    edm::LogError(log_category_ + "|dqmBeginRun") << "failed to get GEMGeometry";
     return;
   }
 
@@ -962,35 +963,35 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
   // get data from Event
   //////////////////////////////////////////////////////////////////////////////
   const GEMRecHitCollection* rechit_collection = nullptr;
-  if (auto handle = event.getHandle(kGEMRecHitCollectionToken_)) {
+  if (auto handle = event.getHandle(gem_rec_hit_collection_token_)) {
     rechit_collection = handle.product();
   } else {
-    edm::LogError(kLogCategory_) << "failed to get GEMRecHitCollection";
+    edm::LogError(log_category_) << "failed to get GEMRecHitCollection";
     return;
   }
 
   const edm::View<reco::Muon>* muon_view = nullptr;
-  if (auto handle = event.getHandle(kMuonViewToken_)) {
+  if (auto handle = event.getHandle(muon_view_token_)) {
     muon_view = handle.product();
   } else {
-    edm::LogError(kLogCategory_) << "failed to get View<Muon>";
+    edm::LogError(log_category_) << "failed to get View<Muon>";
     return;
   }
 
   const GEMOHStatusCollection* oh_status_collection = nullptr;
   const GEMVFATStatusCollection* vfat_status_collection = nullptr;
-  if (kMaskChamberWithError_) {
-    if (auto handle = event.getHandle(kGEMOHStatusCollectionToken_)) {
+  if (mask_chamber_with_error_) {
+    if (auto handle = event.getHandle(gem_oh_status_collection_token_)) {
       oh_status_collection = handle.product();
     } else {
-      edm::LogError(kLogCategory_) << "failed to get OHVFATStatusCollection";
+      edm::LogError(log_category_) << "failed to get OHVFATStatusCollection";
       return;
     }
 
-    if (auto handle = event.getHandle(kGEMVFATStatusCollectionToken_)) {
+    if (auto handle = event.getHandle(gem_vfat_status_collection_token_)) {
       vfat_status_collection = handle.product();
     } else {
-      edm::LogError(kLogCategory_) << "failed to get GEMVFATStatusCollection";
+      edm::LogError(log_category_) << "failed to get GEMVFATStatusCollection";
       return;
     }
   }
@@ -999,10 +1000,10 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
   // get data from EventSetup
   //////////////////////////////////////////////////////////////////////////////
   const TransientTrackBuilder* transient_track_builder = nullptr;
-  if (auto handle = setup.getHandle(kTransientTrackBuilderToken_)) {
+  if (auto handle = setup.getHandle(transient_track_builder_token_)) {
     transient_track_builder = handle.product();
   } else {
-    edm::LogError(kLogCategory_) << "failed to get TransientTrackBuilder";
+    edm::LogError(log_category_) << "failed to get TransientTrackBuilder";
     return;
   }
 
@@ -1016,7 +1017,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
   if (auto handle = muon_service_->propagator("SteppingHelixPropagatorAny")) {
     propagator = handle.product();
   } else {
-    edm::LogError(kLogCategory_) << "failed to get Propagator";
+    edm::LogError(log_category_) << "failed to get Propagator";
     return;
   }
 
@@ -1025,34 +1026,34 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
   //////////////////////////////////////////////////////////////////////////////
 
   for (const reco::Muon& muon : *muon_view) {
-    const reco::Track* track = muon.muonTrack(kMuonTrackType_).get();
+    const reco::Track* track = muon.muonTrack(muon_track_type_).get();
     if (track == nullptr) {
-      LogDebug(kLogCategory_) << "failed to get a " << kMuonTrackTypeName_;
+      LogDebug(log_category_) << "failed to get a " << muon_track_type_name_;
       continue;
     }
 
     const reco::TransientTrack transient_track = transient_track_builder->build(track);
     if (not transient_track.isValid()) {
-      edm::LogError(kLogCategory_) << "failed to build TransientTrack";
+      edm::LogError(log_category_) << "failed to build TransientTrack";
       continue;
     }
 
     for (const GEMLayer& layer : gem_layers_) {
       if (checkPropagationDirection(track, layer)) {
-        LogDebug(kLogCategory_) << "bad flight path. skip this propagation.";
+        LogDebug(log_category_) << "bad flight path. skip this propagation.";
         continue;
       }
 
       const auto [found_start_state, start_state, start_id] = buildStartingState(muon, transient_track, layer);
       if (not found_start_state) {
-        LogDebug(kLogCategory_) << "propagation starting state not found";
+        LogDebug(log_category_) << "propagation starting state not found";
         continue;
       }
 
       // the trajectory state on the destination surface
       const auto [propagated_state, prop_path_length] = propagator->propagateWithPath(start_state, *(layer.disk));
       if (not propagated_state.isValid()) {
-        LogDebug(kLogCategory_) << "failed to propagate a muon from "
+        LogDebug(log_category_) << "failed to propagate a muon from "
                                 << Form("(Detector, Subdetector) = (%d, %d)",
                                         static_cast<int>(start_id.det()),
                                         start_id.subdetId())
@@ -1064,23 +1065,23 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       const GlobalError& prop_global_err =
           ErrorFrameTransformer::transform(propagated_state.localError().positionError(), *layer.disk);
 
-      if (not checkBounds(*layer.disk, prop_global_pos, prop_global_err, kBoundsErrorScale_)) {
-        LogDebug(kLogCategory_) << "failed to pass checkBounds";
+      if (not checkBounds(*layer.disk, prop_global_pos, prop_global_err, bounds_error_scale_)) {
+        LogDebug(log_category_) << "failed to pass checkBounds";
         continue;
       }
 
       const GEMEtaPartition* eta_partition = findEtaPartition(prop_global_pos, prop_global_err, layer.chambers);
       if (eta_partition == nullptr) {
-        LogDebug(kLogCategory_) << "failed to find an eta partition";
+        LogDebug(log_category_) << "failed to find an eta partition";
         continue;
       }
 
       const GEMDetId gem_id = eta_partition->id();
 
-      if (kMaskChamberWithError_) {
+      if (mask_chamber_with_error_) {
         const bool has_error = maskChamberWithError(gem_id.chamberId(), oh_status_collection, vfat_status_collection);
         if (has_error) {
-          LogDebug(kLogCategory_) << gem_id.chamberId() << " has an erorr. Skip this propagation.";
+          LogDebug(log_category_) << gem_id.chamberId() << " has an erorr. Skip this propagation.";
           continue;
         }
       }
@@ -1104,16 +1105,16 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
       const double prop_global_err_phi = Geom::convertRadToDeg(std::sqrt(prop_global_err.phierr(prop_global_pos)));
 
       // cuts
-      const bool passed_prop_err_r_cut = (prop_global_err_r < kPropagationErrorRCut_);
-      const bool passed_prop_err_phi_cut = (prop_global_err_phi < kPropagationErrorPhiCut_);
-      const bool passed_pt_cut = muon_pt > kMuonPtMinCuts_.at(station_id);
+      const bool passed_prop_err_r_cut = (prop_global_err_r < propagation_error_r_cut_);
+      const bool passed_prop_err_phi_cut = (prop_global_err_phi < propagation_error_phi_cut_);
+      const bool passed_pt_cut = muon_pt > muon_pt_min_cuts_.at(station_id);
       const bool passed_eta_cut =
-          (muon_eta > kMuonEtaMinCuts_.at(station_id)) and (muon_eta < kMuonEtaMaxCuts_.at(station_id));
+          (muon_eta > muon_eta_min_cuts_.at(station_id)) and (muon_eta < muon_eta_max_cuts_.at(station_id));
 
       const bool passed_prop_err_cuts = passed_prop_err_r_cut and passed_prop_err_phi_cut;
       const bool passed_all_cuts = passed_prop_err_cuts and passed_pt_cut and passed_eta_cut;
 
-      const int cutflow_last = not kModeDev_                 ? 0
+      const int cutflow_last = not mode_dev_                 ? 0
                                : not passed_prop_err_r_cut   ? 1
                                : not passed_prop_err_phi_cut ? 2
                                : not passed_pt_cut           ? 3
@@ -1136,7 +1137,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         fillME(me_muon_phi_, rs_key, muon_phi);
       }
 
-      if (kModeDev_) {
+      if (mode_dev_) {
         fillMEWithinLimits(me_prop_path_length_, rsl_key, prop_path_length);
         fillMEWithinLimits(me_prop_err_r_, rsl_key, prop_global_err_r);
         fillMEWithinLimits(me_prop_err_phi_, rsl_key, prop_global_err_phi);
@@ -1159,16 +1160,16 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
           findClosestHit(prop_global_pos, rechit_collection->get(gem_id), eta_partition);
 
       if (hit == nullptr) {
-        LogDebug(kLogCategory_) << "hit not found";
+        LogDebug(log_category_) << "hit not found";
         continue;
       }
 
-      if (kModeDev_) {
+      if (mode_dev_) {
         fillMEWithinLimits(me_matching_metric_all_, rse_key, matching_metric);
       }
 
-      if (std::abs(matching_metric) > kMatchingCut_) {
-        LogDebug(kLogCategory_) << "failed to pass the residual rphi cut";
+      if (std::abs(matching_metric) > matching_cut_) {
+        LogDebug(log_category_) << "failed to pass the residual rphi cut";
         continue;
       }
 
@@ -1188,7 +1189,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
         fillME(me_muon_phi_matched_, rs_key, muon_phi);
       }
 
-      if (kModeDev_) {
+      if (mode_dev_) {
         fillMEWithinLimits(me_prop_path_length_matched_, rsl_key, prop_path_length);
 
         fillMEWithinLimits(me_prop_err_r_matched_, rsl_key, prop_global_err_r);
@@ -1216,7 +1217,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
 
         fillMEWithinLimits(me_residual_phi_, rse_key, residual_phi);
 
-        if (kModeDev_) {
+        if (mode_dev_) {
           const LocalPoint prop_local_pos = eta_partition->toLocal(prop_global_pos);
           const StripTopology& topology = eta_partition->specificTopology();
 
@@ -1234,7 +1235,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
           } else {
             fillMEWithinLimits(me_residual_phi_antimuon_, rse_key, residual_phi);
           }
-        }  // kModeDev_
+        }  // mode_dev_
       }    // passed_all_cuts
     }      // destination
   }        // Muon

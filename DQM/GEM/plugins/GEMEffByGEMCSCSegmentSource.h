@@ -42,13 +42,13 @@ private:
   // const member data
   //////////////////////////////////////////////////////////////////////////////
 
-  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> kGEMGeometryTokenBeginRun_;
-  const edm::EDGetTokenT<GEMCSCSegmentCollection> kGEMCSCSegmentCollectionToken_;
-  const edm::EDGetTokenT<reco::MuonCollection> kMuonCollectionToken_;
+  const edm::ESGetToken<GEMGeometry, MuonGeometryRecord> gem_geometry_token_begin_run_;
+  const edm::EDGetTokenT<GEMCSCSegmentCollection> gem_csc_segment_collection_token_;
+  const edm::EDGetTokenT<reco::MuonCollection> muon_collection_token_;
   const int kMinCSCRecHits_;
-  const bool kModeDev_;
+  const bool mode_dev_;
   const bool kUseMuonSegment_;
-  const std::string kFolder_;
+  const std::string folder_;
 
   //////////////////////////////////////////////////////////////////////////////
   // non-const member data

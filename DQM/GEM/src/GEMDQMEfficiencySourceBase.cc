@@ -5,21 +5,21 @@
 #include "TPRegexp.h"
 
 GEMDQMEfficiencySourceBase::GEMDQMEfficiencySourceBase(const edm::ParameterSet& ps)
-    : kGEMOHStatusCollectionToken_(
+    : gem_oh_status_collection_token_(
           consumes<GEMOHStatusCollection>(ps.getUntrackedParameter<edm::InputTag>("ohStatusTag"))),
-      kGEMVFATStatusCollectionToken_(
+      gem_vfat_status_collection_token_(
           consumes<GEMVFATStatusCollection>(ps.getUntrackedParameter<edm::InputTag>("vfatStatusTag"))),
-      kMonitorGE11_(ps.getUntrackedParameter<bool>("monitorGE11")),
-      kMonitorGE21_(ps.getUntrackedParameter<bool>("monitorGE21")),
-      kMonitorGE0_(ps.getUntrackedParameter<bool>("monitorGE0")),
-      kMaskChamberWithError_(ps.getUntrackedParameter<bool>("maskChamberWithError")),
-      kLogCategory_(ps.getUntrackedParameter<std::string>("logCategory")) {}
+      monitor_ge11_(ps.getUntrackedParameter<bool>("monitorGE11")),
+      monitor_ge21_(ps.getUntrackedParameter<bool>("monitorGE21")),
+      monitor_ge0_(ps.getUntrackedParameter<bool>("monitorGE0")),
+      mask_chamber_with_error_(ps.getUntrackedParameter<bool>("maskChamberWithError")),
+      log_category_(ps.getUntrackedParameter<std::string>("logCategory")) {}
 
 // NOTE GEMDQMEfficiencyClientBase::parseEfficiencySourceName
 std::string GEMDQMEfficiencySourceBase::nameNumerator(const std::string& denominator) {
   const bool success = TPRegexp("\\w+_GE\\d1-(P|M)[0-9\\-]*").MatchB(denominator);
   if (not success) {
-    edm::LogError(kLogCategory_) << "denominator name not understood: " << denominator;
+    edm::LogError(log_category_) << "denominator name not understood: " << denominator;
     return std::string{};
   }
 
@@ -39,13 +39,13 @@ std::string GEMDQMEfficiencySourceBase::nameNumerator(const std::string& denomin
 dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookNumerator1D(DQMStore::IBooker& ibooker,
                                                                        MonitorElement* denominator) {
   if (denominator == nullptr) {
-    edm::LogError(kLogCategory_) << "denominator is nullptr";
+    edm::LogError(log_category_) << "denominator is nullptr";
     return nullptr;
   }
 
   const std::string name = nameNumerator(denominator->getName());
   if (name.empty()) {
-    edm::LogError(kLogCategory_) << "denominator's name is " << denominator->getName()
+    edm::LogError(log_category_) << "denominator's name is " << denominator->getName()
                                  << " but nameNumerator returns an empty string";
     return nullptr;
   }
@@ -57,13 +57,13 @@ dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookNumerator1D(DQMStore:
 dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookNumerator2D(DQMStore::IBooker& ibooker,
                                                                        MonitorElement* denominator) {
   if (denominator == nullptr) {
-    edm::LogError(kLogCategory_) << "denominator is nullptr";
+    edm::LogError(log_category_) << "denominator is nullptr";
     return nullptr;
   }
 
   const std::string name = nameNumerator(denominator->getName());
   if (name.empty()) {
-    edm::LogError(kLogCategory_) << "denominator's name is " << denominator->getName()
+    edm::LogError(log_category_) << "denominator's name is " << denominator->getName()
                                  << " but nameNumerator returns an empty string";
     return nullptr;
   }
@@ -81,7 +81,7 @@ std::tuple<bool, int, int> GEMDQMEfficiencySourceBase::getChamberRange(const GEM
 
   const std::vector<const GEMSuperChamber*> superchamber_vec = station->superChambers();
   if (not checkRefs(superchamber_vec)) {
-    edm::LogError(kLogCategory_) << "GEMStation::superChambers";  // FIXME
+    edm::LogError(log_category_) << "GEMStation::superChambers";  // FIXME
     return std::make_tuple(false, 0, 0);
   }
 
@@ -92,7 +92,7 @@ std::tuple<bool, int, int> GEMDQMEfficiencySourceBase::getChamberRange(const GEM
                  [](const GEMSuperChamber* superchamber) -> int { return superchamber->id().chamber(); });
   const auto [first_chamber, last_chamber] = std::minmax_element(id_vec.begin(), id_vec.end());
   if ((first_chamber == id_vec.end()) or (last_chamber == id_vec.end())) {
-    edm::LogError(kLogCategory_) << "";  // TODO
+    edm::LogError(log_category_) << "";  // TODO
     return std::make_tuple(false, 0, 0);
   }
 
@@ -107,18 +107,18 @@ std::tuple<bool, int, int> GEMDQMEfficiencySourceBase::getEtaPartitionRange(cons
 
   const std::vector<const GEMSuperChamber*> superchamber_vec = station->superChambers();
   if (not checkRefs(superchamber_vec)) {
-    edm::LogError(kLogCategory_) << "GEMStation::superChambers";  // FIXME
+    edm::LogError(log_category_) << "GEMStation::superChambers";  // FIXME
     return std::make_tuple(false, 0, 0);
   }
 
   const std::vector<const GEMChamber*> chamber_vec = superchamber_vec.front()->chambers();
   if (not checkRefs(chamber_vec)) {
-    edm::LogError(kLogCategory_) << "";  // TODO
+    edm::LogError(log_category_) << "";  // TODO
     return std::make_tuple(false, 0, 0);
   }
   const std::vector<const GEMEtaPartition*> eta_partition_vec = chamber_vec.front()->etaPartitions();
   if (not checkRefs(eta_partition_vec)) {
-    edm::LogError(kLogCategory_) << "";  // TODO
+    edm::LogError(log_category_) << "";  // TODO
     return std::make_tuple(false, 0, 0);
   }
 
@@ -129,7 +129,7 @@ std::tuple<bool, int, int> GEMDQMEfficiencySourceBase::getEtaPartitionRange(cons
                  [](const GEMEtaPartition* each) -> int { return each->id().ieta(); });
   const auto [first_ieta, last_ieta] = std::minmax_element(ieta_vec.begin(), ieta_vec.end());
   if ((first_ieta == ieta_vec.end()) or (last_ieta == ieta_vec.end())) {
-    edm::LogError(kLogCategory_) << "failed to find minmax";
+    edm::LogError(log_category_) << "failed to find minmax";
     return std::make_tuple(false, 0, 0);
   }
 
@@ -142,13 +142,13 @@ dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookChamber(DQMStore::IBo
                                                                    const TString& title,
                                                                    const GEMStation* station) {
   if (station == nullptr) {
-    edm::LogError(kLogCategory_) << "";  // TODO
+    edm::LogError(log_category_) << "";  // TODO
     return nullptr;
   }
 
   auto [success, first_chamber, last_chamber] = getChamberRange(station);
   if (not success) {
-    edm::LogError(kLogCategory_) << "failed to get chambers: " << station->getName();
+    edm::LogError(log_category_) << "failed to get chambers: " << station->getName();
     return nullptr;
   }
 
@@ -173,19 +173,19 @@ dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookChamberEtaPartition(D
                                                                                const TString& title,
                                                                                const GEMStation* station) {
   if (station == nullptr) {
-    edm::LogError(kLogCategory_) << "station is nullptr";
+    edm::LogError(log_category_) << "station is nullptr";
     return nullptr;
   }
 
   auto [chamber_success, first_chamber, last_chamber] = getChamberRange(station);
   if (not chamber_success) {
-    edm::LogError(kLogCategory_) << "getChamberRange failed";
+    edm::LogError(log_category_) << "getChamberRange failed";
     return nullptr;
   }
 
   auto [ieta_success, first_ieta, last_ieta] = getEtaPartitionRange(station);
   if (not ieta_success) {
-    edm::LogError(kLogCategory_) << "getEtaPartitionRange failed";
+    edm::LogError(log_category_) << "getEtaPartitionRange failed";
     return nullptr;
   }
 
@@ -219,16 +219,16 @@ bool GEMDQMEfficiencySourceBase::skipGEMStation(const int station) {
   bool skip = false;
 
   if (station == 0) {
-    skip = not kMonitorGE0_;
+    skip = not monitor_ge0_;
 
   } else if (station == 1) {
-    skip = not kMonitorGE11_;
+    skip = not monitor_ge11_;
 
   } else if (station == 2) {
-    skip = not kMonitorGE21_;
+    skip = not monitor_ge21_;
 
   } else {
-    edm::LogError(kLogCategory_) << "got an unexpected GEM station " << station << ". skip this station.";
+    edm::LogError(log_category_) << "got an unexpected GEM station " << station << ". skip this station.";
     skip = true;
   }
 
@@ -275,7 +275,7 @@ bool GEMDQMEfficiencySourceBase::hasMEKey(const MEMap& me_map, const GEMDetId& k
 
   if UNLIKELY (not has_key) {
     const std::string hint = me_map.empty() ? "empty" : me_map.begin()->second->getName();
-    edm::LogError(kLogCategory_) << "got an invalid key: " << key << ", hint=" << hint;
+    edm::LogError(log_category_) << "got an invalid key: " << key << ", hint=" << hint;
   }
   return has_key;
 }
@@ -301,7 +301,7 @@ double GEMDQMEfficiencySourceBase::clampWithAxis(const double value, const TAxis
 // https://github.com/cms-sw/cmssw/blob/CMSSW_12_0_0_pre3/DQMOffline/L1Trigger/src/L1TFillWithinLimits.cc
 void GEMDQMEfficiencySourceBase::fillMEWithinLimits(MonitorElement* me, const double x) {
   if (me == nullptr) {
-    edm::LogError(kLogCategory_) << "MonitorElement is nullptr";
+    edm::LogError(log_category_) << "MonitorElement is nullptr";
     return;
   }
   // FIXME assume that GEMDQMEfficiencySourceBase uses only TH1F fo 1d histograms
@@ -312,7 +312,7 @@ void GEMDQMEfficiencySourceBase::fillMEWithinLimits(MonitorElement* me, const do
 // https://github.com/cms-sw/cmssw/blob/CMSSW_12_0_0_pre3/DQMOffline/L1Trigger/src/L1TFillWithinLimits.cc
 void GEMDQMEfficiencySourceBase::fillMEWithinLimits(MonitorElement* me, const double x, const double y) {
   if (me == nullptr) {
-    edm::LogError(kLogCategory_) << "MonitorElement is nullptr";
+    edm::LogError(log_category_) << "MonitorElement is nullptr";
     return;
   }
   // FIXME assume that GEMDQMEfficiencySourceBase uses only TH2F fo 2d histograms

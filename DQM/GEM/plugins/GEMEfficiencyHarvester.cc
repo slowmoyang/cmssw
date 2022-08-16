@@ -34,25 +34,25 @@ void GEMEfficiencyHarvester::bookDetector1DEfficiency(DQMStore::IBooker& ibooker
     const auto& [me_num, me_den] = value;
 
     if (me_num->kind() != MonitorElement::Kind::TH2F) {
-      edm::LogError(kLogCategory_) << key << "expected TH2F but got ";  // TODO
+      edm::LogError(log_category_) << key << "expected TH2F but got ";  // TODO
       continue;
     }
 
     const TH2F* h_num = me_num->getTH2F();
     if (h_num == nullptr) {
-      edm::LogError(kLogCategory_) << "numerator: failed to get TH2F from MonitorElement" << key;
+      edm::LogError(log_category_) << "numerator: failed to get TH2F from MonitorElement" << key;
       continue;
     }
 
     const TH2F* h_den = me_den->getTH2F();
     if (h_den == nullptr) {
-      edm::LogError(kLogCategory_) << "denominator: failed to get TH2F from MonitorElement" << key;
+      edm::LogError(log_category_) << "denominator: failed to get TH2F from MonitorElement" << key;
       continue;
     }
 
     const auto [parsing_success, var_name, gem_name, is_matched] = parseEfficiencySourceName(me_den->getName());
     if (not parsing_success) {
-      edm::LogError(kLogCategory_) << "failed to parse " << me_den->getName();
+      edm::LogError(log_category_) << "failed to parse " << me_den->getName();
       continue;
     }
 

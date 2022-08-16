@@ -8,8 +8,8 @@
 #include <regex>
 
 GEMDQMEfficiencyClientBase::GEMDQMEfficiencyClientBase(const edm::ParameterSet& ps)
-    : kConfidenceLevel_(ps.getUntrackedParameter<double>("confidenceLevel")),
-      kLogCategory_(ps.getUntrackedParameter<std::string>("logCategory")) {}
+    : confidence_level_(ps.getUntrackedParameter<double>("confidenceLevel")),
+      log_category_(ps.getUntrackedParameter<std::string>("logCategory")) {}
 
 // Returns a tuple of
 //   - a boolean indicating whether the parsing is successful or not
@@ -89,7 +89,7 @@ GEMDetId GEMDQMEfficiencyClientBase::parseGEMLabel(const std::string gem_label, 
       ieta = std::stoi(token.substr(1));
 
     } else {
-      edm::LogError(kLogCategory_) << "unknown pattern: " << gem_label << " --> " << token;
+      edm::LogError(log_category_) << "unknown pattern: " << gem_label << " --> " << token;
     }
   }
 
@@ -115,7 +115,7 @@ std::map<std::string, GEMDQMEfficiencyClientBase::MEPair> GEMDQMEfficiencyClient
     const std::string fullpath = folder + "/" + name;
     const MonitorElement* me = igetter.get(fullpath);
     if (me == nullptr) {
-      edm::LogError(kLogCategory_) << "failed to get " << fullpath;
+      edm::LogError(log_category_) << "failed to get " << fullpath;
       continue;
     }
 
@@ -200,19 +200,19 @@ void GEMDQMEfficiencyClientBase::setBins(TH1F* dst_hist, const TAxis* src_axis) 
 // https://github.com/root-project/root/blob/v6-24-06/hist/hist/src/TEfficiency.cxx#L1494-L1512
 bool GEMDQMEfficiencyClientBase::checkConsistency(const TH1& pass, const TH1& total) {
   if (pass.GetDimension() != total.GetDimension()) {
-    edm::LogError(kLogCategory_) << "numerator and denominator have different dimensions: " << pass.GetName() << " & "
+    edm::LogError(log_category_) << "numerator and denominator have different dimensions: " << pass.GetName() << " & "
                                  << total.GetName();
     return false;
   }
 
   if (not TEfficiency::CheckBinning(pass, total)) {
-    edm::LogError(kLogCategory_) << "numerator and denominator have different binning: " << pass.GetName() << " & "
+    edm::LogError(log_category_) << "numerator and denominator have different binning: " << pass.GetName() << " & "
                                  << total.GetName();
     return false;
   }
 
   if (not TEfficiency::CheckEntries(pass, total)) {
-    edm::LogError(kLogCategory_) << "numerator and denominator do not have consistent bin contents " << pass.GetName()
+    edm::LogError(log_category_) << "numerator and denominator do not have consistent bin contents " << pass.GetName()
                                  << " & " << total.GetName();
     return false;
   }
@@ -226,12 +226,12 @@ TH1F* GEMDQMEfficiencyClientBase::makeEfficiency(const TH1F* h_numerator,
                                                  const char* name,
                                                  const char* title) {
   if (h_numerator == nullptr) {
-    edm::LogError(kLogCategory_) << "numerator is nullptr";
+    edm::LogError(log_category_) << "numerator is nullptr";
     return nullptr;
   }
 
   if (h_denominator == nullptr) {
-    edm::LogError(kLogCategory_) << "denominator is nulpptr";
+    edm::LogError(log_category_) << "denominator is nulpptr";
     return nullptr;
   }
 
@@ -268,8 +268,8 @@ TH1F* GEMDQMEfficiencyClientBase::makeEfficiency(const TH1F* h_numerator,
     }
 
     const double efficiency = passed / total;
-    const double lower_boundary = TEfficiency::ClopperPearson(total, passed, kConfidenceLevel_, false);
-    const double upper_boundary = TEfficiency::ClopperPearson(total, passed, kConfidenceLevel_, true);
+    const double lower_boundary = TEfficiency::ClopperPearson(total, passed, confidence_level_, false);
+    const double upper_boundary = TEfficiency::ClopperPearson(total, passed, confidence_level_, true);
     const double error = std::max(efficiency - lower_boundary, upper_boundary - efficiency);
 
     h_eff->SetBinContent(bin, efficiency);
@@ -285,12 +285,12 @@ TH2F* GEMDQMEfficiencyClientBase::makeEfficiency(const TH2F* h_numerator,
                                                  const char* name,
                                                  const char* title) {
   if (h_numerator == nullptr) {
-    edm::LogError(kLogCategory_) << "numerator is nullptr";
+    edm::LogError(log_category_) << "numerator is nullptr";
     return nullptr;
   }
 
   if (h_denominator == nullptr) {
-    edm::LogError(kLogCategory_) << "denominator is nulpptr";
+    edm::LogError(log_category_) << "denominator is nulpptr";
     return nullptr;
   }
 
@@ -317,7 +317,7 @@ TH2F* GEMDQMEfficiencyClientBase::makeEfficiency(const TH2F* h_numerator,
 // FIXME TH2D::ProjectionX looks buggy
 TH1F* GEMDQMEfficiencyClientBase::projectHistogram(const TH2F* h_2d, const unsigned int on_which_axis) {
   if ((on_which_axis != TH1::kXaxis) and (on_which_axis != TH1::kYaxis)) {
-    edm::LogError(kLogCategory_) << "invalid choice: " << on_which_axis << "."
+    edm::LogError(log_category_) << "invalid choice: " << on_which_axis << "."
                                  << " choose from [TH1::kXaxis (=1), TH1::kYaxis (=2)]";
     return nullptr;
   }
@@ -366,13 +366,13 @@ void GEMDQMEfficiencyClientBase::bookEfficiencyAuto(DQMStore::IBooker& ibooker,
     if (me_kind == MonitorElement::Kind::TH1F) {
       TH1F* h_numerator = me_numerator->getTH1F();
       if (h_numerator == nullptr) {
-        edm::LogError(kLogCategory_) << "failed to get TH1F from h_numerator " << key;
+        edm::LogError(log_category_) << "failed to get TH1F from h_numerator " << key;
         continue;
       }
 
       TH1F* h_denominator = me_denominator->getTH1F();
       if (h_denominator == nullptr) {
-        edm::LogError(kLogCategory_) << "failed to get TH1F from h_denominator" << key;
+        edm::LogError(log_category_) << "failed to get TH1F from h_denominator" << key;
         continue;
       }
 
@@ -387,13 +387,13 @@ void GEMDQMEfficiencyClientBase::bookEfficiencyAuto(DQMStore::IBooker& ibooker,
     } else if (me_kind == MonitorElement::Kind::TH2F) {
       TH2F* h_numerator = me_numerator->getTH2F();
       if (h_numerator == nullptr) {
-        edm::LogError(kLogCategory_) << "failed to get TH1F from h_numerator " << key;
+        edm::LogError(log_category_) << "failed to get TH1F from h_numerator " << key;
         continue;
       }
 
       TH2F* h_denominator = me_denominator->getTH2F();
       if (h_denominator == nullptr) {
-        edm::LogError(kLogCategory_) << "failed to get TH1F from h_denominator" << key;
+        edm::LogError(log_category_) << "failed to get TH1F from h_denominator" << key;
         continue;
       }
 
@@ -406,7 +406,7 @@ void GEMDQMEfficiencyClientBase::bookEfficiencyAuto(DQMStore::IBooker& ibooker,
       }
 
     } else {
-      edm::LogError(kLogCategory_) << "got an unepxected MonitorElement::Kind "
+      edm::LogError(log_category_) << "got an unepxected MonitorElement::Kind "
                                    << "0x" << std::hex << static_cast<int>(me_kind);
       continue;
     }

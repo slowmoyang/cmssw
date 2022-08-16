@@ -26,7 +26,7 @@ protected:
 
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override{};
 
-  const std::string kFolder_;
+  const std::string folder_;
 };
 
 #endif  // DQM_GEM_GEMEffByGEMCSCSegmentClient_h

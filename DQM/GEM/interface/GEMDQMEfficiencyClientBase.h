@@ -31,8 +31,8 @@ public:
   TH2F* makeEfficiency(const TH2F*, const TH2F*, const char* name = nullptr, const char* title = nullptr);
   void bookEfficiencyAuto(DQMStore::IBooker&, DQMStore::IGetter&, const std::string&);
 
-  const double kConfidenceLevel_;
-  const std::string kLogCategory_;
+  const double confidence_level_;
+  const std::string log_category_;
 };
 
 #endif  // DQM_GEM_GEMDQMEfficiencyClientBase_h

@@ -1,7 +1,7 @@
 #include "DQM/GEM/plugins/GEMEffByGEMCSCSegmentClient.h"
 
 GEMEffByGEMCSCSegmentClient::GEMEffByGEMCSCSegmentClient(const edm::ParameterSet& ps)
-    : GEMDQMEfficiencyClientBase(ps), kFolder_(ps.getUntrackedParameter<std::string>("folder")) {}
+    : GEMDQMEfficiencyClientBase(ps), folder_(ps.getUntrackedParameter<std::string>("folder")) {}
 
 void GEMEffByGEMCSCSegmentClient::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
@@ -19,5 +19,5 @@ void GEMEffByGEMCSCSegmentClient::dqmEndLuminosityBlock(DQMStore::IBooker& booke
                                                         DQMStore::IGetter& getter,
                                                         edm::LuminosityBlock const&,
                                                         edm::EventSetup const&) {
-  bookEfficiencyAuto(booker, getter, kFolder_);
+  bookEfficiencyAuto(booker, getter, folder_);
 }
