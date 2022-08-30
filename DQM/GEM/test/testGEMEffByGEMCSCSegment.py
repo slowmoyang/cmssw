@@ -15,7 +15,7 @@ process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(None, 'auto:phase1_2021_cosmics', '')
 
-process.load("DQM.Integration.config.environment_cfi")
+process.load("DQM.Integration.config.environment_cff")
 process.dqmEnv.subSystemFolder = "GEM"
 process.dqmEnv.eventInfoFolder = "EventInfo"
 process.dqmSaver.path = ""
