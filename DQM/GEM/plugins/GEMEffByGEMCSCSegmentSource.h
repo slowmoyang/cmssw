@@ -32,11 +32,11 @@ private:
 
   MonitorElement *bookCSCChamberType(DQMStore::IBooker &, const TString &, const TString &);
 
-  // GE11_ME11 segments
-  void analyzeGE11ME11Segment(const GEMCSCSegment &, const GEMOHStatusCollection *, const GEMVFATStatusCollection *);
-  void checkCoincidenceGE11(const GEMRecHit *, const GEMRecHit *, const GEMCSCSegment &);
-  void findMatchedME11Segments(const reco::MuonCollection *);
-  bool isME11SegmentMatched(const CSCSegment &);
+  // methods for GE11-ME11 and GE21-ME21 segments
+  void analyzeGEMCSCSegment(const GEMCSCSegment &, const GEMOHStatusCollection *, const GEMVFATStatusCollection *);
+  void checkCoincidence(const GEMRecHit *, const GEMRecHit *, const GEMCSCSegment &);
+  void findMuonSegments(const reco::MuonCollection *);
+  bool isMuonSegment(const CSCSegment &);
 
   //////////////////////////////////////////////////////////////////////////////
   // const member data
@@ -53,7 +53,7 @@ private:
   //////////////////////////////////////////////////////////////////////////////
   // non-const member data
   //////////////////////////////////////////////////////////////////////////////
-  std::vector<const CSCSegment *> matched_me11_segment_vector_;
+  std::array<std::vector<const CSCSegment *>, 3> muon_segments_;
 
   // MonitorElement
   MEMap me_chamber_;

@@ -4,6 +4,7 @@ from DQM.GEM.GEMDigiSource_cfi import *
 from DQM.GEM.GEMRecHitSource_cfi import *
 from DQM.GEM.GEMDAQStatusSource_cfi import *
 from DQM.GEM.gemEfficiencyAnalyzer_cff import *
+from DQM.GEM.gemEffByGEMCSCSegmentSource_cff import *
 
 GEMDigiSource.runType      = "offline"
 GEMRecHitSource.runType    = "offline"

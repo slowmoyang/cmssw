@@ -11,7 +11,8 @@ GEMEffByGEMCSCSegmentSource::GEMEffByGEMCSCSegmentSource(const edm::ParameterSet
       kMinCSCRecHits_(ps.getUntrackedParameter<int>("minCSCRecHits")),
       kModeDev_(ps.getUntrackedParameter<bool>("modeDev")),
       kUseMuonSegment_(ps.getUntrackedParameter<bool>("useMuonSegment")),
-      kFolder_(ps.getUntrackedParameter<std::string>("folder")) {}
+      kFolder_(ps.getUntrackedParameter<std::string>("folder")),
+      muon_segments_({}) {}
 
 GEMEffByGEMCSCSegmentSource::~GEMEffByGEMCSCSegmentSource() {}
 
@@ -58,7 +59,7 @@ void GEMEffByGEMCSCSegmentSource::bookHistograms(DQMStore::IBooker& ibooker,
     if (skipGEMStation(station_id))
       continue;
 
-    if (station_id == 1) {
+    if ((station_id == 1) or (station_id == 2)) {
       ////////////////////////////////////////////////////////////////////////////
       // Region - Station - Layer
       ////////////////////////////////////////////////////////////////////////////
@@ -176,7 +177,7 @@ void GEMEffByGEMCSCSegmentSource::analyze(const edm::Event& event, const edm::Ev
   }
 
   if (kUseMuonSegment_) {
-    findMatchedME11Segments(muon_collection);
+    findMuonSegments(muon_collection);
   }
 
   for (edm::OwnVector<GEMCSCSegment>::const_iterator iter = gemcsc_segment_collection->begin();
@@ -185,8 +186,8 @@ void GEMEffByGEMCSCSegmentSource::analyze(const edm::Event& event, const edm::Ev
     const GEMCSCSegment& gemcsc_segment = *iter;
 
     const CSCDetId csc_id = gemcsc_segment.cscDetId();
-    if (csc_id.isME11()) {
-      analyzeGE11ME11Segment(gemcsc_segment, oh_status_collection, vfat_status_collection);
+    if ((kMonitorGE11_ and csc_id.isME11()) or (kMonitorGE21_ and csc_id.isME21())) {
+      analyzeGEMCSCSegment(gemcsc_segment, oh_status_collection, vfat_status_collection);
 
     } else {
       LogDebug(kLogCategory_) << "skip " << csc_id;
@@ -195,52 +196,52 @@ void GEMEffByGEMCSCSegmentSource::analyze(const edm::Event& event, const edm::Ev
   }  // GEMCSCSegment
 }
 
-// TODO doc
-void GEMEffByGEMCSCSegmentSource::analyzeGE11ME11Segment(const GEMCSCSegment& gemcsc_segment,
-                                                         const GEMOHStatusCollection* oh_status_collection,
-                                                         const GEMVFATStatusCollection* vfat_status_collection) {
-  const GEMRecHit* ge11_hit_layer1 = nullptr;
-  const GEMRecHit* ge11_hit_layer2 = nullptr;
+// analyze GE11-ME11 and GE21-ME21 segment. Because both GE11 and GE21 consist
+// of two layers, they share the efficiency measurement method.
+void GEMEffByGEMCSCSegmentSource::analyzeGEMCSCSegment(const GEMCSCSegment& gemcsc_segment,
+                                                       const GEMOHStatusCollection* oh_status_collection,
+                                                       const GEMVFATStatusCollection* vfat_status_collection) {
+  const GEMRecHit* hit_layer1 = nullptr;
+  const GEMRecHit* hit_layer2 = nullptr;
 
   const CSCDetId csc_id = gemcsc_segment.cscDetId();
   for (const GEMRecHit& gem_hit : gemcsc_segment.gemRecHits()) {
     const GEMDetId gem_id = gem_hit.gemId();
 
-    if (not gem_id.isGE11()) {
+    // if the segment is neither GE11-ME11 nor GE21-ME21, skip it.
+    if UNLIKELY (not((csc_id.isME11() and gem_id.isGE11()) or (csc_id.isME21() and gem_id.isGE21()))) {
       edm::LogWarning(kLogCategory_) << "CSCSegment is in " << csc_id << " but GEMRecHit is in " << gem_id
                                      << ". skip this GEMCSCSegment."
                                      << "check if RecoLocalMuon/GEMCSCSegment/plugins/GEMCSCSegAlgoRR.cc has changed.";
       return;
     }
 
-    if (kMaskChamberWithError_) {
-      const bool has_error = maskChamberWithError(gem_id.chamberId(), oh_status_collection, vfat_status_collection);
-      if (has_error) {
-        return;
-      }
+    if (kMaskChamberWithError_ and
+        maskChamberWithError(gem_id.chamberId(), oh_status_collection, vfat_status_collection)) {
+      return;
     }
 
     const int layer = gem_id.layer();
     if (layer == 1) {
-      ge11_hit_layer1 = &gem_hit;
+      hit_layer1 = &gem_hit;
 
     } else if (layer == 2) {
-      ge11_hit_layer2 = &gem_hit;
+      hit_layer2 = &gem_hit;
 
     } else {
-      edm::LogError(kLogCategory_) << "isGE11 but got unexpected layer " << gem_id << ". skip this GEMCSCSegment.";
+      edm::LogError(kLogCategory_) << "got unexpected layer id " << gem_id << ". skip this GEMCSCSegment.";
       return;
     }
   }  // GEMRecHit
 
-  checkCoincidenceGE11(ge11_hit_layer1, ge11_hit_layer2, gemcsc_segment);
-  checkCoincidenceGE11(ge11_hit_layer2, ge11_hit_layer1, gemcsc_segment);
+  checkCoincidence(hit_layer1, hit_layer2, gemcsc_segment);
+  checkCoincidence(hit_layer2, hit_layer1, gemcsc_segment);
 }
 
-// TODO doc
-void GEMEffByGEMCSCSegmentSource::checkCoincidenceGE11(const GEMRecHit* trigger_layer_hit,
-                                                       const GEMRecHit* detection_layer_hit,
-                                                       const GEMCSCSegment& gemcsc_segment) {
+// Measure the efficiency of one GEM layer, using a CSC chamber and another GEM layer.
+void GEMEffByGEMCSCSegmentSource::checkCoincidence(const GEMRecHit* trigger_layer_hit,
+                                                   const GEMRecHit* detection_layer_hit,
+                                                   const GEMCSCSegment& gemcsc_segment) {
   if (trigger_layer_hit == nullptr) {
     LogDebug(kLogCategory_) << "trigger_layer_hit is nullptr";
     return;
@@ -253,7 +254,7 @@ void GEMEffByGEMCSCSegmentSource::checkCoincidenceGE11(const GEMRecHit* trigger_
   const GEMDetId key{trigger_layer_id.region(), 1, trigger_layer_id.station(), detection_layer, 0, 0};
 
   const int chamber = trigger_layer_id.chamber();
-  const bool is_matched = kUseMuonSegment_ ? isME11SegmentMatched(gemcsc_segment.cscSegment()) : false;
+  const bool is_matched = kUseMuonSegment_ ? isMuonSegment(gemcsc_segment.cscSegment()) : false;
 
   const int num_csc_hits = static_cast<int>(gemcsc_segment.cscRecHits().size());
   const double reduced_chi2 = gemcsc_segment.chi2() / gemcsc_segment.degreesOfFreedom();
@@ -292,12 +293,10 @@ void GEMEffByGEMCSCSegmentSource::checkCoincidenceGE11(const GEMRecHit* trigger_
   }
 }
 
-// TODO docs
-void GEMEffByGEMCSCSegmentSource::findMatchedME11Segments(const reco::MuonCollection* muon_collection) {
-  matched_me11_segment_vector_.clear();
-
+// save pointers of segments matched with muons into member data
+void GEMEffByGEMCSCSegmentSource::findMuonSegments(const reco::MuonCollection* muon_collection) {
   if (muon_collection == nullptr) {
-    // TODO log
+    LogDebug(kLogCategory_) << "findMuonSegments is called but muon_collection is nullptr";
     return;
   }
 
@@ -310,39 +309,38 @@ void GEMEffByGEMCSCSegmentSource::findMatchedME11Segments(const reco::MuonCollec
       }
 
       const CSCDetId csc_id{chamber_match.id};
-      if (not csc_id.isME11()) {
-        continue;
-      }
-
-      for (const reco::MuonSegmentMatch& segment_match : chamber_match.segmentMatches) {
-        if (not segment_match.isMask(reco::MuonSegmentMatch::BestInStationByDR)) {
-          continue;
-        }
-        matched_me11_segment_vector_.push_back(segment_match.cscSegmentRef.get());
-      }  // MuonSegmentMatch
-    }    // MuonChamberMatch
-  }      // MuonCollection
+      if (csc_id.isME11() or csc_id.isME21()) {
+        for (const reco::MuonSegmentMatch& segment_match : chamber_match.segmentMatches) {
+          if (segment_match.isMask(reco::MuonSegmentMatch::BestInStationByDR)) {
+            muon_segments_.at(csc_id.station()).push_back(segment_match.cscSegmentRef.get());
+            break;
+          }
+        }  // MuonSegmentMatch
+      }    // isME11 or isME21
+    }      // MuonChamberMatch
+  }        // MuonCollection
 }
 
-// TODO
-bool GEMEffByGEMCSCSegmentSource::isME11SegmentMatched(const CSCSegment& csc_segment) {
+// Returns a boolean indicating whether a csc segmetn is matched with a muon.
+// TODO imporve compairson
+bool GEMEffByGEMCSCSegmentSource::isMuonSegment(const CSCSegment& csc_segment) {
   bool found = false;
 
   const CSCDetId csc_id = csc_segment.cscDetId();
-  if (not csc_id.isME11()) {
+  if ((not csc_id.isME11()) and (not csc_id.isME21())) {
     return false;
   }
 
-  for (const CSCSegment* matched_segment : matched_me11_segment_vector_) {
-    if (csc_id != matched_segment->cscDetId())
+  for (const CSCSegment* muon_segment : muon_segments_.at(csc_id.station())) {
+    if (csc_id != muon_segment->cscDetId())
       continue;
-    if (csc_segment.localPosition().x() != matched_segment->localPosition().x())
+    if (csc_segment.localPosition().x() != muon_segment->localPosition().x())
       continue;
-    if (csc_segment.localPosition().y() != matched_segment->localPosition().y())
+    if (csc_segment.localPosition().y() != muon_segment->localPosition().y())
       continue;
-    if (csc_segment.localPosition().z() != matched_segment->localPosition().z())
+    if (csc_segment.localPosition().z() != muon_segment->localPosition().z())
       continue;
-    if (csc_segment.time() != matched_segment->time())
+    if (csc_segment.time() != muon_segment->time())
       continue;
 
     found = true;
