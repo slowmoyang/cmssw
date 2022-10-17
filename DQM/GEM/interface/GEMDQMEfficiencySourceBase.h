@@ -42,7 +42,7 @@ public:
 
   bool skipGEMStation(const int);
 
-  bool maskChamberWithError(const GEMDetId& chamber_id, const GEMOHStatusCollection*, const GEMVFATStatusCollection*);
+  bool checkChamberStatus(const GEMDetId& chamber_id, const GEMOHStatusCollection*, const GEMVFATStatusCollection*);
 
   bool hasMEKey(const MEMap&, const GEMDetId&);
   void fillME(MEMap&, const GEMDetId&, const double);
@@ -63,7 +63,7 @@ public:
   const bool kMonitorGE11_;
   const bool kMonitorGE21_;
   const bool kMonitorGE0_;
-  const bool kMaskChamberWithError_;
+  const bool check_chamber_status_;
   const std::string kLogCategory_;
 };
 

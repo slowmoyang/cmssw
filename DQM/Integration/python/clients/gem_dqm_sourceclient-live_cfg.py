@@ -62,7 +62,8 @@ process.path = cms.Path(
     process.cscSegments *
     process.gemcscSegments *
     process.GEMDQM *
-    process.gemEffByGEMCSCSegment
+    process.gemEffByGEMCSCSegment *
+    process.gemEffByGEMCSCSegmentNoChErr
 )
 
 process.end_path = cms.EndPath(

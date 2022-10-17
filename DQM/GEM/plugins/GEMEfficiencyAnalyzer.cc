@@ -85,8 +85,7 @@ void GEMEfficiencyAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& des
   desc.addUntracked<bool>("monitorGE11", true);
   desc.addUntracked<bool>("monitorGE21", false);
   desc.addUntracked<bool>("monitorGE0", false);
-  desc.addUntracked<bool>("maskChamberWithError", false);
-  desc.addUntracked<std::string>("logCategory", "GEMEfficiencyAnalyzer");
+  desc.addUntracked<bool>("checkChamberStatus", false);
 
   // GEMEfficiencyAnalyzer
   desc.addUntracked<edm::InputTag>("recHitTag", edm::InputTag("gemRecHits"));
@@ -979,7 +978,7 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
 
   const GEMOHStatusCollection* oh_status_collection = nullptr;
   const GEMVFATStatusCollection* vfat_status_collection = nullptr;
-  if (kMaskChamberWithError_) {
+  if (check_chamber_status_) {
     if (auto handle = event.getHandle(kGEMOHStatusCollectionToken_)) {
       oh_status_collection = handle.product();
     } else {
@@ -1077,12 +1076,10 @@ void GEMEfficiencyAnalyzer::analyze(const edm::Event& event, const edm::EventSet
 
       const GEMDetId gem_id = eta_partition->id();
 
-      if (kMaskChamberWithError_) {
-        const bool has_error = maskChamberWithError(gem_id.chamberId(), oh_status_collection, vfat_status_collection);
-        if (has_error) {
-          LogDebug(kLogCategory_) << gem_id.chamberId() << " has an erorr. Skip this propagation.";
-          continue;
-        }
+      if (check_chamber_status_ and
+          checkChamberStatus(gem_id.chamberId(), oh_status_collection, vfat_status_collection)) {
+        LogDebug(kLogCategory_) << gem_id.chamberId() << " has an erorr. Skip this propagation.";
+        continue;
       }
 
       //////////////////////////////////////////////////////////////////////////

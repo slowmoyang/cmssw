@@ -13,7 +13,6 @@ void GEMEfficiencyHarvester::fillDescriptions(edm::ConfigurationDescriptions& de
 
   // GEMDQMEfficiencyClientBase
   desc.addUntracked<double>("confidenceLevel", 0.683);  // 1-sigma
-  desc.addUntracked<std::string>("logCategory", "GEMEfficiencyHarvester");
 
   // GEMEfficiencyHarvester
   desc.addUntracked<std::vector<std::string> >("folders", {"GEM/Efficiency/muonSTA"});
