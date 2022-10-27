@@ -12,8 +12,8 @@ GEMDQMEfficiencySourceBase::GEMDQMEfficiencySourceBase(const edm::ParameterSet& 
       kMonitorGE11_(ps.getUntrackedParameter<bool>("monitorGE11")),
       kMonitorGE21_(ps.getUntrackedParameter<bool>("monitorGE21")),
       kMonitorGE0_(ps.getUntrackedParameter<bool>("monitorGE0")),
-      kMaskChamberWithError_(ps.getUntrackedParameter<bool>("maskChamberWithError")),
-      kLogCategory_(ps.getUntrackedParameter<std::string>("logCategory")) {}
+      check_chamber_status_(ps.getUntrackedParameter<bool>("checkChamberStatus")),
+      kLogCategory_(ps.getParameter<std::string>("@module_label")) {}
 
 // NOTE GEMDQMEfficiencyClientBase::parseEfficiencySourceName
 std::string GEMDQMEfficiencySourceBase::nameNumerator(const std::string& denominator) {
@@ -214,7 +214,7 @@ dqm::impl::MonitorElement* GEMDQMEfficiencySourceBase::bookChamberEtaPartition(D
   return me;
 }
 
-// TODO docs
+// Returns true if the monitoring is turned off for the given station.
 bool GEMDQMEfficiencySourceBase::skipGEMStation(const int station) {
   bool skip = false;
 
@@ -235,10 +235,12 @@ bool GEMDQMEfficiencySourceBase::skipGEMStation(const int station) {
   return skip;
 }
 
-bool GEMDQMEfficiencySourceBase::maskChamberWithError(const GEMDetId& chamber_id,
-                                                      const GEMOHStatusCollection* oh_status_collection,
-                                                      const GEMVFATStatusCollection* vfat_status_collection) {
-  const bool mask = true;
+// Returns a boolean indicating whether a chamber has a warning or an error about DAQ status.
+// Note that a `true` value indicates that the chamber has bad DAQ status.
+bool GEMDQMEfficiencySourceBase::checkChamberStatus(const GEMDetId& chamber_id,
+                                                    const GEMOHStatusCollection* oh_status_collection,
+                                                    const GEMVFATStatusCollection* vfat_status_collection) {
+  const bool has_warning_or_error = true;
 
   for (auto iter = oh_status_collection->begin(); iter != oh_status_collection->end(); iter++) {
     const auto [oh_id, range] = (*iter);
@@ -247,10 +249,10 @@ bool GEMDQMEfficiencySourceBase::maskChamberWithError(const GEMDetId& chamber_id
     }
 
     for (auto oh_status = range.first; oh_status != range.second; oh_status++) {
-      if (oh_status->isBad()) {
-        // GEMOHStatus is bad. Mask this chamber.
-        return mask;
-      }  // isBad
+      if ((oh_status->warnings() != 0) or oh_status->isBad()) {
+        // GEMOHStatus has a warning or an error. Mask this chamber.
+        return has_warning_or_error;
+      }  // has a warning or an error
     }    // range
   }      // collection
 
@@ -260,16 +262,16 @@ bool GEMDQMEfficiencySourceBase::maskChamberWithError(const GEMDetId& chamber_id
       continue;
     }
     for (auto vfat_status = range.first; vfat_status != range.second; vfat_status++) {
-      if (vfat_status->isBad()) {
-        return mask;
-      }
-    }  // range
-  }    // collection
+      if ((vfat_status->warnings() != 0) or vfat_status->isBad()) {
+        return has_warning_or_error;
+      }  // has a warning or an error
+    }    // range
+  }      // collection
 
-  return not mask;
+  return not has_warning_or_error;
 }
 
-// TODO docs
+// Returns true if MEmap has the key.
 bool GEMDQMEfficiencySourceBase::hasMEKey(const MEMap& me_map, const GEMDetId& key) {
   const bool has_key = me_map.find(key) != me_map.end();
 

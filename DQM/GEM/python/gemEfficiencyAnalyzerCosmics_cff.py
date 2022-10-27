@@ -21,6 +21,12 @@ gemEfficiencyAnalyzerCosmicsGlb = gemEfficiencyAnalyzerCosmics.clone(
     muonName = 'Cosmic 2-Leg GLB Muon',
 )
 
+gemEfficiencyAnalyzerCosmicsGlbNoChErr = gemEfficiencyAnalyzerCosmicsGlb.clone(
+    checkChamberStatus = True,
+    folder = 'GEM/Efficiency/muonGLB_NoChamberError',
+    muonName = 'Cosmic 2-Leg GLB Muon (No Chamber Error)',
+)
+
 gemEfficiencyAnalyzerCosmicsSta = gemEfficiencyAnalyzerCosmics.clone(
     muonTag = 'muons',
     muonTrackType = 'OuterTrack',

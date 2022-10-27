@@ -24,8 +24,7 @@ void GEMEffByGEMCSCSegmentSource::fillDescriptions(edm::ConfigurationDescription
   desc.addUntracked<bool>("monitorGE11", true);
   desc.addUntracked<bool>("monitorGE21", false);
   desc.addUntracked<bool>("monitorGE0", false);
-  desc.addUntracked<bool>("maskChamberWithError", false);
-  desc.addUntracked<std::string>("logCategory", "GEMEffByGEMCSCSegmentSource");
+  desc.addUntracked<bool>("checkChamberStatus", false);
 
   // GEMEffByGEMCSCSegmentSource
   desc.addUntracked<edm::InputTag>("gemcscSegmentTag", edm::InputTag("gemcscSegments"));
@@ -151,7 +150,7 @@ void GEMEffByGEMCSCSegmentSource::analyze(const edm::Event& event, const edm::Ev
 
   const GEMOHStatusCollection* oh_status_collection = nullptr;
   const GEMVFATStatusCollection* vfat_status_collection = nullptr;
-  if (kMaskChamberWithError_) {
+  if (check_chamber_status_) {
     if (auto handle = event.getHandle(kGEMOHStatusCollectionToken_)) {
       oh_status_collection = handle.product();
     } else {
@@ -213,11 +212,9 @@ void GEMEffByGEMCSCSegmentSource::analyzeGE11ME11Segment(const GEMCSCSegment& ge
       return;
     }
 
-    if (kMaskChamberWithError_) {
-      const bool has_error = maskChamberWithError(gem_id.chamberId(), oh_status_collection, vfat_status_collection);
-      if (has_error) {
-        return;
-      }
+    if (check_chamber_status_ and
+        checkChamberStatus(gem_id.chamberId(), oh_status_collection, vfat_status_collection)) {
+      return;
     }
 
     const int layer = gem_id.layer();

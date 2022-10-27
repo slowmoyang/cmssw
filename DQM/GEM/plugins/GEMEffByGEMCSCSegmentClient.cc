@@ -8,7 +8,6 @@ void GEMEffByGEMCSCSegmentClient::fillDescriptions(edm::ConfigurationDescription
 
   // GEMDQMEfficiencyClientBase
   desc.addUntracked<double>("confidenceLevel", 0.683);  // 1-sigma
-  desc.addUntracked<std::string>("logCategory", "GEMEffByGEMCSCSegmentClient");
 
   // GEMEffByGEMCSCSegmentClient
   desc.addUntracked<std::string>("folder", "GEM/Efficiency/GEMCSCSegment");

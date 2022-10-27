@@ -25,9 +25,27 @@ gemEfficiencyAnalyzerTightGlb = gemEfficiencyAnalyzer.clone(
     propagationErrorPhiCut = 0.1, # degree
 )
 
+gemEfficiencyAnalyzerTightGlbNoChErr = gemEfficiencyAnalyzerTightGlb.clone(
+    checkChamberStatus = True,
+    folder = "GEM/Efficiency/muonGLB_NoChamberError",
+    muonName = "Tight GLB Muon (No Chamber Error)",
+)
+
 gemEfficiencyAnalyzerTightGlbSeq = cms.Sequence(
     cms.ignore(gemDQMTightGlbMuons) *
-    gemEfficiencyAnalyzerTightGlb)
+    gemEfficiencyAnalyzerTightGlb
+)
+
+gemEfficiencyAnalyzerTightGlbNoChErrSeq = cms.Sequence(
+    cms.ignore(gemDQMTightGlbMuons) *
+    gemEfficiencyAnalyzerTightGlbNoChErr
+)
+
+gemEfficiencyAnalyzerTightGlbFullSeq = cms.Sequence(
+    cms.ignore(gemDQMTightGlbMuons) *
+    gemEfficiencyAnalyzerTightGlb *
+    gemEfficiencyAnalyzerTightGlbNoChErr
+)
 
 ################################################################################
 # Standalone muons
@@ -53,4 +71,5 @@ gemEfficiencyAnalyzerSta = gemEfficiencyAnalyzer.clone(
 
 gemEfficiencyAnalyzerStaSeq = cms.Sequence(
     cms.ignore(gemDQMStaMuons) *
-    gemEfficiencyAnalyzerSta)
+    gemEfficiencyAnalyzerSta
+)

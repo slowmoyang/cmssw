@@ -9,7 +9,7 @@
 
 GEMDQMEfficiencyClientBase::GEMDQMEfficiencyClientBase(const edm::ParameterSet& ps)
     : kConfidenceLevel_(ps.getUntrackedParameter<double>("confidenceLevel")),
-      kLogCategory_(ps.getUntrackedParameter<std::string>("logCategory")) {}
+      kLogCategory_(ps.getParameter<std::string>("@module_label")) {}
 
 // Returns a tuple of
 //   - a boolean indicating whether the parsing is successful or not

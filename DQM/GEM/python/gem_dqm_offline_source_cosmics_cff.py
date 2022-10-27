@@ -14,5 +14,6 @@ gemSourcesCosmics = cms.Sequence(
     GEMRecHitSource *
     GEMDAQStatusSource *
     gemEfficiencyAnalyzerCosmicsGlb *
+    gemEfficiencyAnalyzerCosmicsGlbNoChErr *
     gemEfficiencyAnalyzerCosmicsSta
 )
